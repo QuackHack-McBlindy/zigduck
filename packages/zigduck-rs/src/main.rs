@@ -1834,10 +1834,48 @@ impl ZigduckState {
             }
         };
 
-        let device_cmd_prefix = format!("{}/device_command/", self.mqtt_base_topic);
-        let dash_card_prefix = format!("{}/dashboard/card/", self.mqtt_base_topic);
-        let scene_prefix      = format!("{}/scene/", self.mqtt_base_topic);
-        let tv_prefix         = format!("{}/tv/", self.mqtt_base_topic);
+        let device_cmd_prefix       = format!("{}/device_command/", self.mqtt_base_topic);
+        let dash_card_prefix        = format!("{}/dashboard/card/", self.mqtt_base_topic);
+        let scene_prefix            = format!("{}/scene/", self.mqtt_base_topic);
+        let tv_prefix               = format!("{}/tv/", self.mqtt_base_topic);
+        let snapshot_control_prefix = format!("{}/control/snapshot/", self.mqtt_base_topic);
+
+        
+        // 🦆 says ⮞ handle snapshot control commands (create / restore)
+        if topic.starts_with(&snapshot_control_prefix) {
+            let command = topic.strip_prefix(&snapshot_control_prefix).unwrap_or("");
+            match command {
+                "create" => {
+                    if let Ok(params) = serde_json::from_str::<Value>(payload) {
+                        let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("default");
+                        let scope = params.get("scope").and_then(|v| v.as_str()).unwrap_or("global");
+                        let room = params.get("room").and_then(|v| v.as_str());
+                        let device_list = params.get("devices")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| arr.iter()
+                                .filter_map(|v| v.as_str().map(String::from))
+                                .collect::<Vec<String>>()
+                            );
+        
+                        if let Err(e) = self.create_snapshot(name, scope, room, device_list.as_deref()).await {
+                            dt_warning!("Failed to create snapshot via MQTT: {}", e);
+                        } else { dt_info!("Snapshot '{}' created via MQTT", name); }
+                    } else { dt_warning!("Invalid JSON in snapshot create payload"); }
+                    return Ok(());
+                }
+                "restore" => {
+                    if let Ok(params) = serde_json::from_str::<Value>(payload) {
+                        let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("default");
+                        if let Err(e) = self.restore_snapshot(name).await {
+                            dt_warning!("Failed to restore snapshot via MQTT: {}", e);
+                        } else { dt_info!("Snapshot '{}' restored via MQTT", name); }
+                    } else { dt_warning!("Invalid JSON in snapshot restore payload"); }
+                    return Ok(());
+                }
+                _ => {}
+            }
+        }
+
 
         // 🦆 says ⮞ unified hue & z2m topic
         if topic.starts_with(&device_cmd_prefix) {

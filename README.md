@@ -422,7 +422,7 @@ To customize these actions, configure the automation type `house.zigbee.automati
               { type = "wait"; duration = 2; }
               { type = "shell"; command = "curl http://192.168.1.13/api/settings/speaker/play/ding"; }
               # 7. simple string (shell shortcut)
-              # (with `yo`) can be used to write automations using natural language
+              # (if using `yo`) this can be used for simple automations using natural language
               "yo do 'turn on all lights'"
               { type = "wait"; duration = 2; }     
               { type = "shell"; command = "curl http://192.168.1.15/api/settings/speaker/play/ding"; }          
@@ -716,7 +716,9 @@ The companion flake [yo](https://github.com/QuackHack-McBlindy/yo) is handling e
 
 Once setup, copy the `./modules/voice` directory into your NixOS configuration to be able to control your devices/rooms/media/timers/alarms etc.
 
-For `ESP32-S3` based yo clients - check out [yo-esp](https://github.com/QuackHack-McBlindy/yo-esp).   
+> **Note:** for `ESP32-S3` based `yo` clients - see the [yo-esp](https://github.com/QuackHack-McBlindy/yo-esp) library.   
+
+
 To write additional custom voice commands, please see [yo](https://github.com/QuackHack-McBlindy/yo) for instructions.   
 
 <br>
@@ -729,16 +731,24 @@ To write additional custom voice commands, please see [yo](https://github.com/Qu
 Commandline 
 </strong></summary>
 
-**Zigduck-CLI**  
+<br>
+
+### **Zigduck-CLI**  
+
+<br>
+
+> The **zigduck-cli** tool provides complete control over your smart home from the command line.  
+> Below is its full help output – use `--help` at any time to see the same information.  
 
 
 ```
 Usage: zigduck-cli [OPTIONS] [COMMAND]
 
 Commands:
-  timer  
-  alarm  
-  help   Print this message or the help of the given subcommand(s)
+  timer     
+  alarm     
+  snapshot  
+  help      Print this message or the help of the given subcommand(s)
 
 Options:
   -b, --broker <BROKER>
@@ -835,15 +845,26 @@ zigduck-cli --device myLight --state on --brightness 90 --color red --transition
 zigduck-cli timer set --minutes 15 --seconds 30
 zigduck-cli alarm add --hours 07 --minutes 0
 zigduck-cli --publish --topic "zigduck/Fläkt/set" --payload '{"countdown": 0}'
+zigduck-cli snapshot create my_test
+zigduck-cli snapshot restore my_test
 ```
 
 <br>
 
 
 
-**Android tvOS controller**  
+### **Android TV controller**  
 
-**tv:**  
+<br>
+
+> The **tv** CLI tool provides a simple way of communicating with your TV over `ADB`.  
+> It uses fuzzy search to find media and creates a playlist and tell the TV to play it.   
+> Below is its full help output – use `--help` at any time to see the same information.  
+
+<br>
+
+> **Note:** Please see the **media** configuration step before usage.  
+
 
 ```
 Cast media to an Android TV device via ADB
