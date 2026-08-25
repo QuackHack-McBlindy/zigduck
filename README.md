@@ -269,6 +269,8 @@ Define a dimmer, or motion sensor and those devices would default to control it'
 🎚 Dimmers /  Motion (optional)
 </strong></summary>
 
+<br>
+
 **Example configuraiton:**  
 
 ```nix    
@@ -308,6 +310,22 @@ Define a dimmer, or motion sensor and those devices would default to control it'
         };  
       };
 ```
+
+<br>
+
+### Default dimmer actions  
+
+| Action | Behavior |
+| --- | --- |
+| **On — press** | Turn on all room lights |
+| **On — multiple presses** | Cycle through room scenes |
+| **On — hold** | Turn on all lights |
+| **Up — press** | Increase room brightness |
+| **Down — press** | Decrease room brightness |
+| **Off — press** | Turn off room lights |
+| **Off — hold** | Turn off all lights |
+
+To customize these actions, configure the automation type `house.zigbee.automations.dimmer_actions`.   
 
 <br>
 
@@ -369,7 +387,7 @@ Define a dimmer, or motion sensor and those devices would default to control it'
         };
         
         # 1. time based automations
-        time_based = {       
+        time_based = {
           morning_wakeup = {
             enable = true;
             description = "set morning wakeup alarm";
@@ -480,7 +498,7 @@ Define a dimmer, or motion sensor and those devices would default to control it'
           smoke_detected = [ "notify '🔥 SMOKE DETECTED!'" ];
         };
 
-        # 5. [optional] dimmer actions automations (default configured per room)
+        # 5. dimmer actions automations (default configured per room)
         dimmer_actions = {          
           bedroom = {
             off_hold_release = {
