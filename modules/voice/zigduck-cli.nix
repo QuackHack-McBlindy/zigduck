@@ -168,7 +168,7 @@ in {
       ) scenes);
 
     pair.values = [
-      { "in" = "[pair|start pairing|discover|search for devices]"; out = "true"; }
+      { "in" = "pair|start pairing|discover|search for devices"; out = "true"; }
     ];
 
     all-lights.values = [
@@ -198,11 +198,11 @@ in {
       });
 
     blinds.values = [
-      { "in" = "[up|upp]"; out = "up"; }
-      { "in" = "[down]"; out = "down"; }
+      { "in" = "up|upp"; out = "up"; }
+      { "in" = "down"; out = "down"; }
 
-      { "in" = "[open]"; out = "open"; }
-      { "in" = "[close]"; out = "close"; }  
+      { "in" = "open"; out = "open"; }
+      { "in" = "close"; out = "close"; }  
     ];
 
   };}

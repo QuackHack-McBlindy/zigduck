@@ -1,9 +1,12 @@
 { 
+  self,
   config,
   lib,
   pkgs,
   ...
 } : let
+  zigduck-cli = self.inputs.zigduck2mqttnix.packages.${pkgs.stdenv.hostPlatform.system}.zigduck-cli;
+
   englishNumbers = [
     "zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"
     "eleven" "twelve" "thirteen" "fourteen" "fifteen" "sixteen" "seventeen" "eighteen" "nineteen" "twenty"
@@ -31,7 +34,7 @@ in {
     ];    
     code = ''
       if [ "$list" = "true" ] || [ "$list" = "1" ]; then
-        zigduck-cli timer list
+        ${zigduck-cli}/bin/zigduck-cli timer list
         exit 0
       fi
 
@@ -40,11 +43,11 @@ in {
       if [ -z "$seconds" ]; then seconds=0; fi
       
       if [ "$hours" -eq 0 ] && [ "$minutes" -eq 0 ] && [ "$seconds" -eq 0 ]; then
-        zigduck-cli timer list
+        ${zigduck-cli}/bin/zigduck-cli timer list
         exit 0
       fi
 
-      zigduck-cli timer set --hours "$hours" --minutes "$minutes" --seconds "$seconds"    
+      ${zigduck-cli}/bin/zigduck-cli timer set --hours "$hours" --minutes "$minutes" --seconds "$seconds"    
     '';
   };  
 

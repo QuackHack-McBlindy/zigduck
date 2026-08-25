@@ -6,6 +6,8 @@
   ...
 } : with lib;
 let
+  zigduck-cli = self.inputs.zigduck2mqttnix.packages.${pkgs.stdenv.hostPlatform.system}.zigduck-cli;
+
   englishNumbers = [
     "zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"
     "eleven" "twelve" "thirteen" "fourteen" "fifteen" "sixteen" "seventeen" "eighteen" "nineteen" "twenty"
@@ -34,7 +36,7 @@ in {
     
     code = ''
       if [ "$list" = "true" ] || [ "$list" = "1" ]; then
-        zigduck-cli alarm list
+        ${zigduck-cli}/bin/zigduck-cli alarm list
         exit 0
       fi
 
@@ -44,7 +46,7 @@ in {
 
       # no time given? list alarms
       if [ "$hours" -eq 0 ] && [ "$minutes" -eq 0 ]; then
-        zigduck-cli alarm list
+        ${zigduck-cli}/bin/zigduck-cli alarm list
         exit 0
       fi
 
@@ -56,7 +58,7 @@ in {
       fi
 
       name="alarm-$hours-$minutes"
-      zigduck-cli alarm add --hours "$hours" --minutes "$minutes" --name "$name"    
+      ${zigduck-cli}/bin/zigduck-cli alarm add --hours "$hours" --minutes "$minutes" --name "$name"    
     '';
     voice = {
       priority = 1;
