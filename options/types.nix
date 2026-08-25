@@ -19,7 +19,7 @@
     (types.submodule {
       options = {
         type = mkOption {
-          type = types.enum ["mqtt" "shell" "scene" "wait"];
+          type = types.enum ["mqtt" "shell" "scene" "wait" "snapshot" "restore"];
           default = "shell";
           description = "Type of automation action";
         };
@@ -47,7 +47,27 @@
           type = types.nullOr types.int;
           default = null;
           description = "Duration in seconds (for wait type)";
-        };                
+        };
+        snapshot_name = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Name of the snapshot (for snapshot/restore types). Defaults to 'default' if omitted.";
+        };
+        scope = mkOption {
+          type = types.nullOr (types.enum ["global" "room" "devices"]);
+          default = null;
+          description = "Scope of the snapshot (only for snapshot type). Defaults to 'global'.";
+        };
+        room = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Room name if scope is 'room' (only for snapshot type).";
+        };
+        devices = mkOption {
+          type = types.nullOr (types.listOf types.str);
+          default = null;
+          description = "List of device friendly names if scope is 'devices' (only for snapshot type).";
+        };
       };
     })
   ];

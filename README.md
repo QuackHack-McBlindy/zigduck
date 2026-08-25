@@ -388,26 +388,30 @@ Define a dimmer, or motion sensor and those devices would default to control it'
             description = "Time to wake up!";
             topic = "zigbee2mqtt/alarm/triggered";
             actions = [  
-              # there are 5 different automation action types
+              # there are 7 different automation action types
               # 1. shell
               { type = "shell"; command = "tv --typ youtube --search 'nisse snus'"; }     
-              # 2. scene
+              # 3. snapshot
+              { type = "snapshot"; snapshot_name = "before_alarm"; }
+              # 4. scene
               { type = "scene"; scene = "max"; }
-              # 3. mqtt
+              # 5. mqtt
               { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 3/set"; message = ''{"state":"OFF"}''; }
               { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 4/set"; message = ''{"state":"OFF"}''; }
-              # 4. wait
+              # 6. wait
               { type = "wait"; duration = 10; }
               { type = "scene"; scene = "dark-fast"; }
               { type = "wait"; duration = 2; }
               { type = "shell"; command = "curl http://192.168.1.13/api/settings/speaker/play/ding"; }
-              # 5. simple string (shell shortcut)
+              # 7. simple string (shell shortcut)
               # (with `yo`) can be used to write automations using natural language
               "yo do 'turn on all lights'"
               { type = "wait"; duration = 2; }     
               { type = "shell"; command = "curl http://192.168.1.15/api/settings/speaker/play/ding"; }          
               { type = "wait"; duration = 10; }
               { type = "mqtt"; topic = "zigbee2mqtt/Roller Shade/set"; message = ''{"state":"ON"}''; }
+              # 8. restore (snapshot)
+              { type = "restore"; snapshot_name = "before_alarm"; }              
             ];
           };
 
