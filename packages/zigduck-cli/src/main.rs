@@ -69,6 +69,11 @@ enum Commands {
     Alarm {
         #[command(subcommand)]
         action: AlarmAction,
+    },    
+    #[command(name = "snapshot")]
+    Snapshot {
+        #[command(subcommand)]
+        action: SnapshotAction,
     },
 }
 
@@ -96,6 +101,22 @@ enum AlarmAction {
     Toggle {
         #[arg(long)]
         id: u64,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum SnapshotAction {
+    Create {
+        name: String,
+        #[arg(long, default_value = "global")]
+        scope: String,
+        #[arg(long)]
+        room: Option<String>,
+        #[arg(long, value_delimiter = ',')]
+        devices: Option<Vec<String>>,
+    },
+    Restore {
+        name: String,
     },
 }
 
@@ -1617,6 +1638,30 @@ fn main() -> Result<()> {
                 AlarmAction::Remove { id } => api_remove_alarm(&api_url, &api_password, id)?,
                 AlarmAction::Toggle { id } => api_toggle_alarm(&api_url, &api_password, id)?,
             },
+            Commands::Snapshot { action } => {
+                match action {
+                    SnapshotAction::Create { name, scope, room, devices } => {
+                        let mut payload = serde_json::json!({
+                            "name": name,
+                            "scope": scope,
+                        });
+                        if let Some(r) = room {
+                            payload["room"] = r.into();
+                        }
+                        if let Some(d) = devices {
+                            payload["devices"] = d.into();
+                        }
+                        let topic = format!("{}/control/snapshot/create", base_topic);
+                        controller.publish_mqtt(&topic, payload)?;
+                    }
+                    SnapshotAction::Restore { name } => {
+                        let payload = serde_json::json!({ "name": name });
+                        let topic = format!("{}/control/snapshot/restore", base_topic);
+                        controller.publish_mqtt(&topic, payload)?;
+                    }
+                }
+                return Ok(());
+            }
         }
         return Ok(());
     }
