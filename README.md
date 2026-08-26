@@ -1,10 +1,10 @@
-# **Zigduck2mqttnix**
+# **zigduck**
 
 [![Sponsors](https://img.shields.io/github/sponsors/QuackHack-McBlindy?logo=githubsponsors&label=Sponsor&style=flat&labelColor=ff1493&logoColor=fff&color=rgba(234,74,170,0.5) "")](https://github.com/sponsors/QuackHack-McBlindy) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Sponsor?style=flat&logo=buymeacoffee&logoColor=fff&labelColor=ff1493&color=ff1493)](https://buymeacoffee.com/quackhackmcblindy)
 
 <br>
 
-<a href="https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/blob/main/images/logo.png">
+<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/logo.png">
   <img src="images/logo.png" alt="Logo" width="330">
 </a> 
 
@@ -13,14 +13,14 @@
 # **A Flake For Your House**
 
 
-**Zigduck2mqttnix** is the flake that brings version control to your smart home.   
+**zigduck** is the flake that brings version control to your smart home.   
 A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.  
 Nix for configuration, Rust for responsive async runtime.  
 Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.   
   
 **Define once, deploy forever.**   
 
-**Zigduck2mqttnix** uses smart defaults, after defining your rooms & devices --   
+**zigduck** uses smart defaults, after defining your rooms & devices --   
 most users don’t need to write any automations at all.  
 Lights, dimmers, motion sensors - it should all work as expected **out of the box**.  
 **Everything** is configurable via NixOS options.   
@@ -32,7 +32,7 @@ An optional **dashboard** page is generated from the defined Nix configuration t
             Nix
              │
              ▼
-        zigduck-rs
+          zigduck
              │
       ┌──────┴──────┐
       ▼             ▼
@@ -56,22 +56,22 @@ An optional **dashboard** page is generated from the defined Nix configuration t
 </strong></summary>
 
 
-#### **1: Add zigduck2mqttnix & yo as inputs in your flake.nix**
+#### **1: Add zigduck & yo as inputs in your flake.nix**
 
 ```nix
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    zigduck2mqttnix.url = "github:quackhack-mcblindy/Zigduck2mqttnix";
+    zigduck.url = "github:quackhack-mcblindy/zigduck";
   };
 ```
 
 
-#### **2: Import the modules into your configuration**  
+#### **2: Import the module into your configuration**  
   
 
 ```nix
   imports = [ 
-    zigduck2mqttnix.nixosModules.zigduck2mqttnix
+    zigduck.nixosModules.zigduck
   ];
 ```
 
@@ -117,7 +117,7 @@ An optional **dashboard** page is generated from the defined Nix configuration t
 ## **Configuration**
 
 If anything about the configuration is unclear or if you have questions,  
-a good starter point would be to study the [options](https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/tree/main/options) which has detailed descriptions for everything.  
+a good starter point would be to study the [options](https://github.com/QuackHack-McBlindy/zigduck/tree/main/options) which has detailed descriptions for everything.  
 <br>
 
 <details><summary><strong>
@@ -198,7 +198,7 @@ a good starter point would be to study the [options](https://github.com/QuackHac
 
 <br>
 
-zigduck2mqttnix always uses smart defaults.   
+zigduck always uses smart defaults.   
 Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.     
 
 **Example configuration:**  
@@ -607,19 +607,19 @@ To customize these actions, configure the automation type `house.zigbee.automati
 
 <br>
 
-<a href="https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/blob/main/images/IMG_3316.png">
+<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3316.png">
   <img src="images/IMG_3316.png" alt="Rooms" width="148">
 </a>
 
-<a href="https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/blob/main/images/IMG_3314.png">
+<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3314.png">
   <img src="images/IMG_3314.png" alt="Device" width="148">
 </a> 
 
-<a href="https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/blob/main/images/IMG_3315.png">
+<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3315.png">
   <img src="images/IMG_3315.png" alt="Device" width="148">
 </a> 
 
-<a href="https://github.com/QuackHack-McBlindy/Zigduck2mqttnix/blob/main/images/IMG_3313.png">
+<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3313.png">
   <img src="images/IMG_3313.png" alt="Scenes" width="148">
 </a> <br> <br>
 

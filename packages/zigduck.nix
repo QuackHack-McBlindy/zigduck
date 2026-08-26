@@ -6,13 +6,15 @@
   fetchFromGitHub,
   ...
 } : let
-  src = ./zigduck-rs;
+  src = ./zigduck;
   cargoToml = builtins.fromTOML (builtins.readFile (src + "/Cargo.toml"));
+  name = cargoToml.package.name;
   version = cargoToml.package.version;
   desc = cargoToml.package.description;
+  licen = cargoToml.package.license;  
 in  
 rustPlatform.buildRustPackage {
-  pname = "zigduck-rs";
+  pname = name;
   inherit version;
   src = src;
   cargoLock = { lockFile = src + "/Cargo.lock"; };
@@ -33,9 +35,9 @@ rustPlatform.buildRustPackage {
   ];
 
   meta = with lib; {
-    description = "Home automation system written in Rust";
-    license = licenses.mit;
+    description = desc;
+    license = licen;
     maintainers = [ "QuackHack-McBlindy" ];
-    mainProgram = "zigduck-rs";
+    mainProgram = "zigduck";
     
   };}

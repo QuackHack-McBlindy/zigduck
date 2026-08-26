@@ -17,7 +17,7 @@
 in {
   yo.scripts.tv = {
     description = "Android TV Controller. Fuzzy search all media types and creates playlist and serves over webserver for casting.";
-    binary = self.inputs.zigduck2mqttnix.packages.x86_64-linux.tv + "/bin/tv";
+    binary = self.inputs.zigduck.packages.x86_64-linux.tv + "/bin/tv";
     category = "🎧 Media Management";
     logLevel = "INFO";
     parameters = [

@@ -6,7 +6,7 @@
   ...
 } : with lib;
 let
-  zigduck-cli = self.inputs.zigduck2mqttnix.packages.${pkgs.stdenv.hostPlatform.system}.zigduck-cli;
+  zigduck-cli = self.inputs.zigduck.packages.${pkgs.stdenv.hostPlatform.system}.zigduck-cli;
 
   englishNumbers = [
     "zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"

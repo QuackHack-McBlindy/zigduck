@@ -8,7 +8,7 @@
 let
   cfg = config.services.zigduck;  
   house = config.house;
-  zigduckPkgs = self.inputs.zigduck2mqttnix.packages.${pkgs.system};
+  zigduckPkgs = self.inputs.zigduck.packages.${pkgs.system};
 
   format = pkgs.formats.yaml { };
   configFile = format.generate "zigbee2mqtt.yaml" house.zigbee.settings;
