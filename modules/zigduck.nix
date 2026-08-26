@@ -8,7 +8,7 @@
 let
   cfg = config.services.zigduck;  
   house = config.house;
-  zigduckPkgs = self.inputs.zigduck2mqttnix.packages.${pkgs.system};
+  zigduckPkgs = self.inputs.zigduck.packages.${pkgs.system};
 
   format = pkgs.formats.yaml { };
   configFile = format.generate "zigbee2mqtt.yaml" house.zigbee.settings;
@@ -298,7 +298,7 @@ in {
           StateDirectory = "zigduck";
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
-          ExecStart = "${zigduckPkgs.zigduck-rs}/bin/zigduck-rs";
+          ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck";
           
           Restart = "on-failure";
           RestartSec = "45s";
@@ -340,7 +340,7 @@ in {
           StateDirectory = "zigduck";
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
-          ExecStart = "${zigduckPkgs.zigduck-rs}/bin/zigduck-dashboard ${cfg.dashboard.host} ${toString cfg.dashboard.port}";
+          ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck-dashboard ${cfg.dashboard.host} ${toString cfg.dashboard.port}";
           Restart = "on-failure";
           RestartSec = "45s";
 

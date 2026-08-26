@@ -8,7 +8,7 @@
 let
   cfg = config.services.zigduck;
   house = config.house;
-  zigduckPkgs = self.inputs.zigduck2mqttnix.packages.${pkgs.system}; 
+  zigduckPkgs = self.inputs.zigduck.packages.${pkgs.system}; 
 
   cards = import ./cards.nix { inherit lib pkgs; };
   generateCardStyle = cards.generateCardStyle;

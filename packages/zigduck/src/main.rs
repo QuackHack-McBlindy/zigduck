@@ -1060,7 +1060,7 @@ impl ZigduckState {
 
         let double_click_timeout = Duration::from_millis(config.double_click_timeout_ms.unwrap_or(300));
 
-        let mut pub_options = MqttOptions::new("zigduck-rs-pub", &mqtt_broker, 1883);
+        let mut pub_options = MqttOptions::new("zigduck-pub", &mqtt_broker, 1883);
         pub_options.set_credentials(&mqtt_user, &mqtt_password);
         pub_options.set_keep_alive(Duration::from_secs(30));
         let (mqtt_publisher, mut pub_eventloop) = rumqttc::AsyncClient::new(pub_options, 5);
@@ -2172,7 +2172,7 @@ impl ZigduckState {
         dt_info!("🚀 Starting ZigDuck automation system");
         dt_info!("📡 Listening to all Zigbee events...");
         self.start_periodic_checks().await;
-        let mut mqttoptions = MqttOptions::new("zigduck-rs", &self.mqtt_broker, 1883);
+        let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
         mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
         mqttoptions.set_keep_alive(Duration::from_secs(5));
         // 🦆 says ⮞ max packet size if larger payloads
@@ -2203,7 +2203,7 @@ impl ZigduckState {
                     tokio::time::sleep(Duration::from_secs(5)).await;
 
                     // 🦆 says ⮞ recreate connection
-                    let mut mqttoptions = MqttOptions::new("zigduck-rs", &self.mqtt_broker, 1883);
+                    let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
                     mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
                     mqttoptions.set_keep_alive(Duration::from_secs(5));
                     mqttoptions.set_max_packet_size(1024 * 1024, 1024 * 1024); // 1MB

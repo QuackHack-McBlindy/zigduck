@@ -11,7 +11,7 @@ in {
   options.services.zigduck = {
     enable = mkEnableOption "Zigduck";
 
-    # zigduck-rs service options
+    # zigduck service options
     broker = mkOption {
       type = types.str;
       default = "127.0.0.1";

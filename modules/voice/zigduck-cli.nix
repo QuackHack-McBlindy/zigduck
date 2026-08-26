@@ -12,6 +12,7 @@ in {
 
   yo.scripts.zigduck-cli = {
     description = "Control smart home devices.";
+    binary = self.inputs.zigduck.packages.x86_64-linux.zigduck-cli + "/bin/zigduck-cli";    
     category = "Home Automation";
     logLevel = "INFO";
     parameters = [   
@@ -27,7 +28,7 @@ in {
       { name = "pair"; type = "bool"; description = "Activate zigbee2mqtt pairing and start searching for new devices"; default = false; }
     ];
     
-    binary = self.inputs.zigduck2mqttnix.packages.x86_64-linux.zigduck-cli + "/bin/zigduck-cli";    
+
     voice = {
       priority = 1;
       fuzzy = {

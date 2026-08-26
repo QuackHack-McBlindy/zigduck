@@ -1,13 +1,13 @@
 [package]
-name    = "zigduck-rs"
+name    = "zigduck"
 version = "0.2.2"
 edition = "2021"
 # ───────────────────────────────────────────────────────────────────────
 description = """
-  Zigduck2mqttnix is a completely declarative home automation system."""
+  zigduck is a completely declarative home automation system."""
 # ───────────────────────────────────────────────────────────────────────
 authors    = ["QuackHack-McBlindy"]
-repository = "https://github.com/QuackHack-McBlindy/zigduck2mqttnix"
+repository = "https://github.com/QuackHack-McBlindy/zigduck"
 license    = "MIT"
 readme     = "README.md"
 keywords   = [ ]
@@ -32,7 +32,7 @@ lazy_static = "1.4"
 
 
 [[bin]]
-name = "zigduck-rs"
+name = "zigduck"
 path = "src/main.rs"
 
 [[bin]]
