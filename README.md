@@ -973,6 +973,15 @@ for a full real configuration example, view:
 
 <br>
 
+
+## **More Protocols**  
+
+
+> If you’d like `zigduck` to support devices using other protocols, such as `Matter`, `Z-Wave`, or similar, please consider submitting a helpful PR with a suggested persistent device configuration. Please include enough information to provide a clear implementation strategy to keep `zigduck` fully reproducible. Thanks!  
+
+
+<br>
+
 ## **License**
 
 This project is licensed under the terms of the MIT license.  
