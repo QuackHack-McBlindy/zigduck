@@ -5,9 +5,36 @@
   pkgs,
   ...
 } : with lib;
-let
+let 
   zigbeeDevices = config.house.zigbee.devices;
   scenes = config.house.zigbee.scenes;
+  sceneNames = builtins.attrNames scenes;
+ 
+  englishNumbers = [
+    "zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine" "ten"
+    "eleven" "twelve" "thirteen" "fourteen" "fifteen" "sixteen" "seventeen" "eighteen" "nineteen"
+    "twenty" "twenty-one" "twenty-two" "twenty-three" "twenty-four" "twenty-five" "twenty-six" "twenty-seven" "twenty-eight" "twenty-nine"
+    "thirty" "thirty-one" "thirty-two" "thirty-three" "thirty-four" "thirty-five" "thirty-six" "thirty-seven" "thirty-eight" "thirty-nine"
+    "forty" "forty-one" "forty-two" "forty-three" "forty-four" "forty-five" "forty-six" "forty-seven" "forty-eight" "forty-nine"
+    "fifty" "fifty-one" "fifty-two" "fifty-three" "fifty-four" "fifty-five" "fifty-six" "fifty-seven" "fifty-eight" "fifty-nine"
+    "sixty" "sixty-one" "sixty-two" "sixty-three" "sixty-four" "sixty-five" "sixty-six" "sixty-seven" "sixty-eight" "sixty-nine"
+    "seventy" "seventy-one" "seventy-two" "seventy-three" "seventy-four" "seventy-five" "seventy-six" "seventy-seven" "seventy-eight" "seventy-nine"
+    "eighty" "eighty-one" "eighty-two" "eighty-three" "eighty-four" "eighty-five" "eighty-six" "eighty-seven" "eighty-eight" "eighty-nine"
+    "ninety" "ninety-one" "ninety-two" "ninety-three" "ninety-four" "ninety-five" "ninety-six" "ninety-seven" "ninety-eight" "ninety-nine"
+    "one hundred"
+  ];
+
+  englishNumber = n: builtins.elemAt englishNumbers n;
+  brightnessValues = builtins.map (n: toString n) (lib.range 0 100);
+
+  deviceNames = map (d: d.friendly_name) (lib.attrValues zigbeeDevices);
+  roomNames = if (builtins.hasAttr "rooms" config.house) then
+    builtins.attrNames config.house.rooms
+  else
+    lib.unique (map (d: d.room) (lib.attrValues zigbeeDevices));
+  
+
+
 in {
 
   yo.scripts.zigduck-cli = {
@@ -16,15 +43,17 @@ in {
     category = "Home Automation";
     logLevel = "INFO";
     parameters = [   
-      { name = "device"; description = "Device to control"; optional = true; }
+      { name = "device"; description = "Device to control"; optional = true; values = deviceNames; }
       { name = "state"; type = "string"; description = "State of the device or group"; } 
-      { name = "brightness"; description = "Brightness value (1-100)"; optional = true; type = "int"; }    
+      { name = "brightness"; description = "Brightness value (1-100)"; optional = true; type = "int"; values = brightnessValues; }
       { name = "color"; description = "Color name or hex code"; optional = true; }    
       { name = "temperature"; description = "Light color temperature (153-500)"; optional = true; }          
-      { name = "scene"; description = "Activate a predefined scene"; optional = true; }     
+      { name = "scene"; description = "Activate a predefined scene"; optional = true; values = sceneNames; }
       { name = "all-lights"; description = "Control all lights"; type = "bool"; optional = false; default = false; }        
-      { name = "room"; description = "Room to target"; optional = true; }
-      { name = "blinds"; description = "Control all blinds (up/down/open/close)"; optional = true; }      
+      { name = "room"; description = "Room to target"; optional = true; values = roomNames; }
+      { name = "blinds"; description = "Control all blinds (up/down/open/close)"; optional = true; }
+      { name = "get-temp"; description = "Fetch temperature in a room"; type = "bool"; optional = true; }
+      { name = "get-bat"; description = "Fetch battery status for a device"; type = "bool"; optional = true; }
       { name = "pair"; type = "bool"; description = "Activate zigbee2mqtt pairing and start searching for new devices"; default = false; }
     ];
     
@@ -57,6 +86,12 @@ in {
     "adjust {device} to {brightness} percent"
     "[all] (blind|blinds) {blinds}"
     "roll {blinds} [all] (blind|blinds|cover|covers)"
+    # fetch temperature 
+    "what is the {get-temp} in [the] {room}" 
+    "how {get-temp} is it in [the] {room}"
+    # fetch battery
+    "what is the {get-bat} [procent|procentage|level] on [the] {device}"
+    "how much {get-bat} [procent|procentage|level] [is] [left] on [the] {device}"    
   ];
 
   yo.scripts.zigduck-cli.voice.lists = {
@@ -65,12 +100,12 @@ in {
       { "in" = "off|deactivate"; out = "OFF"; }
     ];
 
-    brightness.range = {
-      type = "number";
-      from = 1;
-      to = 100;
-      multiplier = 1;
-    };
+    brightness.values = builtins.concatLists (builtins.genList (
+      i: let n = i + 1; in [
+        { "in" = toString n; out = toString n; }
+        { "in" = englishNumber n; out = toString n; }
+      ]
+    ) 100);
 
     device.values = let
       # sanitize device names for regex patterns
@@ -91,7 +126,7 @@ in {
     in
       # built-in generic phrases (no hardcoded room names)
       [
-        { "in" = "[all|everything|every light|all lights]"; out = "ALL_LIGHTS"; }
+        { "in" = "[all|everything|every light|all lights]"; out = "true"; }
       ]
       ++
       # dynamically generate device patterns from config
@@ -204,6 +239,13 @@ in {
 
       { "in" = "open"; out = "open"; }
       { "in" = "close"; out = "close"; }  
+    ];
+    get-temp.values = [
+      { "in" = "temp|temperature"; out = "true"; }
+      { "in" = "hot|cold"; out = "true"; }      
+    ];
+    get-bat.values = [
+      { "in" = "battery|battery-level|batteries"; out = "true"; }
     ];
 
   };}

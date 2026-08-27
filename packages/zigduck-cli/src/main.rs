@@ -206,6 +206,12 @@ struct Cli {
     #[arg(long, help = "Show a formatted device status table including state, battery, temperature")]
     status: bool,
 
+    #[arg(long, num_args = 0..=1, default_missing_value = "true", help = "Get temperature readings from devices in a room (requires --room)")]
+    get_temp: Option<String>,
+
+    #[arg(long, num_args = 0..=1, default_missing_value = "true", help = "Get battery level for a device (requires --device)")]
+    get_bat: Option<String>,
+
     #[arg(long, help = "Path to local state.json (overrides API fetch)", env = "ZIGDUCK_STATE_FILE")]
     state_file: Option<PathBuf>,
 
@@ -1364,7 +1370,115 @@ fn api_toggle_alarm(api_url: &str, password: &str, id: u64) -> Result<()> {
     Ok(())
 }
 
+fn fetch_and_print_room_temps(
+    api_url: Option<&str>,
+    api_password: &str,
+    state_file: Option<&Path>,
+    controller: &ZigduckController,
+    room: &str,
+    verbose: bool,
+) -> Result<()> {
+    let json_str = if let Some(path) = state_file {
+        fs::read_to_string(path).context("Failed to read state file")?
+    } else if let Some(base_url) = api_url {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/state", base_url.trim_end_matches('/'));
+        if verbose {
+            println!("Fetching state from API: {}", url);
+        }
+        let resp = client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", api_password))
+            .send()
+            .context("Failed to reach API")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("API returned {}", resp.status());
+        }
+        resp.text()?
+    } else { anyhow::bail!("No state source available (set --api-url or --state-file)"); };
 
+    let data: HashMap<String, serde_json::Value> =
+        serde_json::from_str(&json_str).context("Invalid state JSON")?;
+
+    let room_lower = room.to_lowercase();
+    let room_devices: Vec<&String> = controller
+        .devices
+        .iter()
+        .filter(|(_, cfg)| cfg.room.to_lowercase() == room_lower)
+        .map(|(name, _)| name)
+        .collect();
+
+    if room_devices.is_empty() {
+        println!("No devices configured in room '{}'", room);
+        return Ok(());
+    }
+
+    println!("Temperature in {}:", room.bold());
+    let mut found = false;
+    for device_name in room_devices {
+        if let Some(props) = data.get(device_name) {
+            if let Some(temp_val) = props.get("temperature") {
+                let temp = temp_val
+                    .as_f64()
+                    .or_else(|| temp_val.as_str().and_then(|s| s.parse().ok()));
+                if let Some(t) = temp {
+                    println!("  {}: {:.2}°C", device_name.bold(), t);
+                    found = true;
+                }
+            }
+        }
+    }
+    if !found { println!("  No temperature data available."); }
+
+    Ok(())
+}
+
+fn fetch_and_print_device_battery(
+    api_url: Option<&str>,
+    api_password: &str,
+    state_file: Option<&Path>,
+    controller: &ZigduckController,
+    device_name: &str,
+    verbose: bool,
+) -> Result<()> {
+    let json_str = if let Some(path) = state_file {
+        fs::read_to_string(path).context("Failed to read state file")?
+    } else if let Some(base_url) = api_url {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/state", base_url.trim_end_matches('/'));
+        if verbose { println!("Fetching state from API: {}", url); }
+        let resp = client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", api_password))
+            .send()
+            .context("Failed to reach API")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("API returned {}", resp.status());
+        }
+        resp.text()?
+    } else { anyhow::bail!("No state source available (set --api-url or --state-file)"); };
+
+    let data: HashMap<String, serde_json::Value> =
+        serde_json::from_str(&json_str).context("Invalid state JSON")?;
+
+    let props = data
+        .get(device_name)
+        .with_context(|| format!("Device '{}' not found in state", device_name))?;
+
+    if let Some(battery_val) = props.get("battery") {
+        let battery = battery_val
+            .as_f64()
+            .or_else(|| battery_val.as_str().and_then(|s| s.parse().ok()));
+
+        if let Some(b) = battery {
+            println!("{}: {:.0}%", device_name.bold(), b);
+            return Ok(());
+        }
+    }
+
+    println!("{} {}: No battery data available", "🪫".yellow(), device_name.bold());
+    Ok(())
+}
 
 fn fetch_and_print_status_table(
     api_url: Option<&str>,
@@ -1599,7 +1713,45 @@ fn main() -> Result<()> {
         base_topic.clone(),
     )?;
 
+    if let Some(val) = cli.get_temp.clone() {
+        let enabled = match val.to_lowercase().as_str() {
+           "false" | "0" | "no" | "off" => false,
+            _ => true,
+        };
+        if enabled {
+            let room = cli.room.clone().context("--room is required with --get-temp")?;
+            fetch_and_print_room_temps(
+                Some(&api_url),
+                &api_password,
+                cli.state_file.as_deref(),
+                &controller,
+                &room,
+                cli.verbose > 0,
+            )?;
+            return Ok(());
+        }
+    }
+  
     
+    if let Some(val) = cli.get_bat.clone() {
+        let enabled = match val.to_lowercase().as_str() {
+            "false" | "0" | "no" | "off" => false,
+            _ => true,
+        };
+        if enabled {
+            let device_name = cli.device.clone().context("--device is required with --get-bat")?;
+            fetch_and_print_device_battery(
+                Some(&api_url),
+                &api_password,
+                cli.state_file.as_deref(),
+                &controller,
+                &device_name,
+                cli.verbose > 0,
+            )?;
+            return Ok(());
+        }
+    }
+      
     if let Some(cmd) = cli.command {
         match cmd {
             Commands::Timer { action } => match action {
