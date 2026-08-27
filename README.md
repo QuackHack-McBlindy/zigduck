@@ -6,7 +6,12 @@
 
 <a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/logo.png">
   <img src="images/logo.png" alt="Logo" width="330">
-</a> 
+</a>
+
+![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
+![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
+![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.7.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
+
 
 <br>
 
@@ -1067,3 +1072,4 @@ This project is licensed under the terms of the MIT license.
 See the `LICENSE` file in the repository for full details.
 
 Contributions are welcomed.
+
