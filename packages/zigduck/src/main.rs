@@ -66,6 +66,7 @@ struct DimmerActions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DarkTimeConfig {
     enabled: bool,
+    transition: bool,
     after: u32,
     before: u32,
     duration: u64,
@@ -187,6 +188,8 @@ struct DashboardConfig {
 struct GreetingAutomation {
     enable: bool,
     away_duration: u64,
+    door: String,
+    message: String,
     delay: u64,
     actions: Vec<AutomationAction>,
 }
@@ -606,9 +609,10 @@ impl ZigduckState {
     }
 
     async fn start_periodic_checks(&self) {
+        let no_motion_interval_secs = std::cmp::max(self.config.no_motion.after * 60, 30);
         let state = self.clone();
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_secs(60));
+            let mut interval = tokio::time::interval(Duration::from_secs(no_motion_interval_secs));
             loop {
                 interval.tick().await;
                 state.check_no_motion_global().await;
@@ -1527,9 +1531,41 @@ impl ZigduckState {
         }
         Ok(())
     }
+        
+    async fn room_lights_off_with_transition(&self, room: &str, transition_secs: u64) -> Result<(), Box<dyn std::error::Error>> {
+        for (device_id, device) in &self.devices {
+            if device.room != room {
+                continue;
+            }
     
-
-
+            match device.device_type.as_str() {
+                "light" => {
+                    let message = json!({
+                        "state": "OFF",
+                        "transition": transition_secs
+                    });
+                    let topic = format!("{}/{}/set", self.mqtt_base_topic, device_id);
+                    if let Err(e) = self.mqtt_publish(&topic, &message.to_string()).await {
+                        dt_warning!("Failed to turn off {} with transition: {}", device_id, e);
+                    }
+                }
+                "hue_light" => {
+                    if let (Some(hue_id), Some(hue_client)) = (device.hue_id, &self.hue_client) {
+                        let payload = json!({
+                            "on": false,
+                            "transitiontime": transition_secs * 10
+                        });
+                        if let Err(e) = hue_client.set_light_state(hue_id, payload).await {
+                            dt_warning!("Failed to turn off Hue light {} with transition: {}", device_id, e);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+    
     // 🦆 says ⮞ check if dark (static time configured)
     fn is_dark_time(&self) -> bool {
         // 🦆 says ⮞ if dark time is disabled, it's always dark
@@ -1991,23 +2027,37 @@ impl ZigduckState {
                 } else {
                     dt_debug!("🛑 No more motion in {} {}", device_name, room);
                     self.execute_automations("motion", "motion_not_detected", device_name, &room).await?;
-
+                
                     if self.is_motion_triggered(&room) {
-                        dt_debug!("⏰ Motion stopped in {}, will turn off lights in {}s", room, self.config.dark_time.duration);
-                        let room_clone = room.clone();
-                        let state_clone = std::sync::Arc::new(self.clone());
-                        let duration = self.config.dark_time.duration;
-                        let timer_handle = tokio::spawn(async move {
-                            tokio::time::sleep(Duration::from_secs(duration)).await;
-                            if state_clone.is_motion_triggered(&room_clone) {
-                                dt_debug!("💡 Turning off motion-triggered lights in {}", room_clone);
-                                let _ = state_clone.room_lights_off(&room_clone).await;
-                                let _ = state_clone.set_motion_triggered(&room_clone, false);
+                        // 🦆 says ⮞ if transition is enabled, fade out over duration instead of waiting
+                        if self.config.dark_time.transition {
+                            if let Some(timer) = self.motion_timers.remove(&room) {
+                                timer.abort();
                             }
-                        });
-                        self.motion_timers.insert(room.clone(), timer_handle);
+                            let transition_secs = self.config.dark_time.duration;
+                            dt_debug!("💡 Motion stopped in {}, fading lights off over {}s", room, transition_secs);
+                
+                            if let Err(e) = self.room_lights_off_with_transition(&room, transition_secs).await {
+                                dt_warning!("Failed to turn off lights with transition in {}: {}", room, e);
+                            }
+                            let _ = self.set_motion_triggered(&room, false);
+                        } else {
+                            dt_debug!("⏰ Motion stopped in {}, will turn off lights in {}s", room, self.config.dark_time.duration);
+                            let room_clone = room.clone();
+                            let state_clone = std::sync::Arc::new(self.clone());
+                            let duration = self.config.dark_time.duration;
+                            let timer_handle = tokio::spawn(async move {
+                                tokio::time::sleep(Duration::from_secs(duration)).await;
+                                if state_clone.is_motion_triggered(&room_clone) {
+                                    dt_debug!("💡 Turning off motion-triggered lights in {}", room_clone);
+                                    let _ = state_clone.room_lights_off(&room_clone).await;
+                                    let _ = state_clone.set_motion_triggered(&room_clone, false);
+                                }
+                            });
+                            self.motion_timers.insert(room.clone(), timer_handle);
+                        }
                     }
-                }
+                }      
             }
 
             // 🦆 says ⮞ 💧 WATER SENSORS
@@ -2017,38 +2067,37 @@ impl ZigduckState {
             }
 
             // 🦆 says ⮞ DOOR / WINDOW SENSOR
-            let current_time = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
-
-            let last_motion_str = self
-                .get_state("apartment", "last_motion")
-                .unwrap_or_else(|| "0".to_string());
-
-            let last_motion: u64 = last_motion_str.parse().unwrap_or(0);
-
-            let time_diff = current_time.saturating_sub(last_motion);
-
             if let Some(greeting) = &self.automations.greeting {
-                if greeting.enable && time_diff > greeting.away_duration {
-                    dt_info!("Welcoming you home! (no motion for {} seconds)", greeting.away_duration);
-
-                    let greeting = greeting.clone();
-                    let state = self.clone();
-
-                    tokio::spawn(async move {
-                        tokio::time::sleep(Duration::from_secs(greeting.delay)).await;
-
-                        for action in &greeting.actions {
-                            if let Err(e) = state.execute_automation_action(action, "greeting", "global").await {
-                                dt_debug!("Error executing greeting action: {}", e);
-                            }
+                if greeting.enable {
+                    if device_name == greeting.door {
+                        let is_open = data.get(&greeting.message).and_then(|v| v.as_bool()).map(|b| !b).unwrap_or(false);
+                        if is_open {
+                            let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                            let last_motion_str = self.get_state("apartment", "last_motion").unwrap_or_else(|| "0".to_string());
+                            let last_motion: u64 = last_motion_str.parse().unwrap_or(0);
+                            let time_diff = current_time.saturating_sub(last_motion);
+            
+                            if time_diff > greeting.away_duration {
+                                dt_info!("🚪 Door '{}' opened. Welcome home!", greeting.door);
+                                let greeting = greeting.clone();
+                                let state = self.clone();
+                                tokio::spawn(async move {
+                                    tokio::time::sleep(Duration::from_secs(greeting.delay)).await;
+                                    for action in &greeting.actions {
+                                        if let Err(e) = state
+                                            .execute_automation_action(action, "greeting", "global")
+                                            .await
+                                        {
+                                            dt_error!("Error executing greeting action: {}", e);
+                                        }
+                                    }
+                                });
+                            } else { dt_debug!("🛑 Door opened but only {} seconds since last motion, not greeting.", time_diff); }
                         }
-                    });
+                    }
                 }
-            } else { dt_debug!("🛑 NOT WELCOMING: only {} minutes since last motion", time_diff / 60); }
-
+            }
+            
             // 🦆 says ⮞ BLINDz
             if let Some(position) = data["position"].as_u64() {
                 if device_type == "blind" {

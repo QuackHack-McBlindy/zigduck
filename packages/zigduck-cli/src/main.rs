@@ -33,6 +33,7 @@ struct CliConfig {
 #[derive(Debug, Deserialize, Clone)]
 struct ApiConfig {
     url: Option<String>,
+    url_file: Option<String>,
     password_file: Option<String>,
 }
 
@@ -1644,9 +1645,19 @@ fn main() -> Result<()> {
     let api_url = if let Some(url) = cli.api_url.clone() {
         url
     } else if let Some(cfg) = &config {
-        cfg.api.as_ref()
-            .and_then(|a| a.url.clone())
-            .unwrap_or_else(|| "http://192.168.1.211:13335".to_string())
+        if let Some(api_cfg) = &cfg.api {
+            if let Some(url_file) = &api_cfg.url_file {
+                match fs::read_to_string(url_file) {
+                    Ok(s) => s.trim().to_string(),
+                    Err(e) => {
+                        eprintln!("Warning: failed to read API URL file '{}': {}", url_file, e);
+                        api_cfg.url.clone().unwrap_or_else(|| "http://192.168.1.211:13335".to_string())
+                    }
+                }
+            } else if let Some(url) = &api_cfg.url {
+                url.clone()
+            } else { "http://192.168.1.211:13335".to_string() }
+        } else { "http://192.168.1.211:13335".to_string() }
     } else { "http://192.168.1.211:13335".to_string() };
 
     let api_password = if let Some(pw) = cli.api_password.clone() {
@@ -1654,14 +1665,8 @@ fn main() -> Result<()> {
     } else if let Some(pf) = &cli.api_password_file {
         fs::read_to_string(pf)?.trim().to_string()
     } else if let Some(cfg) = &config {
-        cfg.api.as_ref()
-            .and_then(|a| a.password_file.as_ref())
-            .and_then(|pf| fs::read_to_string(pf).ok())
-            .map(|s| s.trim().to_string())
-            .unwrap_or_default()
-    } else {
-        String::new()
-    };
+        cfg.api.as_ref().and_then(|a| a.password_file.as_ref()).and_then(|pf| fs::read_to_string(pf).ok()).map(|s| s.trim().to_string()).unwrap_or_default()
+    } else { String::new() };
 
     if cli.devices_config.is_none() && !std::env::var("DEVICES_CONFIG").is_ok() {
         let default_devices = PathBuf::from("/etc/zigduck/devices.json");
@@ -1852,7 +1857,7 @@ fn main() -> Result<()> {
 
 
     if let Some(device_name) = cli.device {
-        let state_str = cli.state.as_deref().context("--state is required for device")?;
+        let state_str = cli.state.as_deref().unwrap_or("on");
         let mut brightness = cli.brightness;
         let mut color = cli.color;
         let state = parse_state(state_str, &mut brightness, &mut color)?;
@@ -1872,7 +1877,7 @@ fn main() -> Result<()> {
         )?;
         Ok(())
     } else if let Some(room_name) = cli.room {
-        let state_str = cli.state.as_deref().context("--state is required for room")?;
+        let state_str = cli.state.as_deref().unwrap_or("on");
         let mut brightness = cli.brightness;
         let mut color = cli.color;
         let state = parse_state(state_str, &mut brightness, &mut color)?;
@@ -1891,7 +1896,7 @@ fn main() -> Result<()> {
         let duration = pair_arg.unwrap_or(120);
         controller.enter_pairing_mode(duration, cli.watch)
     } else if all_lights_enabled(&cli.all_lights) {
-        let state_str = cli.state.as_deref().context("--state is required for all-lights")?;
+        let state_str = cli.state.as_deref().unwrap_or("on");
         let mut brightness = cli.brightness;
         let mut color = cli.color;
         let state = parse_state(state_str, &mut brightness, &mut color)?;

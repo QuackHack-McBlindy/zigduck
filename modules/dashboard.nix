@@ -2117,7 +2117,7 @@ let
       tv_defaults_file = "/etc/zigduck/tv-defaults.json";
       media_root = house.media.root;
       playlist_file = house.media.root + "/playlist.m3u";
-      webserver_secret_file = if house.https.urlFile != null then house.https.urlFile else "";
+      webserver_secret_file = if house.https.media.urlFile != null then house.https.media.urlFile else "";
       default_tv_ip = house.tv.${defaultTVName}.ip;
     });
 

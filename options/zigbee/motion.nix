@@ -38,6 +38,11 @@ in {
                       default = 900;
                       description = "Seconds to keep lights on after motion";
                     };
+                    transition = lib.mkOption {
+                      type = lib.types.bool;
+                      default = false;
+                      description = "Wether to fade out the lights for the configured duration, instead of waiting for it.";
+                    };
                   };
                 };
                 default = {};

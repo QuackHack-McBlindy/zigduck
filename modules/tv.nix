@@ -49,8 +49,11 @@ let
       device_ip = config.house.tv.${defaultTVName}.ip;
       inherit rooms directories;
       tvs = tvEntries;
-      webserver_file = if house.https.urlFile != null
-                       then house.https.urlFile
+      webserver_url = if house.https.media.url != null
+                      then house.https.media.url
+                      else null;
+      webserver_file = if house.https.media.urlFile != null
+                       then house.https.media.urlFile
                        else null;
       playlist_file  = house.media.playlistFile;
       favourites_file  = house.media.favouritesFile;

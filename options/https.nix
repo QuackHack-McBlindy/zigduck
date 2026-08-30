@@ -10,28 +10,92 @@ in {
   options.house.https = mkOption {
     type = types.submodule {
       options = {
-        urlFile = mkOption {
-          type = types.nullOr types.path;
-          default = null;
-          example = "/run/secrets/url";
-          description = ''
-            Path to a file containing the public HTTPS URL used to access the
-            media library.
+        dashboard = mkOption {
+          type = types.submodule {
+            options = {
+              url = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                example = "https://dashboard.my-domain.org";
+                description = ''
+                  Public HTTPS URL used to access the dashboard.
+                  This url is used for a secure API connection.
 
-            The URL must use HTTPS and should point to the web server that serves
-            `house.media.root`. For example:
+                  Domain does not need to be publicly accessable, as long as the certificate is valid. 
+                  
+                  You need a domain name with a valid TLS certificate. 
+                  A free dynamic DNS provider such as DuckDNS can be used if you do not already have a domain.
+                '';
+              };
 
-              https://media.my-domain.org
+              urlFile = mkOption {
+                type = types.nullOr types.path;
+                default = null;
+                example = "/run/secrets/dashboard-url";
+                description = ''
+                  Path to a file containing the public HTTPS URL used to
+                  access the dashboard.
+                  This url is used for a secure API connection.
 
-            This is required by some media clients, such as Android TV, when
-            accessing external `.m3u` playlists.
+                  Domain does not need to be publicly accessable, as long as the certificate is valid. 
+                  
+                  You need a domain name with a valid TLS certificate. 
+                  A free dynamic DNS provider such as DuckDNS can be used if you do not already have a domain.
+                '';
+              };
+            };
+          };
+          default = {};
+          description = "HTTPS configuration for the dashboard.";
+        };
 
-            Domain does not need to be publicly accessable, as long as the certificate is valid.
+        media = mkOption {
+          type = types.submodule {
+            options = {
+              url = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                example = "https://media.my-domain.org";
+                description = ''
+                  Public HTTPS URL used to access the media library.
 
-            You need a domain name with a valid TLS certificate. A free dynamic
-            DNS provider such as DuckDNS can be used if you do not already have
-            a domain.
-          '';
+                  The URL must use HTTPS and should point to the web server
+                  that serves `house.media.root`.
+
+                  This is required by some media clients, such as Android TV,
+                  when accessing external `.m3u` playlists.
+                  
+                  Domain does not need to be publicly accessable, as long as the certificate is valid. 
+                  
+                  You need a domain name with a valid TLS certificate. 
+                  A free dynamic DNS provider such as DuckDNS can be used if you do not already have a domain.
+                '';
+              };
+
+              urlFile = mkOption {
+                type = types.nullOr types.path;
+                default = null;
+                example = "/run/secrets/media-url";
+                description = ''
+                  Path to a file containing the public HTTPS URL used to
+                  access the media library.
+
+                  The URL must use HTTPS and should point to the web server
+                  that serves `house.media.root`.
+
+                  This is required by some media clients, such as Android TV,
+                  when accessing external `.m3u` playlists.
+                  
+                  Domain does not need to be publicly accessable, as long as the certificate is valid. 
+                  
+                  You need a domain name with a valid TLS certificate. 
+                  A free dynamic DNS provider such as DuckDNS can be used if you do not already have a domain.
+                '';
+              };
+            };
+          };
+          default = {};
+          description = "HTTPS configuration for the media library.";
         };
       };
     };

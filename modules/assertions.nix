@@ -176,8 +176,8 @@
     let
       enabledTVs = filterAttrs (_: tv: tv.enable or false) (config.house.tv or {});
     in {
-      assertion = enabledTVs == {} || (config.house.https.urlFile or null) != null;
-      message = "🦆 duck say ⮞ fuck ❌ TVs are enabled but `house.https.urlFile` is not set. The TV controller requires a webserver URL file for media playback. Set `house.https.urlFile` to a file containing the base URL of your HTTPS media server.";
+      assertion = enabledTVs == {} || (config.house.https.media.url != null || config.house.https.media.urlFile != null);
+      message = "🦆 duck say ⮞ fuck ❌ TVs are enabled but neither `house.https.media.url` nor `house.https.media.urlFile` is set. The TV controller requires a webserver URL (or URL file) for media playback. Set one of these options.";
     };
 
   noMotionConfig = config.house.zigbee.no.motion or {};
@@ -202,8 +202,29 @@
         message = "🦆 duck say ⮞ fuck ❌ No-motion timeout (${toString noMotionAfter} min × 60 = ${toString (noMotionAfter * 60)}) must be greater than motion trigger lights duration (${toString motionDuration})";
       };
 
-in
-{
+  validateGreetingDoor =
+    let
+      greeting = config.house.zigbee.automations.greeting or {};
+      enable = greeting.enable or false;
+      door = greeting.door or "";
+    in
+      optional enable {
+        assertion = door != "" && deviceExistsByFriendlyName door;
+        message = "🦆 duck say ⮞ fuck ❌ Greeting automation references non-existent door sensor '${door}'";
+      };
+
+  dashboardUrlExclusive = {
+    assertion = !(config.house.https.dashboard.url != null && config.house.https.dashboard.urlFile != null);
+    message = "🦆 duck say ⮞ fuck ❌ `house.https.dashboard.url` and `house.https.dashboard.urlFile` cannot both be set. Choose one.";
+  };
+
+  mediaUrlExclusive = {
+    assertion = !(config.house.https.media.url != null && config.house.https.media.urlFile != null);
+    message = "🦆 duck say ⮞ fuck ❌ `house.https.media.url` and `house.https.media.urlFile` cannot both be set. Choose one.";
+  };
+
+in {
+
   config.assertions =
     sceneValidations
     ++ deviceValidations
@@ -215,5 +236,7 @@ in
     ++ [ tvWebserverValidation ]
     ++ excludedDevicesExistValidation
     ++ noMotionTimeoutComparison
-    ++ tvDefaultValidation;
+    ++ validateGreetingDoor
+    ++ tvDefaultValidation
+    ++ [ dashboardUrlExclusive mediaUrlExclusive ];
 }

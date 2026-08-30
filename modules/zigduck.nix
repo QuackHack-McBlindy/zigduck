@@ -87,6 +87,7 @@ let
     };
     dark_time = {
       enabled = house.zigbee.motion.when.dark.enable;
+      transition = house.zigbee.motion.trigger.lights.transition;
       after = house.zigbee.motion.trigger.lights.after;
       before = house.zigbee.motion.trigger.lights.before;
       duration = house.zigbee.motion.trigger.lights.duration;
@@ -105,8 +106,23 @@ let
       };
       double_click_timeout_ms = house.zigbee.dimmer.doubleClickTimeout;
     };
-    api = {
-      url = "http://${house.zigbee.mosquitto.host}:${toString cfg.dashboard.port}";
+    api = let
+      httpsUrlFile = if cfg.dashboard.secure then
+        if house.https.dashboard.urlFile != null then
+          house.https.dashboard.urlFile
+        else if house.https.dashboard.url != null then
+          null
+        else
+          throw "dashboard.secure is enabled but no HTTPS URL provided. Set `house.https.dashboard.url` or `house.https.dashboard.urlFile`."
+      else null;
+      httpsUrl = if cfg.dashboard.secure && house.https.dashboard.url != null && house.https.dashboard.urlFile == null
+                 then house.https.dashboard.url
+                 else null;
+    in {
+      url_file = if httpsUrlFile != null then httpsUrlFile else null;
+      url = if httpsUrlFile == null && httpsUrl != null then httpsUrl
+            else if !cfg.dashboard.secure then "http://${house.zigbee.mosquitto.host}:${toString cfg.dashboard.port}"
+            else null;
       password_file = cfg.dashboard.passwordFile;
     };
     motion = {    
