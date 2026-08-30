@@ -11,7 +11,7 @@
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
 ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.7.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
-
+![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
 
 <br>
 
@@ -303,7 +303,8 @@ Define a dimmer, or motion sensor and those devices would default to control it'
           # time window in which motion trigger lights on
           after = 14;
           before = 9;
-          duration = 900; # turn off lights again after x seconds of no motion
+          duration = 900;     # turn off lights again after x seconds of no motion
+          transition = false; # enable to fade off the lights
         };  
       };
             
@@ -378,9 +379,10 @@ To customize these actions, configure the automation type `house.zigbee.automati
       automations = {  
         # + a greeting automation
         greeting = {
-          enable = true;
-          awayDuration = 7200; # only trigger if nobody home for x seconds
-          delay = 10; # wait x seconds before action is performed
+          enable       = true;
+          awayDuration = 7200;                  # only trigger if nobody home for x seconds
+          door         = "Door Sensor Hallway"; # when this door opens
+          delay        = 10;                    # wait x seconds before action is performed
           actions = [ 
             {
               type = "shell";
@@ -546,9 +548,11 @@ To customize these actions, configure the automation type `house.zigbee.automati
   house = {
     # Android TV requires a `https` domain (TLS) to be able to play external .m3u files 
     
-    # path to a file containing user's HTTPS URL.
-    # example file contents: ```https://media.my-domain.org```
-    https.urlFile = config.sops.secrets.webserver.path;
+    https.media.url = "https://my-media-domain.org";
+    
+    # or if you want to keep your url outside of Git 
+    # example file contents: ```https://my-media-domain.org```
+    # https.media.urlFile = config.sops.secrets.webserver.path;
 
     # root directory for the media library.
     # the URL above should point to this directory as a file server.

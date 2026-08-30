@@ -103,13 +103,14 @@ struct Args {
 }
 
 
-// configuration
+
 #[derive(Deserialize)]
 struct Config {
     device_ip: String,
     rooms: HashMap<String, String>,
     tvs: HashMap<String, TvConfig>,
     directories: HashMap<String, String>,
+    webserver_url: Option<String>,    
     webserver_file: Option<String>,
     playlist_file: String,
     max_items: usize,
@@ -143,6 +144,10 @@ struct TvConfig {
 
 impl Config {
     fn webserver(&self) -> Option<String> {
+        if let Some(url) = &self.webserver_url {
+            return Some(url.trim().to_string());
+        }
+
         let path = self.webserver_file.as_ref()?;
         let path = std::path::Path::new(path);
         let url = std::fs::read_to_string(path)
@@ -187,7 +192,6 @@ fn resolve_tv<'a>(args: &Args, config: &'a Config) -> &'a TvConfig {
 }
 
 
-// adb helpers
 fn adb(ip: &str, cmd: &[&str]) -> std::process::Output {
     let mut args = vec!["-s", ip];
     args.extend(cmd);
@@ -750,14 +754,14 @@ fn main() {
             return;
         }
         "play_playlist" => {
-            let url = webserver_url.as_ref().expect("Webserver URL is required. Set `config.house.https.urlFile` in configuration.nix");
+            let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
             let playlist_url = format!("{}/{}", url, playlist_rel);
             play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
             return;
         }
         "favourites" | "starred" => {
             let url = webserver_url.as_ref()
-                .expect("Webserver URL is required. Set `config.house.https.urlFile` in configuration.nix");
+                .expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
             let playlist_url = format!("{}/{}", url, favourites_rel);
             play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
             return;
@@ -833,7 +837,7 @@ fn main() {
 
     // jukebox: all music shuffled
     if typ == "jukebox" {
-        let url = webserver_url.as_ref().expect("Webserver URL is required. Set `config.house.https.urlFile` in configuration.nix");
+        let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         let music_dir = config.directories.get("music").expect("music dir missing");
         let path = Path::new(music_dir);
         generate_folder_playlist(
@@ -899,7 +903,7 @@ fn main() {
             }
         }
 
-        let url = webserver_url.as_ref().expect("Webserver URL is required. Set `config.house.https.urlFile` in configuration.nix");
+        let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         generate_folder_playlist(
             &target_path,
             &base,
@@ -932,7 +936,7 @@ fn main() {
             return;
         }
         let files: Vec<PathBuf> = matches.into_iter().map(|(_, p)| p).collect();
-        let url = webserver_url.as_ref().expect("Webserver URL is required. Set `config.house.https.urlFile` in configuration.nix");
+        let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         make_playlist_from_files(
             &files,
             base_path,

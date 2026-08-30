@@ -257,6 +257,17 @@ in {
                 default = 7200;
                 description = "Time in seconds to be considered away from home (default 7200)";
               };
+              door = mkOption {
+                type = types.str;
+                default = null;
+                description = "Device friendly name of the door sensor. Required if enable is true.";
+                example = "door sensor hallway";
+              };
+              message = mkOption {
+                type = types.str;
+                default = "contact";
+                description = "MQTT field name that should turn false (open).";
+              };
               delay = mkOption {
                 type = types.int;
                 default = 10;
