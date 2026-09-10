@@ -2463,4 +2463,53 @@ input[type="range"].brightness-active {
   animation: quack 2s infinite ease-in-out reverse;
 }
 
+.media-browser {
+    background: rgba(0,0,0,0.5);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px 0;
+}
+.media-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.back-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.breadcrumbs {
+    color: #ccc;
+    cursor: pointer;
+}
+.media-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.media-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.media-item:hover {
+    background: rgba(255,255,255,0.15);
+}
+.media-item.directory i { color: #fbbf24; }
+.media-item.file i { color: #93c5fd; }
+.empty-media {
+    color: #888;
+    text-align: center;
+    padding: 30px;
+}
 

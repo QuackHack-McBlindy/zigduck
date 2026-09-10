@@ -9,14 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-
 ### Changed
-
 
 ### Fixed
 
 
 ### Removed
+
+
+## [0.2.3] - 10-10-2026
+
+### Added
+- If `house.media.root` is defined an extra media tab is added to the dashboard.  
+
+### Changed
+- Alarms are now removed and toggled using time instead of id.  
+- To avoid mixed content issues, the dashboard is now communicating entirely via API calls instead of MQTT.
+
+### Fixed
+
+
+### Removed
+- MQTT dashboard client script and connection logic.
+
 
 ## [0.2.2] - 08-30-2026
 

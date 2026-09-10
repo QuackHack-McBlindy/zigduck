@@ -96,12 +96,16 @@ enum AlarmAction {
         payload: Option<String>,
     },
     Remove {
-        #[arg(long)]
-        id: u64,
+        #[arg(long, help = "Alarm time as HH:MM (e.g., 11:42)")]
+        time: String,
+        #[arg(long, help = "Optional comma-separated days (0=Sunday, 6=Saturday)")]
+        days: Option<String>,
     },
     Toggle {
-        #[arg(long)]
-        id: u64,
+        #[arg(long, help = "Alarm time as HH:MM (e.g., 11:42)")]
+        time: String,
+        #[arg(long, help = "Optional comma-separated days (0=Sunday, 6=Saturday)")]
+        days: Option<String>,
     },
 }
 
@@ -1339,11 +1343,17 @@ fn api_add_alarm(
     Ok(())
 }
 
-fn api_remove_alarm(api_url: &str, password: &str, id: u64) -> Result<()> {
+fn api_remove_alarm(api_url: &str, password: &str, time: &str, days: Option<&str>) -> Result<()> {
     let client = HttpClient::new();
+    let mut params = vec![("time", time.to_string())];
+    if let Some(d) = days {
+        if !d.is_empty() {
+            params.push(("days", d.to_string()));
+        }
+    }
     let resp = client
         .post(format!("{}/alarms/remove", api_url))
-        .query(&[("id", id.to_string())])
+        .query(&params)
         .header("Authorization", format!("Bearer {}", password))
         .send()
         .context("Failed to reach API")?;
@@ -1355,11 +1365,17 @@ fn api_remove_alarm(api_url: &str, password: &str, id: u64) -> Result<()> {
     Ok(())
 }
 
-fn api_toggle_alarm(api_url: &str, password: &str, id: u64) -> Result<()> {
+fn api_toggle_alarm(api_url: &str, password: &str, time: &str, days: Option<&str>) -> Result<()> {
     let client = HttpClient::new();
+    let mut params = vec![("time", time.to_string())];
+    if let Some(d) = days {
+        if !d.is_empty() {
+            params.push(("days", d.to_string()));
+        }
+    }
     let resp = client
         .post(format!("{}/alarms/toggle", api_url))
-        .query(&[("id", id.to_string())])
+        .query(&params)
         .header("Authorization", format!("Bearer {}", password))
         .send()
         .context("Failed to reach API")?;
@@ -1792,8 +1808,8 @@ fn main() -> Result<()> {
                         &payload,
                     )?;
                 }
-                AlarmAction::Remove { id } => api_remove_alarm(&api_url, &api_password, id)?,
-                AlarmAction::Toggle { id } => api_toggle_alarm(&api_url, &api_password, id)?,
+                AlarmAction::Remove { time, days } => { api_remove_alarm(&api_url, &api_password, &time, days.as_deref())?; }
+                AlarmAction::Toggle { time, days } => { api_toggle_alarm(&api_url, &api_password, &time, days.as_deref())?; }
             },
             Commands::Snapshot { action } => {
                 match action {
