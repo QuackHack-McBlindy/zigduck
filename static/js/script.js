@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  function getRoomElement(roomName) {
+    return document.querySelector(`.room[data-room-name="${roomName.replace(/"/g, '\\"')}"]`);
+  }
+
   window.statusCardsConfig = {};
   window.enabledCards = [];
   
@@ -301,7 +305,8 @@
     const roomEl = document.getElementById('room-' + roomId);
     const iconClass = roomEl.querySelector('.room-icon').className.match(/mdi-([^ ]+)/)[1];
     document.getElementById('panelRoomIcon').className = 'mdi mdi-' + iconClass + ' panel-room-icon';
-    populateRoomDevices(roomId);
+    //populateRoomDevices(roomId);
+    populateRoomDevices(roomId, roomName);
     document.getElementById('devicesSlidePanel').classList.add('open');
     document.getElementById('panelBackdrop').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -317,10 +322,10 @@
     playPanelCloseSound();
   }
 
-  function populateRoomDevices(roomId) {
+  function populateRoomDevices(roomId, roomName) { 
     const container = document.getElementById('panelDevicesContainer');
     container.innerHTML = '';
-    const mappings = window.roomDeviceMappings[roomId] || [];
+    const mappings = window.roomDeviceMappings[roomName] || [];
     if (!mappings.length) {
       container.innerHTML = '<div class="no-devices-message"><i class="fas fa-lightbulb" style="font-size:4rem;opacity:0.3;"></i><p>No devices in this room</p></div>';
       return;
@@ -334,7 +339,8 @@
       const color = dev.color?.hex || '#ffffff';
       const temp = dev.color_temp || 153;
       const isOn = dev.state === 'ON';
-      const brightness = dev.brightness || 100;
+      let brightness = dev.brightness || 100;
+      if (brightness > 100) brightness = Math.round((brightness / 254) * 100);
       let icon = dev.icon || 'mdi:lightbulb';
       let iconClass = icon.startsWith('mdi:') ? 'mdi mdi-' + icon.substring(4) : (icon.startsWith('fas ') ? icon : 'fas fa-lightbulb');
 
@@ -455,7 +461,7 @@
     console.log('🦆 Updating room stats...');
     if (!window.roomDeviceMappings || !window.devices) return;
     Object.entries(window.roomDeviceMappings).forEach(([room, mappings]) => {
-      const el = document.getElementById('room-' + room);
+      const el = getRoomElement(room);
       if (!el) return;
       let onCount = 0, totalBri = 0, count = 0;
       mappings.forEach(info => {
@@ -493,7 +499,7 @@
 
   function syncRoomStatesAfterLoad() {
     document.querySelectorAll('.room').forEach(roomEl => {
-      const room = roomEl.getAttribute('data-room');
+      const room = roomEl.getAttribute('data-room-name');
       const devices = Array.from(roomEl.querySelectorAll('.device'));
       let anyOn = false;
       devices.forEach(d => {
@@ -735,7 +741,7 @@
   }
 
   function updateRoomHeaderState(roomName) {
-    const roomEl = document.getElementById('room-' + roomName);
+    const roomEl = getRoomElement(roomName);
     if (!roomEl) return;
     const ids = window.roomDevices[roomName] || [];
     const anyOn = ids.some(id => window.devices[id]?.state === 'ON');
@@ -754,7 +760,7 @@
     if (!window.roomDevices || !window.devices) return;
     Object.entries(window.roomDevices).forEach(([room, ids]) => {
       const anyOn = ids.some(id => window.devices[id]?.state === 'ON');
-      const roomEl = document.getElementById('room-' + room);
+      const roomEl = getRoomElement(room);
       if (roomEl) {
         roomEl.classList.toggle('on', anyOn);
         roomEl.classList.toggle('off', !anyOn);
@@ -766,7 +772,7 @@
 
   function setInitialRoomCollapse() {
     document.querySelectorAll('.room').forEach(roomEl => {
-      const room = roomEl.getAttribute('data-room');
+      const room = roomEl.getAttribute('data-room-name');
       const ids = window.roomDevices[room] || [];
       const anyOn = ids.some(id => window.devices[id]?.state === 'ON');
       if (!anyOn) {
@@ -859,7 +865,7 @@
     }
 
     function updateRoomBrightness(roomEl, brightness) {
-      const roomName = roomEl.getAttribute('data-room');
+      const roomName = roomEl.getAttribute('data-room-name');
       const bSlider = roomEl.querySelector('.room-brightness');
       const bValue = roomEl.querySelector('.room-brightness-container .brightness-value');
       const indicator = roomEl.querySelector('.brightness-indicator');
@@ -942,7 +948,7 @@
     document.querySelectorAll('.room-brightness').forEach(slider => {
       slider.addEventListener('input', function () {
         const roomEl = this.closest('.room');
-        const roomName = roomEl.getAttribute('data-room');
+        const roomName = roomEl.getAttribute('data-room-name');
         setRoomBrightness(roomName, this.value);
       });
     });
@@ -1061,6 +1067,106 @@
       }, 1000);
     }
   }
+
+  let mediaCurrentPath = "";
+  let mediaInitialized = false;
+
+  
+  window.loadMediaDirectory = async function(path = "") {
+      try {
+          const response = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
+          if (!response.ok) throw new Error('Failed to load media directory');
+          const data = await response.json();
+  
+          if (data.error) {
+              console.error('Media error:', data.error);
+              if (typeof showNotification === 'function') showNotification(data.error, 'error');
+              return;
+          }
+  
+          mediaCurrentPath = data.path;
+          updateMediaBreadcrumbs(data.path);
+          renderMediaItems(data.directories, data.files);
+      } catch (error) {
+          console.error('Media browse error:', error);
+          if (typeof showNotification === 'function') showNotification('Failed to load media directory', 'error');
+      }
+  };
+  
+  function renderMediaItems(directories, files) {
+    const container = document.getElementById('mediaList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    directories.forEach(dir => {
+      const item = document.createElement('div');
+      item.className = 'media-item directory';
+      item.innerHTML = `<i class="mdi mdi-folder"></i><span>${escapeHtml(dir)}</span>`;
+      item.onclick = () => window.loadMediaDirectory(joinMediaPath(mediaCurrentPath, dir));
+      container.appendChild(item);
+    });
+
+    files.forEach(file => {
+      const item = document.createElement('div');
+      item.className = 'media-item file';
+      item.innerHTML = `<i class="mdi mdi-file"></i><span>${escapeHtml(file)}</span>`;
+      item.onclick = () => handleMediaFileClick(file);
+      container.appendChild(item);
+    });
+
+    if (directories.length === 0 && files.length === 0) {
+      container.innerHTML = '<div class="empty-media">Empty directory</div>';
+    }
+  }
+
+  function handleMediaFileClick(fileName) {
+    const fullPath = joinMediaPath(mediaCurrentPath, fileName);
+    fetch(`/playlist/add?entry=${encodeURIComponent(fullPath)}`, { method: 'POST' })
+      .then(() => {
+        if (typeof showNotification === 'function') showNotification(`Added to playlist: ${fileName}`, 'success');
+      })
+      .catch(() => {
+        if (typeof showNotification === 'function') showNotification('Failed to add to playlist', 'error');
+      });
+  }
+
+  function updateMediaBreadcrumbs(path) {
+    const container = document.getElementById('mediaBreadcrumbs');
+    if (!container) return;
+    container.innerHTML = '';
+    const root = document.createElement('span');
+    root.textContent = '/';
+    root.onclick = () => window.loadMediaDirectory('');
+    container.appendChild(root);
+
+    const crumbs = path ? path.split('/') : [];
+    crumbs.forEach((segment, i) => {
+      const span = document.createElement('span');
+      span.textContent = ' / ' + segment;
+      const fullPath = crumbs.slice(0, i + 1).join('/');
+      span.onclick = () => window.loadMediaDirectory(fullPath);
+      container.appendChild(span);
+    });
+  }
+
+  window.mediaGoBack = function() {
+    if (!mediaCurrentPath) return;
+    const parentPath = mediaCurrentPath.split('/').slice(0, -1).join('/');
+    window.loadMediaDirectory(parentPath);
+  };
+
+  function joinMediaPath(base, segment) {
+    if (!base) return segment;
+    return `${base}/${segment}`.replace(/\/+/g, '/');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  
+
 
   document.addEventListener('DOMContentLoaded', () => new DuckStealer());
 

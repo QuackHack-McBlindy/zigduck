@@ -223,7 +223,7 @@ let
     in if roomLights != [] then
       let
         deviceMappings = map (d: {
-          id = d.id;
+          id = d.friendly_name or d.id;
           friendly_name = d.friendly_name or d.id;
           type = d.type;
         }) roomLights;
@@ -263,7 +263,7 @@ let
             ) roomLights);
           in
             if hasLights then ''
-              <div class="room" id="room-${roomId}" data-room="${roomId}">
+              <div class="room" id="room-${roomId}" data-room="${roomId}" data-room-name="${room}">>
                 <div class="room-header" onclick="openRoomDevicesPanel('${roomId}', '${room}')">
                   <div class="room-title">
                     <i class="mdi mdi-${iconName} room-icon"></i>
@@ -334,8 +334,7 @@ let
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">     
         <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
-        <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>        
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">    
 
         <style> 
             .page {
@@ -440,7 +439,24 @@ let
                       ${sceneGridHtml}
                     </div>
                 </div>
-                                    
+                  
+                <!-- 🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆
+                🦆 says ⮞ PAGE 3 - MEDIA BROWSER
+                🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆 -->
+                ${lib.optionalString (house.media.root or "" != "") ''
+                  <div class="page" id="pageMedia" data-page="3">
+                      <div class="media-browser">
+                          <div class="media-header">
+                              <button class="back-btn" onclick="window.mediaGoBack()">← Back</button>
+                              <div class="breadcrumbs" id="mediaBreadcrumbs">/</div>
+                          </div>
+                          <div class="media-list" id="mediaList">
+                              <!-- Items rendered by JS -->
+                          </div>
+                      </div>
+                  </div>
+                ''}
+     
                <!-- 🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆
                🦆 says ⮞ USER CONFIGURATION PAGES
                🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆 -->
@@ -462,6 +478,12 @@ let
                 <div class="nav-tab" data-page="2">
                     <i class="mdi mdi-palette"></i>
                 </div>
+                
+                ${lib.optionalString (house.media.root or "" != "") ''
+                  <div class="nav-tab" data-page="3">
+                      <i class="mdi mdi-folder-multiple"></i>
+                  </div>
+                ''}
                 <!-- 🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆
               🦆 says ⮞ USER CONFIGURED TABS 🦆 -->
                 ${customTabsHtml}
@@ -579,12 +601,14 @@ let
                 // 🦆 says ⮞ mqtt
                 let client = null;
                 
-                const brokerUrl = 'ws://${house.zigbee.mosquitto.host}:9001';              
+
                 const statusElement = document.getElementById('connectionStatus');
                 const notification = document.getElementById('notification');
         
                 // 🦆 says ⮞ auto-hide connection status
                 let connectionHideTimeout = null;
+                
+                let mediaInitialized = false; 
                 
                 // 🦆 says ⮞ init status cards 
                 if (window.initStatusCards) {
@@ -832,10 +856,17 @@ let
                 
                 // 🦆 says ⮞ COLOR func
                 window.setColor = function(hex) {
+                    if (hex === 'rainbow') {
+                        const r = Math.floor(Math.random() * 256);
+                        const g = Math.floor(Math.random() * 256);
+                        const b = Math.floor(Math.random() * 256);
+                        publishPatch({ color: { r, g, b } });
+                        return;
+                    }
+                
                     const r = parseInt(hex.slice(1, 3), 16);
                     const g = parseInt(hex.slice(3, 5), 16);
                     const b = parseInt(hex.slice(5, 7), 16);
-
                     publishPatch({ color: { r, g, b } });
                 };
 
@@ -1083,133 +1114,7 @@ let
                     }
                 }
                
-                
-                /*🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆
-                 🦆 says ⮞ ZIGDUCK CONNECT 
-                 🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆🦆*/
-                function connectToMQTT() {
-                    showConnectionStatus();
-                    statusElement.className = 'connection-status status-connecting';
-                    statusElement.innerHTML = '<i class="fas fa-plug"></i><span>📛</span>';
-                   
-                    let password = localStorage.getItem('mqttPassword');
-                    if (!password) {
-                        password = prompt('quack yo MQTT pass:');
-                        if (password) {
-                            localStorage.setItem('mqttPassword', password);
-                        }
-                    }
-                    
-                    const options = {
-                        username: '${house.zigbee.mosquitto.username}',
-                        password: password,
-                        clientId: 'web-dashboard-' + Math.random().toString(16).substring(2, 10)
-                    };
-                    
-                    try {
-                        client = mqtt.connect(brokerUrl, options);
-                        
-                        window.mqttClient = client; 
-                        
-                        client.on('connect', function() {
-                            window.mqttConnected = true;
-                            showConnectionStatus();
-                            statusElement.className = 'connection-status status-connected';
-                            statusElement.innerHTML = '<i class="fas fa-plug"></i><span>🟢</span>';
-                            
-                            client.subscribe('${house.zigbee.mosquitto.baseTopic}/#', function(err) {
-                                if (!err) {
-                                    showNotification('Subscribed to all devices', 'success');
-                                }
-                            });
-                       
-                        });
-                        
-                        client.on('error', function(err) {
-                            window.mqttConnected = false; 
-                            showConnectionStatus(); // 🦆 says ⮞ show on error
-                            statusElement.className = 'connection-status status-error';
-                            statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>⚠️📛</span>';
-                            console.error('Connection error: ', err);
-                        });
-                        
-                        client.on('message', function(topic, message) {
-                            const topicParts = topic.split('/');
-                            const deviceName = topicParts[1];
-
-                            // 🦆 says ⮞ handle TV channel updates
-                            if (topic.startsWith('${house.zigbee.mosquitto.baseTopic}/tv/') && topic.endsWith('/channel')) {
-                                try {
-                                    const data = JSON.parse(message.toString());
-                                    const deviceIp = topicParts[2];
-                                    console.log('TV channel update:', deviceIp, data);
-                                    const tvConfig = ${builtins.toJSON house.tv};
-                                    const tvDevice = Object.entries(tvConfig).find(([name, config]) => 
-                                        config.ip === deviceIp
-                                    );
-        
-                                    if (tvDevice) {
-                                        const tvName = tvDevice[0];
-                                        const tvKey = `tv_''${tvName}`;
-                                        devices[tvKey] = { ...devices[tvKey], ...data };
-                                        console.log('Updated TV state for:', tvKey, devices[tvKey]);
-                                        updateTVChannelDisplay(deviceIp, data);
-                                        saveState();
-                                    }
-                                } catch (e) {
-                                    console.error('Error parsing TV channel message:', e);
-                                }
-                                return;
-                            }
-
-
-                            if (topicParts.length === 2) {
-                                try {
-                                    const data = JSON.parse(message.toString());
-                                    devices[deviceName] = data;    
-                                    saveState();     
-                                    updateDeviceSelector(); 
-                                    if (selectedDevice === deviceName) {
-                                        updateDeviceUI(data);
-                                    }      
-                                    // updateStatusCards();
-                                    onMQTTDataUpdate();   
-                                    
-                                    // 🦆 says ⮞ update room control UI
-                                    if (window.updateDeviceUIFromMQTT) {
-                                      updateDeviceUIFromMQTT(deviceName, data);
-                                    }
-                                    
-                                    if (window.updateRoomStats) {
-                                        setTimeout(() => {
-                                            updateRoomStats();
-                                        }, 100);
-                                    }    
-                                    
-                                    if (window.syncRoomToggles) {
-                                        window.syncRoomToggles();
-                                    }
-                                } catch (e) {
-                                    console.error('Error parsing message: ', e);
-                                }
-                            }
-                        });
-                        
-                        client.on('close', function() {
-                            window.mqttConnected = false; 
-                            showConnectionStatus(); // 🦆 says ⮞ show on disconnect
-                            statusElement.className = 'connection-status status-error';
-                            statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>⚠️📛</span>';
-                        });
-                        
-                    } catch (err) {
-                        statusElement.className = 'connection-status status-error';
-                        statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Connection failed</span>';
-                        console.error('Connection error: ', err);
-                    }
-                }
-                
-                
+                                
                 function updateDeviceSelector() {
                     const selector = document.getElementById('deviceSelect');
                     const currentValue = selector.value;    
@@ -1289,35 +1194,31 @@ let
                 }    
       
 
-                // 🦆 says ⮞ unified command topic (hue + z2m)
+                
                 function sendCommand(deviceId, command) {
-                    const client = window.mqttClient;
-                    if (!client || !client.connected) {
-                        showNotification('Not connected to MQTT, reconnecting...', 'warning');
-                        connectToMQTT();
-                        setTimeout(() => {
-                            if (window.mqttClient && window.mqttClient.connected) {
-                                window.mqttClient.publish(`${house.zigbee.mosquitto.baseTopic}/device_command/''${deviceId}`, JSON.stringify(command));
-                            } else {
-                                showNotification('Still not connected to MQTT', 'error');
-                            }
-                        }, 1000);
-                        return;
-                    }
-
-                    const topic = `${house.zigbee.mosquitto.baseTopic}/device_command/''${deviceId}`;
-                    client.publish(topic, JSON.stringify(command), function(err) {
-                        if (err) {
-                            showNotification('Failed to send command', 'error');
-                            console.error('Publish error: ', err);
-                        } else {
-                            if (window.devices && window.devices[deviceId]) {
-                                window.devices[deviceId] = { ...window.devices[deviceId], ...command };
-                            }
-                        }
-                    });
+                  let url = "";
+                  if (command.state) {
+                    url = `/api/device/''${encodeURIComponent(deviceId)}/state/''${command.state.toLowerCase()}`;
+                  } else if (command.brightness !== undefined) {
+                    url = `/api/device/''${encodeURIComponent(deviceId)}/brightness/''${command.brightness}`;
+                  } else if (command.color) {
+                    const hex = '#' + [command.color.r, command.color.g, command.color.b]
+                      .map(v => v.toString(16).padStart(2, '0')).join("");
+                    url = `/api/device/''${encodeURIComponent(deviceId)}/color/''${encodeURIComponent(hex)}`;
+                  } else if (command.color_temp !== undefined) {
+                    url = `/api/device/''${encodeURIComponent(deviceId)}/temperature/''${command.color_temp}`;
+                  }
+                  if (!url) return Promise.resolve();
+                
+                  return fetch(url, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                      if (data.error) showNotification(data.error, 'error');
+                      else console.log('Command sent:', data);
+                    })
+                    .catch(err => showNotification('Command failed', 'error'));
                 }
-              
+                              
                 window.sendCommand = sendCommand;
                 
                 function showPage(pageId) {
@@ -1334,6 +1235,9 @@ let
                         deviceSelectorContainer.classList.remove('hidden');
                     } else {
                         deviceSelectorContainer.classList.add('hidden');
+                    }
+                    if (String(pageId) === "3") {
+                        window.loadMediaDirectory("");
                     }
                 
                     navTabs.forEach((tab) => {
@@ -1390,43 +1294,13 @@ let
                   });
                 }
     
-                function setRangeGradient(slider, startColor, endColor) {
-                    const existingStyle = document.getElementById('sliderGradientStyle');
-                    if (existingStyle) {
-                        existingStyle.remove();
-                    }
-    
-                    const style = document.createElement('style');
-                    style.id = 'sliderGradientStyle';
-    
-                    const sliderId = `slider-''${Math.random().toString(36).substr(2, 9)}`;
-                    slider.id = sliderId;
-    
-                    style.textContent = `
-                        #''${sliderId} {
-                            background: linear-gradient(to right, ''${startColor}, ''${endColor});
-                        }
-        
-                        #''${sliderId}::-webkit-slider-thumb {
-                            background: var(--primary);
-                        }
-        
-                        #''${sliderId}::-moz-range-thumb {
-                            background: var(--primary);
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-
                 function updatePosition(value) {
                     const position = clamp(parseInt(value), 0, 100);
                     document.querySelector('.position-value').textContent = `''${position}%`;
                 
                 }
     
-                function clamp(value, min, max) {
-                    return Math.min(Math.max(value, min), max);
-                }    
+  
 
                 function publishPatch(payload) {
                     if (!selectedDevice) {
@@ -1476,7 +1350,7 @@ let
                             <div class="row special">
                                 <div class="state-display ''${stateClass}">
                                     <label class="switch">
-                                        <input type="checkbox" id="stateToggle" ''${checked}  onclick="publishPatch({ state: this.checked ? 'ON' : 'OFF' })">
+                                        <input type="checkbox" id="stateToggle" ''${checked}>
                                         <span class="slider-round"></span>
                                     </label>
                                     <span class="state-text">''${stateText}</span>
@@ -1868,7 +1742,7 @@ let
                                 
                 async function loadInitialState() {
                     try {
-                        const response = await fetch('/state.json');
+                        const response = await fetch('/api/state');
                         if (!response.ok) {
                             throw new Error(`HTTP ''${response.status}: ''${response.statusText}`);
                         }
@@ -2033,21 +1907,38 @@ let
                         document.querySelectorAll('.scene-item').forEach(scene => {
                             scene.addEventListener('click', () => {
                                 const sceneName = scene.getAttribute('data-scene');
-                                const topic = `${house.zigbee.mosquitto.baseTopic}/scene/''${sceneName}`;
-                                const message = "{}";
-                                client.publish(topic, message);
-                                console.log(`Publishing to ''${topic}`);
+                                fetch(`/api/scene/''${encodeURIComponent(sceneName)}`, { method: 'POST' })
+                                    .then(r => r.json())
+                                    .then(data => console.log('Scene activated:', data));
                             });
                         });
                         
-                        window.addEventListener('beforeunload', saveState);         
-                        connectToMQTT();
+                        window.addEventListener('beforeunload', saveState);
                     }).catch(error => {
                         console.error('Failed to load initial state:', error);
                         // 🦆 says ⮞ fallback
                         loadSavedState();
-                        connectToMQTT();
                     });
+                    
+                    devices = window.devices;
+                    
+                    setInterval(() => {
+                      fetch('/api/state')
+                        .then(r => r.json())
+                        .then(serverState => {
+                          for (const [key, data] of Object.entries(serverState)) {
+                            devices[key] = data;
+                          }
+                          if (selectedDevice && devices[selectedDevice]) {
+                            updateDeviceUI(devices[selectedDevice]);
+                          }
+                          if (window.updateAllRoomControls) {
+                            window.updateAllRoomControls();
+                          }
+                        })
+                        .catch(() => {});
+                    }, 2500);
+
                 }
                 
                                                                                                        

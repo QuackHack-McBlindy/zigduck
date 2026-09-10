@@ -140,6 +140,65 @@ impl AlarmManager {
         })
     }
 
+    
+    fn remove_by_time(&self, hour: u8, minute: u8, days: Option<Vec<u8>>) -> Result<Alarm, String> {
+        let mut alarms = self.alarms.lock().unwrap();
+        let mut matching_indices: Vec<usize> = alarms
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.hour == hour && a.minute == minute)
+            .filter(|(_, a)| match (&days, &a.days) {
+                (Some(d1), Some(d2)) => d1 == d2,
+                (Some(_), None) | (None, Some(_)) => false,
+                (None, None) => true,
+            })
+            .map(|(i, _)| i)
+            .collect();
+    
+        match matching_indices.len() {
+            0 => Err("Alarm not found".into()),
+            1 => {
+                let alarm = alarms.remove(matching_indices[0]);
+                drop(alarms);
+                self.save_to_file();
+                self.condvar.notify_one();
+                Ok(alarm)
+            }
+            _ => Err("Multiple alarms match this time; please specify days or use id".into()),
+        }
+    }
+    
+    fn toggle_by_time(&self, hour: u8, minute: u8, days: Option<Vec<u8>>) -> Result<Alarm, String> {
+        let mut alarms = self.alarms.lock().unwrap();
+        let matching_indices: Vec<usize> = alarms
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.hour == hour && a.minute == minute)
+            .filter(|(_, a)| match (&days, &a.days) {
+                (Some(d1), Some(d2)) => d1 == d2,
+                (Some(_), None) | (None, Some(_)) => false,
+                (None, None) => true,
+            })
+            .map(|(i, _)| i)
+            .collect();
+    
+        match matching_indices.len() {
+            0 => Err("Alarm not found".into()),
+            1 => {
+                let alarm = &mut alarms[matching_indices[0]];
+                alarm.enabled = !alarm.enabled;
+                let cloned = alarm.clone();
+                drop(alarms);
+                self.save_to_file();
+                self.condvar.notify_one();
+                Ok(cloned)
+            }
+            _ => Err("Multiple alarms match this time; please specify days or use id".into()),
+        }
+    }
+    
+
+
     fn save_to_file(&self) {
         let alarms = self.alarms.lock().unwrap();
         if let Ok(json) = serde_json::to_string_pretty(&*alarms) {
@@ -644,6 +703,7 @@ fn is_api_path(path: &str) -> bool {
         "/timers",
         "/alarms",
         "/browse",
+        "/browsev2",
         "/playlist",
         "/media",
     ];
@@ -704,6 +764,46 @@ fn get_path_arg(query: &str) -> String {
     String::new()
 }
 
+fn parse_time_from_query(query: &str) -> Option<(u8, u8)> {
+    let time_str = get_query_arg(query, "time");
+    if !time_str.is_empty() {
+        let parts: Vec<&str> = time_str.split(':').collect();
+        if parts.len() == 2 {
+            let h: u8 = parts[0].parse().ok()?;
+            let m: u8 = parts[1].parse().ok()?;
+            if h <= 23 && m <= 59 {
+                return Some((h, m));
+            }
+        }
+        return None;
+    }
+
+    let hours_str = get_query_arg(query, "hours");
+    let minutes_str = get_query_arg(query, "minutes");
+    if hours_str.is_empty() || minutes_str.is_empty() {
+        return None;
+    }
+    let h: u8 = hours_str.parse().ok()?;
+    let m: u8 = minutes_str.parse().ok()?;
+    if h <= 23 && m <= 59 {
+        Some((h, m))
+    } else { None }
+}
+
+fn parse_days_from_query(query: &str) -> Option<Vec<u8>> {
+    let days_str = get_query_arg(query, "days");
+    if days_str.is_empty() {
+        return None;
+    }
+    let parsed: Vec<u8> = days_str
+        .split(',')
+        .filter_map(|s| s.trim().parse().ok())
+        .filter(|d| *d <= 6)
+        .collect();
+    if parsed.is_empty() {
+        None
+    } else { Some(parsed) }
+}
 
 fn handle_state_all() -> String {
     let state_file_path = &CONFIG.state_file;
@@ -781,9 +881,11 @@ fn handle_state_room(room: &str) -> String {
 } 
 
 fn handle_browse(path_arg: &str, use_v2: bool) -> String {
-    let media_root = get_root_dir();
-    let full_path = format!("{}/{}", media_root, path_arg);
-    
+    let media_root = get_root_dir().trim_end_matches('/');
+    let path_arg = path_arg.trim_start_matches('/');
+    let full_path = if path_arg.is_empty() {
+        media_root.to_string()
+    } else { format!("{}/{}", media_root, path_arg) }; 
     if !full_path.starts_with(media_root) {
         dt_warning(&format!("Access forbidden for path: {}", path_arg));
         return r#"{"error":"Access forbidden"}"#.to_string();
@@ -1232,29 +1334,46 @@ fn handle_alarm_add(query: &str) -> String {
     json!({"status":"ok","id":id}).to_string()
 }
 
-
 fn handle_alarm_remove(query: &str) -> String {
     let id: u64 = get_query_arg(query, "id").parse().unwrap_or(0);
-    if id == 0 {
-        return json!({"error":"Missing id parameter"}).to_string();
+    if id != 0 {
+        return match ALARM_MANAGER.remove(id) {
+            Ok(alarm) => json!({"status":"ok","removed":alarm.name}).to_string(),
+            Err(e) => json!({"error":e}).to_string(),
+        };
     }
-    match ALARM_MANAGER.remove(id) {
+
+    let (hour, minute) = if let Some((h, m)) = parse_time_from_query(query) {
+        (h, m)
+    } else { return json!({"error":"Missing time parameter (use hours&minutes or time=HH:MM)"}).to_string(); };
+
+    let days = parse_days_from_query(query);
+
+    match ALARM_MANAGER.remove_by_time(hour, minute, days) {
         Ok(alarm) => json!({"status":"ok","removed":alarm.name}).to_string(),
         Err(e) => json!({"error":e}).to_string(),
     }
 }
-
 fn handle_alarm_toggle(query: &str) -> String {
     let id: u64 = get_query_arg(query, "id").parse().unwrap_or(0);
-    if id == 0 {
-        return json!({"error":"Missing id parameter"}).to_string();
+    if id != 0 {
+        return match ALARM_MANAGER.toggle(id) {
+            Ok(alarm) => json!({"status":"ok","id":alarm.id,"enabled":alarm.enabled}).to_string(),
+            Err(e) => json!({"error":e}).to_string(),
+        };
     }
-    match ALARM_MANAGER.toggle(id) {
+
+    let (hour, minute) = if let Some((h, m)) = parse_time_from_query(query) {
+        (h, m)
+    } else { return json!({"error":"Missing time parameter (use hours&minutes or time=HH:MM)"}).to_string(); };
+
+    let days = parse_days_from_query(query);
+
+    match ALARM_MANAGER.toggle_by_time(hour, minute, days) {
         Ok(alarm) => json!({"status":"ok","id":alarm.id,"enabled":alarm.enabled}).to_string(),
         Err(e) => json!({"error":e}).to_string(),
     }
 }
-
 
 fn start_alarm_thread(manager: Arc<AlarmManager>) {
     std::thread::spawn(move || {
@@ -1265,9 +1384,7 @@ fn start_alarm_thread(manager: Arc<AlarmManager>) {
                     let now = Local::now().time();
                     let diff = if target > now {
                         target - now
-                    } else {
-                        chrono::Duration::seconds(60)
-                    };
+                    } else { chrono::Duration::seconds(60) };
                     diff.to_std().unwrap_or(Duration::from_secs(60))
                 }
                 None => Duration::from_secs(60),
@@ -1753,7 +1870,8 @@ fn handle_request(mut stream: TcpStream) {
                 stripped
             } else { path };
 
-            let decoded_scene_name = scene_name.replace('+', " ");
+            //let decoded_scene_name = scene_name.replace('+', " ");
+            let decoded_scene_name = urldecode(scene_name);
             dt_info(&format!("Scene activation: {}", decoded_scene_name));
             
             let response = handle_scene_activate(&decoded_scene_name);
@@ -1817,8 +1935,8 @@ fn main() {
     log("  GET  /timers                     - List timers");
     log("  GET  /alarms                     - List alarms");
     log("  POST /alarms/add?hours=...&minutes=...&name=...&days=...[&topic=...&payload=...] - Add alarm");
-    log("  POST /alarms/remove?id=...       - Remove alarm");
-    log("  POST /alarms/toggle?id=...       - Toggle alarm");
+    log("  POST /alarms/remove?hours=...&minutes=...   - Remove alarm by time");
+    log("  POST /alarms/toggle?hours=...&minutes=...   - Toggle alarm by time");
     log("  GET  /browse?path=...            - Browse media directory (legacy)");
     log("  GET  /browsev2?path=...          - Browse media directory (improved)");
     log("  GET  /playlist/list              - Get current m3u playlist");
