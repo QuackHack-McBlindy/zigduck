@@ -8,10 +8,16 @@
   <img src="images/logo.png" alt="Logo" width="330">
 </a>
 
+<!-- VERSIONS_START -->
+
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.0-black?style=flat)
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
 ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.7.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
 ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
+
+<!-- VERSIONS_END -->
+
 
 <br>
 

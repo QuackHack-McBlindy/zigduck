@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added CI workflow.
+- `tv-scraper` python package that scrapes Nix defined TV-channel URLs.
+- The `zigduck-cli` package now supports `--version`.
+
 ### Changed
 
 ### Fixed
-
 
 ### Removed
 

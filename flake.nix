@@ -8,8 +8,9 @@
   outputs = { self, nixpkgs, tinyFlake, ... }@inputs:
     tinyFlake.lib.mkFlake {
       inherit self inputs;
-      systems = [ "x86_64-linux" "aarch64-linux" ];
-      packages = tinyFlake.lib.mapModules ./packages import;
+      systems   = [ "x86_64-linux" "aarch64-linux" ];
+      packages  = tinyFlake.lib.mapModules ./packages import;
       nixosModules.zigduck = import ./modules;
-              
+      devShells = tinyFlake.lib.mapModules ./devShells (path: import path);              
+
     };}
