@@ -16,9 +16,9 @@
   cargoVersion = cargoToml.package.version;
 in  # 🦆 says ⮞ code source
 stdenv.mkDerivation {
-    name = "tv-scraper";
+    pname = "tv-scraper";
     src = ./tv-scraper;
-
+    version = cargoVersion;
     buildInputs = [ pythonEnv ];
     propagatedBuildInputs = [ pythonEnv ];
 

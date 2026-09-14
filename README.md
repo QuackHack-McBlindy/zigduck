@@ -12,7 +12,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.3-black?style=flat)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.4-black?style=flat)
 
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
