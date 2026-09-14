@@ -159,10 +159,10 @@ enum TimerAction {
 #[derive(Parser)]
 #[command(
     name = "zigduck-cli",
-    version = "0.1.0",
     author = "QuackHack-McBLindy",
     about = "High-performance unified home automation controller",
-    long_about = "Control Zigbee and Hue devices, scenes, and automations with Rust speed and reliability"
+    long_about = "Control Zigbee and Hue devices, scenes, and automations with Rust speed and reliability",
+    disable_version_flag = true
 )]
 struct Cli {
     #[arg(long, short, help = "MQTT broker host", env = "MQTT_BROKER", default_value = "127.0.0.1")]
@@ -1606,9 +1606,20 @@ fn fetch_and_print_status_table(
 }
 
 
-
+fn print_version() {
+    println!("zigduck version {}", env!("CARGO_PKG_VERSION"));
+    println!("Copyright (C) 2026 QuackHack-McBlindy.com");
+    println!("License MIT.");
+    println!("This is free software: you are free to change it.");
+    println!("There is NO WARRANTY, to the extent permitted by law.");
+}
 
 fn main() -> Result<()> {
+    if std::env::args().any(|a| a == "--version" || a == "-V") {
+        print_version();
+        return Ok(());
+    }
+    
     let debug = std::env::var("DEBUG").is_ok();
     if debug { std::env::set_var("DT_LOG_LEVEL", "DEBUG"); }
     dt_setup(None, None);
