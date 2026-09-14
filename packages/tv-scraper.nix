@@ -6,9 +6,14 @@
   python3,
 } : let # 🦆 says ⮞ python dependencies
   pythonEnv = python3.withPackages (ps: [
-    ps.lxml
+    ps.sounddevice
     ps.requests
+    ps.lxml
+    ps.python-dotenv
   ]);
+  cargoSrc = ./zigduck;
+  cargoToml = builtins.fromTOML (builtins.readFile (cargoSrc + "/Cargo.toml"));
+  cargoVersion = cargoToml.package.version;
 in  # 🦆 says ⮞ code source
 stdenv.mkDerivation {
     name = "tv-scraper";
@@ -28,5 +33,6 @@ stdenv.mkDerivation {
       description = "TV-scraper";
       license = lib.licenses.mit;
       maintainers = [ "QuackHack-McBlindy" ];
+      version = cargoVersion;
 
     };}
