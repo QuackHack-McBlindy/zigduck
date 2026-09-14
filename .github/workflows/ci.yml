@@ -38,7 +38,11 @@ name: CI
 #  │
 #  ├── tag v0.3.1
 #  │
-#  └── GitHub Release v0.3.1
+#  ├── GitHub Release v0.3.1
+#  │
+#  ▼
+# sync dev ← main
+
 
 on:
   push:
@@ -130,10 +134,21 @@ jobs:
       - name: Determine and validate next version
         if: steps.merge.outputs.release == 'true'
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          latest_tag="$(git tag --list 'v*' --sort=-version:refname | head -n 1)"
+          latest_tag="$(
+            gh api \
+              --paginate \
+              "/repos/${GITHUB_REPOSITORY}/tags?per_page=100" \
+              --jq '.[].name' |
+              grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' |
+              sed 's/^v//' |
+              sort -V |
+              tail -n 1
+          )"
 
           if [[ -z "$latest_tag" ]]; then
             echo "error: no existing version tag found"
@@ -141,27 +156,26 @@ jobs:
             exit 1
           fi
 
-          if [[ ! "$latest_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "error: latest tag '$latest_tag' is not a valid semantic version"
-            exit 1
-          fi
-
+          latest_tag="v${latest_tag}"
           current_version="${latest_tag#v}"
 
           IFS='.' read -r major minor patch <<< "$current_version"
           expected_version="${major}.${minor}.$((patch + 1))"
           expected_tag="v${expected_version}"
+
           echo "Latest tag: $latest_tag"
           echo "Expected next version: $expected_version"
 
-          system="$(nix eval --raw --expr 'builtins.currentSystem')"
+          system="x86_64-linux"
 
-          # discover all packages
           mapfile -t packages < <(
-            nix flake show --json --no-write-lock-file \
-              | jq -r --arg system "$system" '
-                  .packages[$system] // {} | keys[]
-                '
+            nix eval \
+              --json \
+              --impure \
+              --no-write-lock-file \
+              --apply builtins.attrNames \
+              ".#packages.${system}" |
+              jq -r '.[]'
           )
 
           if [[ "${#packages[@]}" -eq 0 ]]; then
@@ -189,13 +203,11 @@ jobs:
             echo "  ${package}: ${package_version}"
 
             version_counts["$package_version"]=$(
-              printf '%s\n' "${version_counts[$package_version]:-0}" \
-                | awk '{print $1 + 1}'
+              printf '%s\n' "${version_counts[$package_version]:-0}" |
+                awk '{print $1 + 1}'
             )
           done
 
-
-          # find the version occurring most frequently.
           majority_version=""
           majority_count=0
           package_count="${#packages[@]}"
@@ -224,7 +236,6 @@ jobs:
           echo "Majority package version: ${majority_version}"
           echo "Expected release version:  ${expected_version}"
 
-          # the majority package version MUST equal the next version
           if [[ "$majority_version" != "$expected_version" ]]; then
             echo "error: version mismatch"
             echo "  latest Git tag:        $latest_tag"
@@ -318,3 +329,14 @@ jobs:
             --notes-file /tmp/notes.md \
             --verify-tag \
             --latest
+
+
+      - name: Sync dev with main
+        if: steps.merge.outputs.release == 'true'
+        run: |
+          set -euo pipefail
+          git fetch origin dev
+          git checkout -B dev origin/dev
+          git merge --no-ff origin/main \
+            -m "chore: sync dev with main after ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin dev

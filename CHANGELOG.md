@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed the dashboard favicons and webmanifest.
+
 ### Fixed
+
+- Fixed the critical issue with Rust code missing.
 
 ### Removed
 
@@ -23,10 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.3] - 10-10-2026
 
 ### Added
-- If `house.media.root` is defined an extra media tab is added to the dashboard.  
+- If `house.media.root` is defined an extra media tab is added to the dashboard.
 
 ### Changed
-- Alarms are now removed and toggled using time instead of id.  
+- Alarms are now removed and toggled using time instead of id.
 - To avoid mixed content issues, the dashboard is now communicating entirely via API calls instead of MQTT.
 
 ### Fixed
@@ -57,4 +61,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Greeting automation now triggers on door open event (requires door sensor) instead of global motion absence.
 
 ### Removed
-
