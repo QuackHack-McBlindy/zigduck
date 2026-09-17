@@ -1,4 +1,3 @@
-# ddotfiles/packages/tv.nix ⮞ https://github.com/QuackHack-McBlindy/dotfiles
 {
   self,
   stdenv,
@@ -6,10 +5,8 @@
   python3,
 } : let # 🦆 says ⮞ python dependencies
   pythonEnv = python3.withPackages (ps: [
-    ps.sounddevice
     ps.requests
     ps.lxml
-    ps.python-dotenv
   ]);
   cargoSrc = ./zigduck;
   cargoToml = builtins.fromTOML (builtins.readFile (cargoSrc + "/Cargo.toml"));
@@ -24,13 +21,13 @@ stdenv.mkDerivation {
 
     installPhase = ''
       mkdir -p $out/bin
-      echo "#!${pythonEnv}/bin/python3" > $out/bin/tv
-      cat $src/tv.py >> $out/bin/tv
-      chmod +x $out/bin/tv
+      echo "#!${pythonEnv}/bin/python3" > $out/bin/tv-scraper
+      cat $src/tv-scraper.py >> $out/bin/tv-scraper
+      chmod +x $out/bin/tv-scraper
     '';
 
     meta = {
-      description = "TV-scraper";
+      description = "TV-scraper that's configurable";
       license = lib.licenses.mit;
       maintainers = [ "QuackHack-McBlindy" ];
       version = cargoVersion;

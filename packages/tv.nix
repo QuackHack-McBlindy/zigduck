@@ -1,4 +1,4 @@
-{ 
+{
   self,
   lib,
   pkgs,
@@ -8,10 +8,12 @@
 } : let
   src = ./tv;
   cargoToml = builtins.fromTOML (builtins.readFile (src + "/Cargo.toml"));
-  version = cargoToml.package.version;
+  zigduckSrc = ./zigduck;
+  zigduckToml = builtins.fromTOML (builtins.readFile (zigduckSrc + "/Cargo.toml"));
+  version = zigduckToml.package.version;
   desc = cargoToml.package.description;
-   
-in  
+
+in
 rustPlatform.buildRustPackage {
   pname = "tv";
   inherit version;
@@ -27,7 +29,7 @@ rustPlatform.buildRustPackage {
     rustPlatform.bindgenHook
   ];
 
-  buildInputs = [ 
+  buildInputs = [
     pkgs.openssl.dev
     pkgs.android-tools
   ];
@@ -38,5 +40,5 @@ rustPlatform.buildRustPackage {
     license = licenses.mit;
     maintainers = [ "QuackHack-McBlindy" ];
     mainProgram = "tv";
-    
+
   };}

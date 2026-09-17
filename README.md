@@ -11,9 +11,8 @@
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.4-black?style=flat)
-
+![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
 ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)

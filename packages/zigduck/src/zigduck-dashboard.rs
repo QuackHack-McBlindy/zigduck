@@ -140,7 +140,7 @@ impl AlarmManager {
         })
     }
 
-    
+
     fn remove_by_time(&self, hour: u8, minute: u8, days: Option<Vec<u8>>) -> Result<Alarm, String> {
         let mut alarms = self.alarms.lock().unwrap();
         let mut matching_indices: Vec<usize> = alarms
@@ -154,7 +154,7 @@ impl AlarmManager {
             })
             .map(|(i, _)| i)
             .collect();
-    
+
         match matching_indices.len() {
             0 => Err("Alarm not found".into()),
             1 => {
@@ -167,7 +167,7 @@ impl AlarmManager {
             _ => Err("Multiple alarms match this time; please specify days or use id".into()),
         }
     }
-    
+
     fn toggle_by_time(&self, hour: u8, minute: u8, days: Option<Vec<u8>>) -> Result<Alarm, String> {
         let mut alarms = self.alarms.lock().unwrap();
         let matching_indices: Vec<usize> = alarms
@@ -181,7 +181,7 @@ impl AlarmManager {
             })
             .map(|(i, _)| i)
             .collect();
-    
+
         match matching_indices.len() {
             0 => Err("Alarm not found".into()),
             1 => {
@@ -196,7 +196,7 @@ impl AlarmManager {
             _ => Err("Multiple alarms match this time; please specify days or use id".into()),
         }
     }
-    
+
 
 
     fn save_to_file(&self) {
@@ -217,11 +217,24 @@ impl AlarmManager {
         name: String,
         topic: Option<String>,
         payload: Option<String>,
-    ) -> u64 {
+    ) -> Result<u64, String> {
         let action = match (topic, payload) {
             (Some(t), Some(p)) => Some(AlarmAction { topic: t, payload: p }),
             _ => None,
         };
+
+        let mut alarms = self.alarms.lock().unwrap();
+
+        if alarms
+            .iter()
+            .any(|a| a.hour == hour && a.minute == minute)
+        {
+            return Err(format!(
+                "Alarm already exists at {:02}:{:02}; multiple alarms at the same time are not allowed",
+                hour, minute
+            ));
+        }
+
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let alarm = Alarm {
             id,
@@ -233,10 +246,13 @@ impl AlarmManager {
             last_fired: None,
             action,
         };
-        self.alarms.lock().unwrap().push(alarm);
+
+        alarms.push(alarm);
+        drop(alarms);
+
         self.save_to_file();
         self.condvar.notify_one();
-        id
+        Ok(id)
     }
 
     fn remove(&self, id: u64) -> Result<Alarm, String> {
@@ -549,7 +565,7 @@ fn check_password_auth(headers: &HashMap<String, String>, query: &str) -> bool {
     }
     false
 }
- 
+
 fn read_password_from_file() -> String {
     match std::env::var("API_PASSWORD_FILE") {
         Ok(path) => std::fs::read_to_string(path)
@@ -557,8 +573,8 @@ fn read_password_from_file() -> String {
             .unwrap_or_default(),
         Err(_) => String::new(),
     }
-} 
- 
+}
+
 fn urldecode(s: &str) -> String {
     let mut result = Vec::new();
     let bytes = s.bytes().collect::<Vec<_>>();
@@ -825,7 +841,7 @@ fn handle_state_device(device_name: &str) -> String {
         Ok(content) => {
             let state_data: serde_json::Value = serde_json::from_str(&content)
                 .unwrap_or_else(|_| json!({}));
-            
+
             if let Some(device_state) = state_data.get(device_name) {
                 dt_info(&format!("Returning state for device: {}", device_name));
                 device_state.to_string()
@@ -844,19 +860,19 @@ fn handle_state_device(device_name: &str) -> String {
 fn handle_state_room(room: &str) -> String {
     let state_file_path = &CONFIG.state_file;
     let devices_file = &CONFIG.devices_file;
-    
+
     match fs::read_to_string(state_file_path) {
         Ok(content) => {
             let state_data: Value = serde_json::from_str(&content)
                 .unwrap_or_else(|_| json!({}));
-            
+
             let devices_content = fs::read_to_string(devices_file)
                 .unwrap_or_else(|_| "{}".to_string());
-            let devices: Map<String, Value> = 
+            let devices: Map<String, Value> =
                 serde_json::from_str(&devices_content).unwrap_or_else(|_| Map::new());
-            
+
             let mut room_devices = Map::new();
-            
+
             let empty_map = Map::new();
             for (device_name, device_state) in state_data.as_object().unwrap_or(&empty_map) {
                 if let Some(device_info) = devices.get(device_name) {
@@ -869,7 +885,7 @@ fn handle_state_room(room: &str) -> String {
                     }
                 }
             }
-            
+
             dt_info(&format!("Returning state for room: {} ({} devices)", room, room_devices.len()));
             serde_json::to_string(&room_devices).unwrap_or_else(|_| "{}".to_string())
         }
@@ -878,14 +894,14 @@ fn handle_state_room(room: &str) -> String {
             r#"{"error":"Failed to read state file"}"#.to_string()
         }
     }
-} 
+}
 
 fn handle_browse(path_arg: &str, use_v2: bool) -> String {
     let media_root = get_root_dir().trim_end_matches('/');
     let path_arg = path_arg.trim_start_matches('/');
     let full_path = if path_arg.is_empty() {
         media_root.to_string()
-    } else { format!("{}/{}", media_root, path_arg) }; 
+    } else { format!("{}/{}", media_root, path_arg) };
     if !full_path.starts_with(media_root) {
         dt_warning(&format!("Access forbidden for path: {}", path_arg));
         return r#"{"error":"Access forbidden"}"#.to_string();
@@ -907,7 +923,7 @@ fn handle_browse(path_arg: &str, use_v2: bool) -> String {
             .arg("-mindepth")
             .arg("1")
             .output();
-        
+
         match output {
             Ok(output) if output.status.success() => {
                 let output_str = String::from_utf8_lossy(&output.stdout);
@@ -928,7 +944,7 @@ fn handle_browse(path_arg: &str, use_v2: bool) -> String {
             .arg("-1")
             .arg(&full_path)
             .output();
-        
+
         match output {
             Ok(output) if output.status.success() => {
                 let output_str = String::from_utf8_lossy(&output.stdout);
@@ -979,22 +995,22 @@ fn handle_device_list() -> String {
         Err(_) => r#"{"error":"Devices file not found"}"#.to_string(),
     }
 }
-        
+
 fn handle_device_rest_control(path: &str) -> String {
-    dt_info(&format!("Device control request: {}", path));    
+    dt_info(&format!("Device control request: {}", path));
     let segments: Vec<&str> = path.split('/').collect();
-    
+
     if segments.is_empty() {
         dt_warning("Device control called without device name");
         return r#"{"error":"Missing device name"}"#.to_string();
     }
-    
+
     let device_name = urldecode(segments[0]);
     dt_info(&format!("Controlling device: {}", device_name));
-    
+
     let mut commands = Vec::new();
     let mut i = 1;
-    
+
     while i < segments.len() {
         if i + 1 < segments.len() {
             let action = segments[i];
@@ -1003,11 +1019,11 @@ fn handle_device_rest_control(path: &str) -> String {
             i += 2;
         } else { return r#"{"error":"Malformed command path"}"#.to_string(); }
     }
-    
+
     if commands.is_empty() {
         return r#"{"error":"No commands specified"}"#.to_string();
     }
-    
+
     handle_device_combined_control(&device_name, &commands)
 }
 
@@ -1055,7 +1071,7 @@ fn handle_device_combined_control(device_name: &str, commands: &[(&str, String)]
                     let pct = if raw_val > 100 {
                         ((raw_val as f32 / 254.0) * 100.0).round() as u8
                     } else { raw_val as u8 };
-                    
+
                     if pct < 1 || pct > 100 {
                         return format!(
                             r#"{{"error":"Invalid brightness value (must be 1-100 or 1-254): {}"}}"#,
@@ -1137,8 +1153,8 @@ fn handle_device_combined_control(device_name: &str, commands: &[(&str, String)]
         }
     }
 }
-    
-    
+
+
 fn handle_scene_activate(scene_name: &str) -> String {
     if scene_name.is_empty() {
         return r#"{"error":"Missing scene name"}"#.to_string();
@@ -1330,8 +1346,10 @@ fn handle_alarm_add(query: &str) -> String {
         return json!({"error":"Invalid time"}).to_string();
     }
 
-    let id = ALARM_MANAGER.add(hours, minutes, days, name, topic_opt, payload_opt);
-    json!({"status":"ok","id":id}).to_string()
+    match ALARM_MANAGER.add(hours, minutes, days, name, topic_opt, payload_opt) {
+        Ok(id) => json!({"status":"ok","id":id}).to_string(),
+        Err(e) => json!({"error":e}).to_string(),
+    }
 }
 
 fn handle_alarm_remove(query: &str) -> String {
@@ -1466,7 +1484,7 @@ fn handle_request(mut stream: TcpStream) {
 
     let mut reader = BufReader::new(&stream);
     let mut request_line = String::new();
-    
+
 
     if reader.read_line(&mut request_line).is_err() || request_line.is_empty() {
         log("No data on stdin; exiting");
@@ -1474,7 +1492,7 @@ fn handle_request(mut stream: TcpStream) {
     }
 
     dt_info(&format!("[{}] Request: {}", peer_addr, request_line.trim()));
-    
+
     log(&format!("Request: {}", request_line.trim()));
 
     let parts: Vec<&str> = request_line.split_whitespace().collect();
@@ -1497,15 +1515,15 @@ fn handle_request(mut stream: TcpStream) {
         if header_line == "\r\n" || header_line == "\n" {
             break;
         }
-        
+
         if let Some((key, value)) = header_line.split_once(':') {
             let key_lower = key.trim().to_lowercase();
             let value_trimmed = value.trim().to_string();
-            
+
             if key_lower == "content-length" {
                 content_length = value_trimmed.parse().unwrap_or(0);
             }
-            
+
             headers.insert(key_lower, value_trimmed);
         }
     }
@@ -1562,16 +1580,16 @@ fn handle_request(mut stream: TcpStream) {
             send_response(&mut stream, "200 OK", "", None);
             return;
         }
-    
+
         ("GET", "/") => {
             dt_info("Root endpoint requested");
-            send_response(&mut stream, "200 OK", 
+            send_response(&mut stream, "200 OK",
                 r#"{"service":"zigduck-api","endpoints":["/timers","/alarms","/alarms/add","/alarms/remove","/alarms/toggle","/browse","/browsev2","/device/list","/device/{device}/...","/device/rooms","/device/types","/scene/{scene}","/state","/state/{device}","/state/room/{room}","/playlist/list","/playlist/add","/playlist/remove","/playlist/shuffle","/playlist/clear","/media/playlist","/media/next","/media/previous","/media/play","/media/pause","/media/volume/up","/media/volume/down","/media/power/on","/media/power/off"]}"#,
                 None);
         }
-        
 
-        
+
+
         ("GET", "/browsev2") | ("GET", "/api/browsev2") => {
             let path_arg = get_path_arg(query);
             let response = handle_browse(&path_arg, true);
@@ -1581,9 +1599,9 @@ fn handle_request(mut stream: TcpStream) {
             let path_arg = get_path_arg(query);
             let response = handle_browse(&path_arg, false);
             send_response(&mut stream, "200 OK", &response, None);
-        }   
-        
-        ("GET", "/timers") => {
+        }
+
+        ("GET", "/timers") | ("GET", "/api/timers") => {
             let timers = TIMER_MANAGER.list();
             let json_timers: Vec<serde_json::Value> = timers.iter().map(|t| {
                 let remaining = if let Some(paused_rem) = t.paused_remaining {
@@ -1609,8 +1627,8 @@ fn handle_request(mut stream: TcpStream) {
             let body = serde_json::to_string(&json_timers).unwrap_or_else(|_| "[]".to_string());
             send_response(&mut stream, "200 OK", &body, None);
         }
-        
-        ("POST", "/timers/set") => {
+
+        ("POST", "/timers/set") | ("POST", "/api/timers/set") => {
             let hours: u32 = get_query_arg(query, "hours").parse().unwrap_or(0);
             let minutes: u32 = get_query_arg(query, "minutes").parse().unwrap_or(0);
             let seconds: u32 = get_query_arg(query, "seconds").parse().unwrap_or(0);
@@ -1625,8 +1643,8 @@ fn handle_request(mut stream: TcpStream) {
             let id = TIMER_MANAGER.add(hours, minutes, seconds, action, name);
             send_response(&mut stream, "200 OK", &format!(r#"{{"status":"ok","timer_id":{}}}"#, id), None);
         }
-        
-        ("POST", "/timers/pause") => {
+
+        ("POST", "/timers/pause") | ("POST", "/api/timers/pause")  => {
             let id: TimerId = get_query_arg(query, "id").parse().unwrap_or(0);
             if id == 0 {
                 send_response(&mut stream, "400 Bad Request", r#"{"error":"Missing id parameter"}"#, None);
@@ -1637,8 +1655,8 @@ fn handle_request(mut stream: TcpStream) {
                 Err(e) => send_response(&mut stream, "400 Bad Request", &format!(r#"{{"error":"{}"}}"#, e), None),
             }
         }
-        
-        ("POST", "/timers/resume") => {
+
+        ("POST", "/timers/resume") | ("POST", "/api/timers/resume") => {
             let id: TimerId = get_query_arg(query, "id").parse().unwrap_or(0);
             if id == 0 {
                 send_response(&mut stream, "400 Bad Request", r#"{"error":"Missing id parameter"}"#, None);
@@ -1649,8 +1667,8 @@ fn handle_request(mut stream: TcpStream) {
                 Err(e) => send_response(&mut stream, "400 Bad Request", &format!(r#"{{"error":"{}"}}"#, e), None),
             }
         }
-        
-        ("POST", "/timers/cancel") => {
+
+        ("POST", "/timers/cancel") | ("POST", "/api/timers/cancel") => {
             let id: TimerId = get_query_arg(query, "id").parse().unwrap_or(0);
             if id == 0 {
                 send_response(&mut stream, "400 Bad Request", r#"{"error":"Missing id parameter"}"#, None);
@@ -1661,8 +1679,8 @@ fn handle_request(mut stream: TcpStream) {
                 Err(e) => send_response(&mut stream, "400 Bad Request", &format!(r#"{{"error":"{}"}}"#, e), None),
             }
         }
-        
-        
+
+
         ("GET", "/alarms") | ("GET", "/api/alarms") => {
             let response = handle_alarm_list();
             send_response(&mut stream, "200 OK", &response, None);
@@ -1697,8 +1715,8 @@ fn handle_request(mut stream: TcpStream) {
                 Err(e) => send_response(&mut stream, "500 Internal Server Error",
                     &format!(r#"{{"error":"{}"}}"#, e), None),
             }
-        }        
-        
+        }
+
         ("POST", "/media/next") => {
             let device = get_device_ip(query);
             match execute_adb(&device, &["shell", "input", "keyevent", "KEYCODE_MEDIA_NEXT"]) {
@@ -1760,8 +1778,8 @@ fn handle_request(mut stream: TcpStream) {
                 Err(e) => send_response(&mut stream, "500 Internal Server Error", &format!(r#"{{"error":"Failed to start playlist: {}"}}"#, e), None),
             }
         }
-        
-                 
+
+
         ("POST", "/playlist/clear") => {
             let response = handle_m3u_clear();
             send_response(&mut stream, "200 OK", &response, None);
@@ -1784,36 +1802,36 @@ fn handle_request(mut stream: TcpStream) {
             let response = handle_m3u_list();
             send_response(&mut stream, "200 OK", &response, None);
         }
-          
+
         ("GET", "/state") | ("GET", "/api/state") => {
             dt_info("Full state request");
             let response = handle_state_all();
             send_response(&mut stream, "200 OK", &response, Some("application/json"));
         }
-        
+
         ("GET", path) if path.starts_with("/state/") || path.starts_with("/api/state/") => {
             let rest = if let Some(stripped) = path.strip_prefix("/api/state/") {
                 stripped
             } else if let Some(stripped) = path.strip_prefix("/state/") {
                 stripped
             } else { path };
-            
+
             let parts: Vec<&str> = rest.split('/').collect();
-            
+
             if parts.is_empty() {
                 dt_warning("State endpoint called without parameters");
-                send_response(&mut stream, "400 Bad Request", 
+                send_response(&mut stream, "400 Bad Request",
                     r#"{"error":"Missing parameters"}"#, None);
                 return;
             }
-            
+
             let first_param = parts[0].to_lowercase();
-            
+
             match first_param.as_str() {
                 "room" => {
                     if parts.len() < 2 {
                         dt_warning("Room state request without room name");
-                        send_response(&mut stream, "400 Bad Request", 
+                        send_response(&mut stream, "400 Bad Request",
                             r#"{"error":"Missing room name"}"#, None);
                         return;
                     }
@@ -1831,13 +1849,13 @@ fn handle_request(mut stream: TcpStream) {
                     send_response(&mut stream, "200 OK", &response, Some("application/json"));
                 }
             }
-        }   
-        
+        }
+
         ("GET", "/device/list") | ("GET", "/api/device/list") => {
             let response = handle_device_list();
             send_response(&mut stream, "200 OK", &response, None);
         }
-        
+
         ("POST", path) if path.starts_with("/device/") || path.starts_with("/api/device/") => {
             let rest = if let Some(stripped) = path.strip_prefix("/api/device/") {
                 stripped
@@ -1862,7 +1880,7 @@ fn handle_request(mut stream: TcpStream) {
                 return;
             }
         }
-        
+
         ("POST", path) if path.starts_with("/scene/") || path.starts_with("/api/scene/") => {
             let scene_name = if let Some(stripped) = path.strip_prefix("/api/scene/") {
                 stripped
@@ -1873,7 +1891,7 @@ fn handle_request(mut stream: TcpStream) {
             //let decoded_scene_name = scene_name.replace('+', " ");
             let decoded_scene_name = urldecode(scene_name);
             dt_info(&format!("Scene activation: {}", decoded_scene_name));
-            
+
             let response = handle_scene_activate(&decoded_scene_name);
             if response.contains("error") {
                 dt_warning(&format!("Scene not found: {}", decoded_scene_name));
@@ -1883,18 +1901,18 @@ fn handle_request(mut stream: TcpStream) {
                 send_response(&mut stream, "200 OK", &response, None);
             }
         }
-        
+
         ("GET", "/device/rooms") | ("GET", "/api/device/rooms") => {
             let response = handle_rooms_list();
             send_response(&mut stream, "200 OK", &response, None);
         }
-        
+
         ("GET", "/device/types") | ("GET", "/api/device/types") => {
             let response = handle_types_list();
             send_response(&mut stream, "200 OK", &response, None);
         }
-     
-  
+
+
         _ => { send_response(&mut stream, "404 Not Found", &format!(r#"{{"error":"Endpoint not found","path":"{}"}}"#, raw_path), None); }
     }
 }
@@ -1902,7 +1920,7 @@ fn handle_request(mut stream: TcpStream) {
 fn main() {
     dt_setup(None, None);
     dt_info(&format!("Starting zigduck-dashboard server"));
-        
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         dt_error("Usage: zigduck-api");

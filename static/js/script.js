@@ -7,7 +7,7 @@
 
   window.statusCardsConfig = {};
   window.enabledCards = [];
-  
+
   async function loadBaseTopic() {
     try {
       const resp = await fetch('/config.json');
@@ -20,7 +20,7 @@
       window.baseTopic = 'zigbee2mqtt';
     }
   }
-  
+
   async function loadCardConfig() {
     try {
       const resp = await fetch('/status-cards-config.json');
@@ -322,7 +322,7 @@
     playPanelCloseSound();
   }
 
-  function populateRoomDevices(roomId, roomName) { 
+  function populateRoomDevices(roomId, roomName) {
     const container = document.getElementById('panelDevicesContainer');
     container.innerHTML = '';
     const mappings = window.roomDeviceMappings[roomName] || [];
@@ -1071,19 +1071,19 @@
   let mediaCurrentPath = "";
   let mediaInitialized = false;
 
-  
+
   window.loadMediaDirectory = async function(path = "") {
       try {
           const response = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
           if (!response.ok) throw new Error('Failed to load media directory');
           const data = await response.json();
-  
+
           if (data.error) {
               console.error('Media error:', data.error);
               if (typeof showNotification === 'function') showNotification(data.error, 'error');
               return;
           }
-  
+
           mediaCurrentPath = data.path;
           updateMediaBreadcrumbs(data.path);
           renderMediaItems(data.directories, data.files);
@@ -1092,7 +1092,7 @@
           if (typeof showNotification === 'function') showNotification('Failed to load media directory', 'error');
       }
   };
-  
+
   function renderMediaItems(directories, files) {
     const container = document.getElementById('mediaList');
     if (!container) return;
@@ -1165,8 +1165,315 @@
     div.textContent = str;
     return div.innerHTML;
   }
-  
 
+  const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function formatDays(days) {
+    if (!days || days.length === 0 || days.length === 7) return 'every day';
+    return days.slice().sort((a, b) => a - b).map(d => DAY_LABELS[d] || '?').join(' ');
+  }
+  function formatClock(h, m) {
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  function formatDuration(secs) {
+    secs = Number(secs) || 0;
+    if (secs < 60) return secs + 's';
+    if (secs < 3600) {
+      const m = Math.floor(secs / 60), s = secs % 60;
+      return m + 'm ' + String(s).padStart(2, '0') + 's';
+    }
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    return h + 'h ' + String(m).padStart(2, '0') + 'm';
+  }
+
+
+  function injectScheduleStyles() {
+    if (document.getElementById('schedule-widget-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'schedule-widget-styles';
+    style.textContent = `
+      .alarms-timers-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 20px 0;
+        padding: 0 4px;
+      }
+      @media (max-width: 700px) {
+        .alarms-timers-section { grid-template-columns: 1fr; }
+      }
+      .schedule-panel {
+        background: rgba(255,255,255,0.05);
+        border-radius: 16px;
+        padding: 14px 16px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .schedule-panel h3 {
+        margin: 0 0 12px 0;
+        font-size: 1rem;
+        letter-spacing: 1px;
+        color: var(--primary, #00ffaa);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .schedule-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: rgba(0,0,0,0.25);
+        border-radius: 10px;
+        border-left: 3px solid var(--primary, #00ffaa);
+        transition: opacity 0.2s, border-color 0.2s;
+      }
+      .schedule-item:last-child { margin-bottom: 0; }
+      .schedule-item.disabled {
+        opacity: 0.45;
+        border-left-color: #666;
+      }
+      .schedule-item .item-info {
+        display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;
+      }
+      .schedule-item .item-time {
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-family: 'Poppins', ui-monospace, monospace;
+        line-height: 1.05;
+        color: #fff;
+        letter-spacing: 0.5px;
+      }
+      .schedule-item.disabled .item-time { color: #999; }
+      .schedule-item .item-name {
+        font-size: 0.82rem; color: #ccc;
+        white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis; max-width: 200px;
+      }
+      .schedule-item .item-meta {
+        font-size: 0.68rem; color: #888; letter-spacing: 0.5px;
+        display: flex; gap: 6px; align-items: center;
+      }
+      .schedule-item .item-meta .dot { opacity: 0.5; }
+      .schedule-item .item-actions {
+        display: flex; gap: 6px; align-items: center; flex-shrink: 0;
+      }
+      .schedule-btn {
+        background: rgba(255,255,255,0.08);
+        border: none; border-radius: 8px;
+        height: 34px; min-width: 34px; padding: 0 10px;
+        cursor: pointer; color: white; font-size: 0.72rem;
+        font-weight: 700; letter-spacing: 0.5px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s;
+      }
+      .schedule-btn:hover { transform: scale(1.05); }
+
+      .schedule-btn.state-pill.is-on {
+        background: rgba(0, 255, 170, 0.22);
+        color: #00ffaa;
+        box-shadow: 0 0 0 1px rgba(0,255,170,0.35) inset;
+      }
+      .schedule-btn.state-pill.is-on:hover {
+        background: rgba(0, 255, 170, 0.35);
+      }
+      .schedule-btn.state-pill.is-off {
+        background: rgba(255,255,255,0.05);
+        color: #888;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
+      }
+      .schedule-btn.state-pill.is-off:hover {
+        background: rgba(255,255,255,0.12);
+        color: #ccc;
+      }
+
+      .schedule-btn.pause-btn {
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+      }
+      .schedule-btn.pause-btn:hover { background: rgba(56, 189, 248, 0.35); }
+      .schedule-btn.danger { color: #ff6b6b; }
+      .schedule-btn.danger:hover { background: rgba(231, 76, 60, 0.6); color: #fff; }
+      .schedule-empty {
+        color: #777; font-size: 0.82rem;
+        padding: 10px; text-align: center; font-style: italic;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function injectScheduleHTML() {
+    if (document.getElementById('alarmsTimersSection')) return;
+    const home = document.getElementById('pageHome');
+    if (!home) return;
+
+    const section = document.createElement('div');
+    section.className = 'alarms-timers-section';
+    section.id = 'alarmsTimersSection';
+    section.innerHTML = `
+      <div class="schedule-panel">
+        <h3><i class="fas fa-clock"></i> ALARMS</h3>
+        <div id="alarmsList"><div class="schedule-empty">Loading…</div></div>
+      </div>
+      <div class="schedule-panel">
+        <h3><i class="fas fa-hourglass-half"></i> TIMERS</h3>
+        <div id="timersList"><div class="schedule-empty">Loading…</div></div>
+      </div>
+    `;
+
+    const roomControls = home.querySelector('.room-controls-section');
+    if (roomControls) home.insertBefore(section, roomControls);
+    else home.appendChild(section);
+  }
+
+  async function loadAlarms() {
+    const box = document.getElementById('alarmsList');
+    if (!box) return;
+    const panel = box.closest('.schedule-panel');
+    try {
+      const res = await fetch('/api/alarms');
+      const alarms = await res.json();
+
+      if (!Array.isArray(alarms) || alarms.length === 0) {
+        if (panel) panel.style.display = 'none';
+        refreshScheduleSectionVisibility();
+        return;
+      }
+      if (panel) panel.style.display = '';
+
+      box.innerHTML = alarms.map(a => `
+        <div class="schedule-item ${a.enabled ? '' : 'disabled'}">
+          <div class="item-info">
+            <div class="item-time">${formatClock(a.hour, a.minute)}</div>
+            <div class="item-name">${escapeHtml(a.name || 'Alarm')}</div>
+            <div class="item-meta">
+              <span>${a.enabled ? 'Active' : 'Disabled'}</span>
+              <span class="dot">•</span>
+              <span>${formatDays(a.days)}</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="schedule-btn state-pill ${a.enabled ? 'is-on' : 'is-off'}"
+                    data-action="toggle-alarm" data-id="${a.id}"
+                    title="${a.enabled ? 'Click to disable' : 'Click to enable'}">
+              ${a.enabled ? 'ON' : 'OFF'}
+            </button>
+            <button class="schedule-btn danger"
+                    data-action="delete-alarm" data-id="${a.id}"
+                    title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      refreshScheduleSectionVisibility();
+    } catch (e) {
+      console.error('loadAlarms:', e);
+      if (panel) panel.style.display = '';
+      box.innerHTML = '<div class="schedule-empty">Failed to load alarms</div>';
+    }
+  }
+
+
+  async function loadTimers() {
+    const box = document.getElementById('timersList');
+    if (!box) return;
+    const panel = box.closest('.schedule-panel');
+    try {
+      const res = await fetch('/api/timers');
+      const timers = await res.json();
+
+      if (!Array.isArray(timers) || timers.length === 0) {
+        if (panel) panel.style.display = 'none';
+        refreshScheduleSectionVisibility();
+        return;
+      }
+      if (panel) panel.style.display = '';
+
+      box.innerHTML = timers.map(t => `
+        <div class="schedule-item ${t.paused ? 'disabled' : ''}">
+          <div class="item-info">
+            <div class="item-time">${formatDuration(t.remaining_seconds)}</div>
+            <div class="item-name">${escapeHtml(t.name || 'Timer')}</div>
+            <div class="item-meta">
+              <span>${t.paused ? 'Paused' : 'Running'}</span>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="schedule-btn pause-btn"
+                    data-action="toggle-timer" data-id="${t.id}" data-paused="${t.paused}"
+                    title="${t.paused ? 'Resume' : 'Pause'}">
+              <i class="fas fa-${t.paused ? 'play' : 'pause'}"></i>
+            </button>
+            <button class="schedule-btn danger"
+                    data-action="cancel-timer" data-id="${t.id}"
+                    title="Cancel">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      refreshScheduleSectionVisibility();
+    } catch (e) {
+      console.error('loadTimers:', e);
+      if (panel) panel.style.display = '';
+      box.innerHTML = '<div class="schedule-empty">Failed to load timers</div>';
+    }
+  }
+
+  function refreshScheduleSectionVisibility() {
+    const section = document.getElementById('alarmsTimersSection');
+    if (!section) return;
+    const panels = section.querySelectorAll('.schedule-panel');
+    const anyVisible = Array.from(panels).some(p => p.style.display !== 'none');
+    section.style.display = anyVisible ? '' : 'none';
+  }
+
+  async function handleScheduleClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { action, id } = btn.dataset;
+    try {
+      if (action === 'toggle-alarm') {
+        await fetch(`/api/alarms/toggle?id=${id}`, { method: 'POST' });
+        loadAlarms();
+      } else if (action === 'delete-alarm') {
+        if (!confirm('Delete this alarm?')) return;
+        await fetch(`/api/alarms/remove?id=${id}`, { method: 'POST' });
+        loadAlarms();
+      } else if (action === 'toggle-timer') {
+        const paused = btn.dataset.paused === 'true';
+        const url = paused ? `/api/timers/resume?id=${id}` : `/api/timers/pause?id=${id}`;
+        await fetch(url, { method: 'POST' });
+        loadTimers();
+      } else if (action === 'cancel-timer') {
+        await fetch(`/api/timers/cancel?id=${id}`, { method: 'POST' });
+        loadTimers();
+      }
+    } catch (err) {
+      console.error('schedule action failed:', err);
+      if (typeof showNotification === 'function') showNotification('Action failed', 'error');
+    }
+  }
+
+  function initAlarmsTimers() {
+    injectScheduleStyles();
+    injectScheduleHTML();
+    const section = document.getElementById('alarmsTimersSection');
+    if (!section) return;
+    section.addEventListener('click', handleScheduleClick);
+    loadAlarms();
+    loadTimers();
+    setInterval(() => {
+      const home = document.getElementById('pageHome');
+      if (home && home.style.display !== 'none') {
+        loadAlarms();
+        loadTimers();
+      }
+    }, 5000);
+  }
 
   document.addEventListener('DOMContentLoaded', () => new DuckStealer());
 
@@ -1175,6 +1482,7 @@
     await loadCardConfig();
     if (window.initStatusCards) window.initStatusCards();
     if (window.initRoomControls) window.initRoomControls();
+    initAlarmsTimers();
   });
 
 })();
