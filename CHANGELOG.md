@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.5] - 2026-09-17
+
+### Added
+
 - Added alarm/timer control on the dashboard.
 - Added options for tv scraping. Can be configured globally or per-channel.
 - Added TV-guide voice script, user can search by channel or show.
@@ -24,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FIxed the timers API endpoints by properly prefixing with `/api/`.
 
 ### Removed
-
 
 ## [0.2.4] - 2026-09-14
 
