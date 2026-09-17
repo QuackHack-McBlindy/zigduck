@@ -4,9 +4,9 @@
   pkgs,
   ...
 } : let
-  inherit (lib) mkOption types;
+  inherit (lib) mkOption types mkEnableOption;
+  Types = import ./types.nix { inherit lib; };
 in {
-
   options.house.tv = mkOption {
     type = lib.types.attrsOf (lib.types.submodule {
       options = {
@@ -146,6 +146,16 @@ in {
           description = "Mapping of logical actions to Android keycodes";
         };
 
+        scraper = mkOption {
+          type = Types.scraperType;
+          default = {};
+          description = ''
+            Scraper tunables applied to every channel on this device.
+            Any subset may be overridden per channel via
+            `channels.<name>.scraper`.
+          '';
+        };
+
         # TV channel definitions
         channels = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule {
@@ -177,10 +187,18 @@ in {
               scrape_url = lib.mkOption {
                 type = lib.types.str;
                 description = ''
-                  URL used by external tools to scrape TV guide data for this channel.
-                  Not used directly by the TV binary.
-                '';  
+                  URL used by tv-scraper to fetch TV guide data for this channel.
+                '';
                 default = "";
+              };
+              scraper = mkOption {
+                type = Types.scraperType;
+                default = {};
+                description = ''
+                  Per-channel scraper overrides, layered on top of the
+                  device-level `scraper` and the scraper's built-in
+                  defaults.
+                '';
               };
             };
           });

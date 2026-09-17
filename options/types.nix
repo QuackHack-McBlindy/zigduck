@@ -2,7 +2,7 @@
   lib,
   ...
 } : let
-  inherit (lib) types mkOption mkEnableOption mkMerge;  
+  inherit (lib) types mkOption mkEnableOption mkMerge;
 
   roomType = types.submodule {
     options = {
@@ -11,7 +11,7 @@
         description = "Material Design (mdi) icon representing the room.";
       };
     };
-  }; 
+  };
 
 
   automationActionType = types.oneOf [
@@ -110,70 +110,178 @@
         default = "default";
         example = "sensors";
         description = "Status cards are ordered by it's group name";
-      };        
+      };
 
       source = mkOption {
         type = enum [ "file" ];
         default = "file";
-      };      
+      };
 
-      filePath = mkOption { 
-        type = str; 
-        default = ""; 
+      filePath = mkOption {
+        type = str;
+        default = "";
         description = "Path to JSON file for file source";
-      };    
+      };
 
-      jsonField = mkOption { 
-        type = str; 
-        default = ""; 
+      jsonField = mkOption {
+        type = str;
+        default = "";
         description = "JSON field to extract from file for main value";
-      };    
-      detailsJsonField = mkOption { 
-        type = nullOr str; 
+      };
+      detailsJsonField = mkOption {
+        type = nullOr str;
         default = null;
         description = "JSON field to extract from file for details (optional)";
-      };   
+      };
 
-      format = mkOption { 
-        type = str; 
-        default = "{value}"; 
+      format = mkOption {
+        type = str;
+        default = "{value}";
         description = "Format string for main value. Use {value} placeholder";
-      };   
-      detailsFormat = mkOption { 
-        type = str; 
-        default = "{value}"; 
+      };
+      detailsFormat = mkOption {
+        type = str;
+        default = "{value}";
         description = "Format string for details value. Use {value} placeholder";
       };
-      chart = mkOption { 
-        type = bool; 
-        default = false; 
+      chart = mkOption {
+        type = bool;
+        default = false;
         description = "Wether to show a history chart in the status card";
       };
-      historyField = mkOption { 
-        type = str; 
-        default = "history"; 
+      historyField = mkOption {
+        type = str;
+        default = "history";
         description = "JSON field to extract history data from for the chart";
       };
 
 
-      on_click_action = mkOption { 
+      on_click_action = mkOption {
         type = lib.types.listOf automationActionType;
         default = [];
         description = "Actions to perform when clicking this status card";
-      };    
-  
+      };
+
       # fallback values
       defaultValue = mkOption { type = str; default = ""; };
-      defaultDetails = mkOption { type = str; default = ""; };   
+      defaultDetails = mkOption { type = str; default = ""; };
       # legacy support - will be used if detailsJsonField is null
-      details = mkOption { 
-        type = str; 
-        default = ""; 
+      details = mkOption {
+        type = str;
+        default = "";
         description = "Static details text (used if detailsJsonField is not set)";
       };
     };
   };
 
+  scraperType = types.submodule {
+    options = {
+      row_xpath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          XPath selecting each programme row.
+          Scraper default: '//table[@id="channel-schedule"]//tr'.
+        '';
+        example = "//div[contains(@class,'programme-row')]";
+      };
+
+      time_xpath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          XPath relative to a row, locating the element containing the
+          start time. Scraper default: './/time'.
+        '';
+        example = ".//span[@class='airtime']";
+      };
+
+      time_attr = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          Attribute of the time element to read. Set to "" to always use
+          the element's text content. Scraper default: "datetime".
+        '';
+        example = "data-start";
+      };
+
+      title_xpath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          XPath relative to a row, locating the title element.
+          Scraper default: './/a[contains(@class, "program-title")]'.
+        '';
+        example = ".//h3";
+      };
+
+      desc_xpath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          XPath relative to a row, locating the description element.
+          Set to "" to disable descriptions.
+          Scraper default: './/p'.
+        '';
+        example = ".//div[@class='synopsis']";
+      };
+
+      time_formats = mkOption {
+        type = types.nullOr (types.listOf types.str);
+        default = null;
+        description = ''
+          strptime formats tried in order, after ISO 8601 is attempted.
+          Scraper default: [ "%H:%M" "%H.%M" ].
+        '';
+        example = [ "%I:%M %p" "%I:%M%p" "%H:%M" ];
+      };
+
+      time_strip_pattern = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = ''
+          Regex applied to the raw time string before strptime. Set to ""
+          to disable stripping — required when the format keeps a literal
+          AM/PM marker. Scraper default: "[^\\d:\\.]".
+        '';
+        example = "[^\\d:\\.APM ]";
+      };
+
+      default_duration_minutes = mkOption {
+        type = types.nullOr types.ints.positive;
+        default = null;
+        description = ''
+          Fallback duration when the next entry's start time can't be
+          parsed. Scraper default: 30.
+        '';
+      };
+
+      timezone_offset_hours = mkOption {
+        type = types.nullOr types.number;
+        default = null;
+        description = ''
+          Fixed offset applied to every parsed time, in hours. May be fractional
+          (e.g. 5.5). null = use the scraper's built-in global TIME_OFFSET.
+        '';
+        example = 2;
+      };
+
+      pm_heuristic_after_hour = mkOption {
+        type = types.nullOr (types.ints.between 0 23);
+        default = null;
+        description = ''
+          Only relevant for 12-hour formats that lack an explicit AM/PM
+          marker. Once the previous programme reached or passed this hour,
+          later ambiguous AM hours are promoted to PM. null disables.
+        '';
+        example = 12;
+      };
+    };
+  };
+
+  scraperToJson = s: lib.filterAttrs (_: v: v != null) s;
+
 in {
-  inherit automationActionType dimmerActionType roomType statusCardType;
+  inherit automationActionType dimmerActionType roomType statusCardType scraperType scraperToJson;
 }

@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added alarm/timer control on the dashboard.
+- Added options for tv scraping. Can be configured globally or per-channel.
+- Added TV-guide voice script, user can search by channel or show.
+
 ### Changed
 
+- Consolidated all packages to use the same version for simplicity.
+- Duplicate alarms set for the same time is no longer allowed.
+
 ### Fixed
+
+- `tv-scraper` package now uses the correct JSON configuration file.
+- FIxed the timers API endpoints by properly prefixing with `/api/`.
 
 ### Removed
 
@@ -50,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MQTT dashboard client script and connection logic.
 
 
-## [0.2.2] - 08-30-2026
+## [0.2.2] - 2026-08-30
 
 ### Added
 - `house.https.dashboard.url` and `house.https.dashboard.urlFile` options for dashboard API URL.

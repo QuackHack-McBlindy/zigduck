@@ -1,4 +1,4 @@
-{ 
+{
   self,
   config,
   lib,
@@ -6,7 +6,8 @@
   ...
 } : with lib;
 let
-  cfg = config.services.zigduck;  
+  Types = import ./../options/types.nix { inherit lib; };
+  cfg = config.services.zigduck;
   house = config.house;
   zigduckPkgs = self.inputs.zigduck.packages.${pkgs.system};
 
@@ -15,25 +16,30 @@ let
 
   tvDefaultsJsonFile = let
     rooms = lib.mapAttrs (_: tv: tv.ip) house.tv;
-  
+
     enabledTVs = lib.filterAttrs (_: tv: tv.enable) config.house.tv;
-  
+
     tvEntries = lib.mapAttrs (name: tv: {
-      ip = tv.ip;
-      room = tv.room;
+      ip         = tv.ip;
+      room       = tv.room;
       is_default = tv.isDefault or false;
-      keymap = tv.keymap;
-      apps = tv.apps or {};
-      channels = tv.channels or {};
+      keymap     = tv.keymap;
+      apps       = tv.apps or {};
+
+      scraper    = Types.scraperToJson (tv.scraper or {});
+
+      channels   = lib.mapAttrs (_: ch: ch // {
+        scraper = Types.scraperToJson (ch.scraper or {});
+      }) (tv.channels or {});
     }) enabledTVs;
-  
+
     defaultTVName = let
       defaults = lib.filterAttrs (_: tv: tv.isDefault) enabledTVs;
     in
       if defaults != {} then lib.head (lib.attrNames defaults)
       else if enabledTVs != {} then lib.head (lib.attrNames enabledTVs)
       else throw "No enabled TVs defined";
-  
+
     directories = {
       root        = house.media.root;
       tv          = house.media.tv;
@@ -44,7 +50,7 @@ let
       othervideo  = house.media.otherVideos;
       audiobook   = house.media.audiobooks;
     };
-  
+
     tvDefaultsAttrSet = {
       device_ip = config.house.tv.${defaultTVName}.ip;
       inherit rooms directories;
@@ -74,8 +80,9 @@ in {
     (mkIf (cfg.enable || cfg.cli.enable) {
       environment.systemPackages = [
         zigduckPkgs.tv
+        zigduckPkgs.tv-scraper
       ];
-      
+
       environment.etc."zigduck/tv-defaults.json".source = tvDefaultsJsonFile;
 
     })

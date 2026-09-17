@@ -916,49 +916,49 @@
   .page[data-page="0"] .status-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .page[data-page="0"] .card-value {
     font-size: 2.8rem;
   }
-  
+
   .page[data-page="0"] .duck-emoji {
     font-size: 2rem;
     top: -10px;
     right: -10px;
   }
-  
+
   .page[data-page="0"] .devices {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 15px;
   }
-  
+
   .page[data-page="0"] .device {
     padding: 15px;
     min-height: 130px;
   }
-  
+
   .page[data-page="0"] .device-icon {
     font-size: 2rem;
     width: 44px;
     height: 44px;
   }
-  
+
   .page[data-page="0"] .device-name {
     font-size: 1.3rem;
   }
-  
+
   .page[data-page="0"] .room-controls-section {
     padding: 0 15px;
   }
-  
+
   .page[data-page="0"] .room {
     padding: 18px 20px;
   }
-  
+
   .page[data-page="0"] .room-controls-section h3 {
     font-size: 2.2rem;
   }
-  
+
   .page[data-page="0"] .room-controls-section h3::before,
   .page[data-page="0"] .room-controls-section h3::after {
     font-size: 1.6rem;
@@ -971,47 +971,47 @@
   .page[data-page="0"] .devices {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
-  
+
   .page[data-page="0"] .room-controls-section {
     padding: 0 10px;
   }
-  
+
   .page[data-page="0"] .room {
     padding: 15px;
   }
-  
+
   .page[data-page="0"] .room-icon {
     font-size: 5.0rem;
     width: 36px;
     height: 36px;
   }
-  
+
   .page[data-page="0"] .device {
     min-height: 120px;
   }
-  
+
   .page[data-page="0"] .device-icon {
     font-size: 1.8rem;
     width: 40px;
     height: 40px;
   }
-  
+
   .page[data-page="0"] .device-name {
     font-size: 1.2rem;
   }
-  
+
   .page[data-page="0"] .device .switch {
     width: 52px;
     height: 28px;
   }
-  
+
   .page[data-page="0"] .device .toggle-slider:before {
     height: 20px;
     width: 20px;
     left: 4px;
     bottom: 4px;
   }
-  
+
   .page[data-page="0"] .device input:checked + .toggle-slider:before {
     transform: translateX(24px) scale(1.1);
   }
@@ -1023,13 +1023,113 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 240, 240, 0.8));
     color: #333;
   }
-  
+
   .page[data-page="0"] .card-title {
     color: #222;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
-  
+
   .page[data-page="0"] .card-value {
     color: #222;
   }
+}
+
+
+.alarms-timers-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 0 4px;
+}
+@media (max-width: 700px) {
+    .alarms-timers-section { grid-template-columns: 1fr; }
+}
+.schedule-panel {
+    background: rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.schedule-panel h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: var(--primary, #00ffaa);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.schedule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border-left: 3px solid var(--primary, #00ffaa);
+    transition: opacity 0.2s;
+}
+.schedule-item:last-child { margin-bottom: 0; }
+.schedule-item.disabled {
+    opacity: 0.45;
+    border-left-color: #666;
+}
+.schedule-item .item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+.schedule-item .item-time {
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: 'Poppins', monospace;
+    line-height: 1.1;
+}
+.schedule-item .item-name {
+    font-size: 0.78rem;
+    color: #bbb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+.schedule-item .item-days {
+    font-size: 0.68rem;
+    color: #888;
+    letter-spacing: 0.5px;
+}
+.schedule-item .item-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.schedule-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    color: white;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.schedule-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.06);
+}
+.schedule-btn.danger:hover { background: rgba(231, 76, 60, 0.6); }
+.schedule-empty {
+    color: #777;
+    font-size: 0.82rem;
+    padding: 10px;
+    text-align: center;
+    font-style: italic;
 }
