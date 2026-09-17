@@ -44,8 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## [0.2.3] - 2026-09-10
-
+## [0.2.3] - 10-10-2026
 
 ### Added
 - If `house.media.root` is defined an extra media tab is added to the dashboard.
