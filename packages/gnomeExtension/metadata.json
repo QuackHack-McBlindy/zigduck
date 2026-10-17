@@ -1,0 +1,13 @@
+{
+  "uuid": "zigduck@quackhack-mcblindy.com",
+  "name": "Zigduck Smart Home",
+  "description": "Control your Zigduck NixOS smart home from from the top bar.",
+  "gettext-domain": "zigduck",
+  "shell-version": [
+    "48",
+    "49",
+    "50"
+  ],
+  "url": "https://github.com/quackhack-mcblindy/zigduck",
+  "version": 1
+}

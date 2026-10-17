@@ -35,7 +35,7 @@ in {
       default = {};
       description = "Extra environment variables to pass to the service";
     };
-    
+
     # zigduck-dashboard servoce options
     dashboard = {
       enable = mkEnableOption "Zigduck dashboard service";
@@ -53,7 +53,7 @@ in {
         type = types.bool;
         default = false;
         description = "Whether to open the firewall for the specified port.";
-      };      
+      };
       passwordFile = mkOption {
         type = types.nullOr types.path;
         default = null;
@@ -75,7 +75,15 @@ in {
         description = "Whether to install zigduck-cli package.";
       };
     };
-    
+
+    # gnome-shell extension options
+    gnomeExtension = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether to install gnome-shell-extension zigduck package.";
+      };
+    };
+
+
   };}
-
-

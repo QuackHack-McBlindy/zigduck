@@ -8,7 +8,7 @@
   cmdHelpers = ''
     say_duck() {
       echo -e "\e[3m\e[38;2;0;150;150m🦆 duck say \e[1m\e[38;2;255;255;0m⮞\e[0m\e[3m\e[38;2;0;150;150m $1\e[0m"
-    }  
+    }
 
     color2hex() {
       local color="$1"
@@ -42,7 +42,7 @@
       fi
       printf "%02x%02x%02x\n" "$r" "$g" "$b"
     }
-    
+
     color2xy() {
       local color="$1"
       declare -A color_ranges=(
@@ -72,40 +72,40 @@
         IFS=':' read -r min_range max_range <<< "''${color_ranges[$color]}"
         IFS=',' read -r min_x min_y <<< "$min_range"
         IFS=',' read -r max_x max_y <<< "$max_range"
-        
+
         x=$(LC_ALL=C awk -v min="$min_x" -v max="$max_x" -v seed=$RANDOM 'BEGIN {srand(seed); printf "%.4f\n", min + rand() * (max - min)}')
         y=$(LC_ALL=C awk -v min="$min_y" -v max="$max_y" -v seed=$RANDOM 'BEGIN {srand(seed); printf "%.4f\n", min + rand() * (max - min)}')
       fi
-      
+
       LC_ALL=C awk -v x="$x" -v y="$y" 'BEGIN {printf "[%.4f,%.4f]\n", x, y}'
-    }    
-    
+    }
+
     hex_to_xy() {
       local hex="$1"
-      local r g b 
+      local r g b
       hex=$(echo "$hex" | sed 's/^#//')
       [[ ''${#hex} -eq 6 ]] || { echo "0.5 0.4"; return 1; }
-  
+
       r=$((16#''${hex:0:2}))
       g=$((16#''${hex:2:2}))
       b=$((16#''${hex:4:2}))
-  
+
       local r_cor g_cor b_cor
       r_cor=$(echo "scale=4; $r / 255" | bc -l)
       g_cor=$(echo "scale=4; $g / 255" | bc -l)
       b_cor=$(echo "scale=4; $b / 255" | bc -l)
-  
+
       r_cor=$(echo "scale=4; if ($r_cor > 0.04045) { e(2.4 * l($r_cor / 1.055 + 0.055)) } else { $r_cor / 12.92 }" | bc -l)
       g_cor=$(echo "scale=4; if ($g_cor > 0.04045) { e(2.4 * l($g_cor / 1.055 + 0.055)) } else { $g_cor / 12.92 }" | bc -l)
       b_cor=$(echo "scale=4; if ($b_cor > 0.04045) { e(2.4 * l($b_cor / 1.055 + 0.055)) } else { $b_cor / 12.92 }" | bc -l)
-  
+
       local x y z
       x=$(echo "scale=4; ($r_cor * 0.649926 + $g_cor * 0.103455 + $b_cor * 0.197109)" | bc -l)
       y=$(echo "scale=4; ($r_cor * 0.234327 + $g_cor * 0.743075 + $b_cor * 0.022598)" | bc -l)
       z=$(echo "scale=4; ($r_cor * 0.000000 + $g_cor * 0.053077 + $b_cor * 1.035763)" | bc -l)
-  
+
       local total
-      total=$(echo "scale=4; $x + $y + $z" | bc -l)  
+      total=$(echo "scale=4; $x + $y + $z" | bc -l)
       if [[ $(echo "$total == 0" | bc -l) -eq 1 ]]; then
         echo "0.5 0.4"
       else
@@ -125,7 +125,7 @@ in {
           ( pkgs.writeScriptBin "hue" ''
             ${cmdHelpers}
             # set -euo pipefail
-          
+
             if [ "${if config.house.zigbee.hueSyncBox != null && config.house.zigbee.hueSyncBox.enable then "1" else "0"}" = "1" ]; then
               HUE_BRIDGE_IP="${config.house.zigbee.hueSyncBox.bridge.ip}"
               HUE_BRIDGE_API_KEY="$(cat "${config.house.zigbee.hueSyncBox.bridge.passwordFile}" 2>/dev/null || echo "")"
@@ -133,7 +133,7 @@ in {
               HUE_SYNC_BOX_API_KEY="$(cat "${config.house.zigbee.hueSyncBox.syncBox.passwordFile}" 2>/dev/null || echo "")"
               HUE_INSECURE="${toString config.house.zigbee.hueSyncBox.insecure}"
               HUE_SKIP_CERT_CHECK="${toString config.house.zigbee.hueSyncBox.skipCertCheck}"
-              
+
               HUE_DEVICE_MAP='${builtins.toJSON (
                 let
                   zigbeeConfig = config.house.zigbee;
@@ -162,8 +162,8 @@ in {
                 in
                   hueDeviceMapping
               )}'
-              
-              
+
+
               HUE_NIX_SCENES='${builtins.toJSON config.house.zigbee.scenes}'
             else
               HUE_BRIDGE_IP=""
@@ -175,13 +175,13 @@ in {
               HUE_DEVICE_MAP='{}'
               HUE_NIX_SCENES='{}'
             fi
-          
+
             update_state_file() {
               STATE_FILE="/var/lib/zigduck/state.json"
               HUE_JSON="$(hue bridge lights)"
               NOW_ISO="$(date --iso-8601=seconds)"
               NOW_EPOCH="$(date +%s)"
-              
+
               jq \
                 --argjson hue "$HUE_JSON" \
                 --arg now_iso "$NOW_ISO" \
@@ -209,18 +209,18 @@ in {
                       )
                   )
                 )
-              ' "$STATE_FILE" > "''${STATE_FILE}.tmp"      
-              mv "''${STATE_FILE}.tmp" "$STATE_FILE" 
+              ' "$STATE_FILE" > "''${STATE_FILE}.tmp"
+              mv "''${STATE_FILE}.tmp" "$STATE_FILE"
             }
 
             load_device_map() {
               echo "$HUE_DEVICE_MAP" | ${pkgs.jq}/bin/jq '.'
             }
-            
+
             load_nix_scenes() {
               echo "$HUE_NIX_SCENES" | ${pkgs.jq}/bin/jq '.'
             }
-          
+
             get_hue_id() {
               local friendly_name="$1"
               local device_map
@@ -229,7 +229,7 @@ in {
                 if .[$name] then .[$name].hue_id else null end
               '
             }
-          
+
             get_device_info() {
               local friendly_name="$1"
               local device_map
@@ -238,25 +238,25 @@ in {
                 if .[$name] then .[$name] else null end
               '
             }
-          
+
             list_hue_devices() {
               local device_map
               device_map=$(load_device_map)
               echo "$device_map" | ${pkgs.jq}/bin/jq -r '
-                to_entries[] | 
+                to_entries[] |
                 "\(.key) (hue_id: \(.value.hue_id), room: \(.value.room), type: \(.value.type))"
               '
             }
-          
+
             list_nix_scenes() {
               local nix_scenes
               nix_scenes=$(load_nix_scenes)
               echo "$nix_scenes" | ${pkgs.jq}/bin/jq -r '
-                to_entries[] | 
+                to_entries[] |
                 .key
               '
             }
-          
+
             get_nix_scene_info() {
               local scene_name="$1"
               local nix_scenes
@@ -265,10 +265,10 @@ in {
                 if .[$scene] then .[$scene] else null end
               '
             }
-          
+
             hue_api() {
               local target="$1" method="$2" endpoint="$3" data="$4"
-              local ip key base curl_opts=""  
+              local ip key base curl_opts=""
               case "$target" in
                 bridge)
                   ip="$HUE_BRIDGE_IP"
@@ -279,28 +279,33 @@ in {
                 sync)
                   ip="$HUE_SYNC_BOX_IP"
                   key="$HUE_SYNC_BOX_API_KEY"
-                  base="https://$ip/api/v1/$key"
-                  [ "$HUE_SKIP_CERT_CHECK" = "true" ] && curl_opts="-k"
+                  base="https://$ip/api/v1"
+                  curl_opts="-k"
                   ;;
                 *)
                   say_duck "fuck ❌ Invalid target: $target"
                   say_duck "Use: \"bridge\" or \"sync\""
                   exit 1
                   ;;
-              esac      
+              esac
               [[ -z "$ip" || -z "$key" ]] && {
                 say_duck "fuck ❌ $target not configured or API key missing"
                 exit 1
               }
+              local auth_header=""
+              [ "$target" = "sync" ] && auth_header="Authorization: Bearer $key"
+
               if [[ -n "$data" ]]; then
                 curl $curl_opts -X "$method" "$base$endpoint" \
+                  ''${auth_header:+-H "$auth_header"} \
                   -H "Content-Type: application/json" \
-                  -d "$data" 2>/dev/null || { say_duck "fuck ❌ $target API call failed"; exit 1; }
+                  -d "$data" 2>/dev/null || { say_duck "fuck ❌ $target API call failed" >&2; exit 1; }
               else
-                curl $curl_opts -X "$method" "$base$endpoint" 2>/dev/null || { say_duck "$target API call failed"; exit 1; }
+                curl $curl_opts -X "$method" "$base$endpoint" \
+                  ''${auth_header:+-H "$auth_header"} 2>/dev/null || { say_duck "$target API call failed" >&2; exit 1; }
               fi
             }
-          
+
 
             apply_nix_scene() {
               local scene_name="$1"
@@ -308,51 +313,51 @@ in {
               nix_scenes=$(load_nix_scenes)
               local scene_def
               scene_def=$(echo "$nix_scenes" | ${pkgs.jq}/bin/jq -r --arg scene "$scene_name" '.[$scene]')
-              
+
               if [ -z "$scene_def" ] || [ "$scene_def" = "null" ]; then
                 say_duck "fuck ❌ No Nix scene found: $scene_name"
                 say_duck "Available Nix scenes:"
                 list_nix_scenes | sed 's/^/  /'
                 exit 1
               fi
-              
+
               say_duck "Applying Nix scene: $scene_name"
               local applied_count=0
               local skipped_count=0
-              
+
               local device_names
               device_names=$(echo "$scene_def" | ${pkgs.jq}/bin/jq -r 'keys[]')
-              
+
               while IFS= read -r friendly_name; do
                 local hue_id
                 hue_id=$(get_hue_id "$friendly_name")
-                
+
                 if [ -z "$hue_id" ] || [ "$hue_id" = "null" ]; then
                   say_duck "⚠️ Skipping $friendly_name: no hue_id"
                   skipped_count=$((skipped_count + 1))
                   continue
                 fi
-                
+
                 local device_state
                 device_state=$(echo "$scene_def" | ${pkgs.jq}/bin/jq -c --arg name "$friendly_name" '.[$name]')
-                
+
                 local state
                 state=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.state // "ON"')
-                
+
                 local update_json="{\"on\":"
                 if [ "$state" = "ON" ]; then
                   update_json="''${update_json}true"
-  
+
                   if [ "$brightness" != "null" ] && [ "$brightness" != "" ]; then
                     update_json="''${update_json}, \"bri\":$brightness"
                   fi
-  
+
                   local xy_json hue_val sat_val ct_val
                   xy_json=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.color.xy')
                   hue_val=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.color.hue')
                   sat_val=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.color.saturation')
                   ct_val=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.color.ct // .color.temp')
-  
+
                   if [ "$xy_json" != "null" ] && [ "$xy_json" != "" ]; then
                     update_json="''${update_json}, \"xy\":$xy_json"
                   elif [ "$hue_val" != "null" ] && [ "$sat_val" != "null" ] && [ "$hue_val" != "" ] && [ "$sat_val" != "" ]; then
@@ -374,13 +379,13 @@ in {
                       fi
                     fi
                   fi
-  
+
                   local effect_val
                   effect_val=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.effect')
                   if [ "$effect_val" != "null" ] && [ "$effect_val" != "" ] && [ "$effect_val" != "none" ]; then
                     update_json="''${update_json}, \"effect\":\"$effect_val\""
                   fi
-  
+
                   local alert_val
                   alert_val=$(echo "$device_state" | ${pkgs.jq}/bin/jq -r '.alert')
                   if [ "$alert_val" != "null" ] && [ "$alert_val" != "" ] && [ "$alert_val" != "none" ]; then
@@ -389,9 +394,9 @@ in {
                 else
                   update_json="''${update_json}false"
                 fi
-                
+
                 update_json="''${update_json}}"
-                
+
                 hue_api bridge PUT "/lights/$hue_id/state" "$update_json" > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
                   say_duck "$friendly_name (hue_id: $hue_id): $state"
@@ -399,14 +404,14 @@ in {
                 else
                   say_duck "fuck  ❌ Failed to update $friendly_name"
                 fi
-                
+
                 sleep 0.1
               done <<< "$device_names"
-              
+
               say_duck "Scene '$scene_name' applied! ($applied_count hue devices, $skipped_count non-hue devices skipped)"
               update_state_file
             }
-          
+
             case "$1" in
               bridge)
                 case "$2" in
@@ -440,7 +445,7 @@ in {
                     friendly_name="$3"
                     action="$4"
                     value="''${5:-}"
-                    
+
                     hue_id=$(get_hue_id "$friendly_name")
                     if [ -z "$hue_id" ] || [ "$hue_id" = "null" ]; then
                       say_duck "fuck ❌ No hue_id found for device: $friendly_name"
@@ -448,7 +453,7 @@ in {
                       list_hue_devices | sed 's/^/  /'
                       exit 1
                     fi
-                    
+
                     case "$action" in
                       on)
                         hue_api bridge PUT "/lights/$hue_id/state" '{"on":true}'
@@ -556,7 +561,7 @@ in {
             apply-scene <name>    Apply a Nix-defined scene to hue devices
             group <id> <action>   Control a group
                 Actions: on, off, brightness <0-254>
-          
+
           Examples:
             hue bridge devices
             hue bridge nix-scenes
@@ -574,30 +579,33 @@ in {
                     exit 1
                     ;;
                 esac
-                ;;            
-              
+                ;;
+
               sync)
                 case "$2" in
                   on)
-                    hue_api sync PUT "/sync" '{"syncActive":true}'
+                    hue_api sync PUT "/execution" '{"syncActive":true}'
+                    say_duck "Sync ON"
                     ;;
                   off)
-                    hue_api sync PUT "/sync" '{"syncActive":false}'
+                    hue_api sync PUT "/execution" '{"syncActive":false}'
+                    say_duck "Sync OFF"
                     ;;
                   toggle)
-                    status=$(hue_api sync GET "" "")
-                    is_active=$(echo "$status" | ${pkgs.jq}/bin/jq -r '.execution.syncActive')
-                    new_state=$([ "$is_active" = "true" ] && echo "false" || echo "true")
-                    hue_api sync PUT "/sync" "{\"syncActive\":$new_state}"
+                    cur=$(hue_api sync GET "/execution" "" | ${pkgs.jq}/bin/jq -r '.syncActive')
+                    new=$([ "$cur" = "true" ] && echo "false" || echo "true")
+                    hue_api sync PUT "/execution" "{\"syncActive\":$new}"
+                    say_duck "Sync toggled → $new"
                     ;;
                   status)
-                    hue_api sync GET "" "" | ${pkgs.jq}/bin/jq '.'
+                    hue_api sync GET "/execution" "" | ${pkgs.jq}/bin/jq '.'
                     ;;
                   mode)
                     mode="$3"
                     case "$mode" in
                       video|music|game)
-                        hue_api sync PUT "/sync" "{\"mode\":\"$mode\"}"
+                        hue_api sync PUT "/execution" "{\"mode\":\"$mode\"}"
+                        say_duck "Mode → $mode"
                         ;;
                       *)
                         say_duck "fuck ❌ Invalid mode: $mode"
@@ -609,7 +617,9 @@ in {
                     intensity="$3"
                     case "$intensity" in
                       subtle|moderate|high|intense)
-                        hue_api sync PUT "/sync" "{\"intensity\":\"$intensity\"}"
+                        cur_mode=$(hue_api sync GET "/execution" "" | ${pkgs.jq}/bin/jq -r '.mode')
+                        hue_api sync PUT "/execution" "{\"$cur_mode\":{\"intensity\":\"$intensity\"}}"
+                        say_duck "Intensity ($cur_mode) → $intensity"
                         ;;
                       *)
                         say_duck "fuck ❌ Invalid intensity: $intensity"
@@ -617,9 +627,19 @@ in {
                         ;;
                     esac
                     ;;
+                  brightness|bri)
+                    value="$3"
+                    [[ "$value" =~ ^[0-9]+$ && "$value" -ge 0 && "$value" -le 100 ]] || {
+                      say_duck "fuck ❌ Sync brightness must be 0-100"
+                      exit 1
+                    }
+                    hue_api sync PUT "/execution" "{\"brightness\":$value}"
+                    say_duck "Sync brightness → $value"
+                    ;;
                   entertainment-area)
                     area_id="$3"
-                    hue_api sync PUT "/sync" "{\"entertainmentConfiguration\":\"$area_id\"}"
+                    hue_api sync PUT "/execution" "{\"hueTarget\":\"$area_id\"}"
+                    say_duck "Entertainment area → $area_id"
                     ;;
                   hdmi-input)
                     input="$3"
@@ -627,7 +647,8 @@ in {
                       say_duck "fuck ❌ Invalid HDMI input: $input"
                       exit 1
                     }
-                    hue_api sync PUT "/sync" "{\"hdmiSource\":\"input$input\"}"
+                    hue_api sync PUT "/execution" "{\"hdmiSource\":\"input$input\"}"
+                    say_duck "HDMI input → $input"
                     ;;
                   help)
                     cat <<EOF
@@ -635,30 +656,32 @@ in {
             on                    Turn sync on
             off                   Turn sync off
             toggle                Toggle sync state
-            status                Get sync box status
+            status                Get full execution state
             mode <mode>           Set sync mode (video|music|game)
-            intensity <level>     Set intensity (subtle|moderate|high|intense)
-            entertainment-area <id> Set entertainment area
+            intensity <level>     Set intensity (subtle|moderate|high|intense) for current mode
+            brightness <0-100>    Set sync brightness
+            entertainment-area <uuid>  Set hueTarget entertainment area
             hdmi-input <1-4>      Set HDMI input source
           EOF
                     ;;
                   *)
                     say_duck "fuck ❌ Unknown sync command: $2"
-                    say_duck "Use: help, on, off, toggle, status, mode, intensity, entertainment-area, hdmi-input"
+                    say_duck "Use: help, on, off, toggle, status, mode, intensity, brightness, entertainment-area, hdmi-input"
                     exit 1
                     ;;
                 esac
                 ;;
-              
+
+
               help|--help|-h)
                 cat <<EOF
           🦆 Philips Hue Control Script
-          
+
           Usage:
             hue bridge <command> [args...]    Control Hue Bridge
             hue sync <command> [args...]      Control Hue Sync Box
             hue help                         Show this help
-          
+
           Quick Examples:
             hue bridge nix-scenes             # List all Nix scenes
             hue bridge apply-scene backlit    # Apply Nix "backlit" scene to hue devices
@@ -667,10 +690,10 @@ in {
             hue bridge light "TV Play 1" on  # Turn on a light by name
             hue sync on                       # Turn on sync box
             hue sync mode video              # Set sync mode to video
-          
+
           Use 'hue bridge help' or 'hue sync help' for more detailed help.
           EOF
-                ;;         
+                ;;
               *)
                 say_duck "fuck ❌ Unknown command: $1"
                 say_duck "Use: \"bridge\", \"sync\", or \"help\""
@@ -679,5 +702,5 @@ in {
             esac
           '')
     ];
-    
-  };}       
+
+  };}

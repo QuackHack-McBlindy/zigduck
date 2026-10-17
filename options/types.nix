@@ -10,6 +10,11 @@
         type = types.str;
         description = "Material Design (mdi) icon representing the room.";
       };
+      entertainment = mkOption {
+        type = types.bool;
+        default = false;
+        description = "When set to true this room is an entertainment area within the Philips Hue Play HDMI Sync Box integration.";
+      };
     };
   };
 
