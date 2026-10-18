@@ -10,7 +10,7 @@ in {
   options.house.zigbee.hueSyncBox = mkOption {
     type = types.nullOr (types.submodule {
       options = {
-        enable = mkEnableOption "Enable Philips Hue Bridge & Sync Box integration";      
+        enable = mkEnableOption "Enable Philips Hue Bridge & Sync Box integration";
         # hue bridge configuration
         bridge = {
           ip = mkOption {
@@ -26,7 +26,7 @@ in {
               The response will contain a `username` field – save that string in this file.
             '';
           };
-        };      
+        };
         # hue sync box configuration
         syncBox = {
           ip = mkOption {
@@ -35,7 +35,13 @@ in {
           };
           passwordFile = mkOption {
             type = types.path;
-            description = "File containing the Hue Sync Box API key";
+            description = ''
+              Path to a file containing the Hue Sync Box API token.
+              To get a token, run the following command:
+                curl -k -sS -X POST "https://<SYNC_BOX_IP>/api/v1/registrations" -H "Content-Type: application/json" -d '{"appName": "zigduck", "instanceName": "zigduck"}'
+              Then press and hold the physical button on the Sync Box until the LED turns green, then send the command again.
+              The resposne will contain the API token.
+            '';
           };
           tv = mkOption {
             type = types.str;
@@ -47,20 +53,10 @@ in {
               else if builtins.hasAttr tvName config.house.tv then tvName
               else throw "TV '${tvName}' is not defined in house.tv. Available: ${lib.concatStringsSep ", " (lib.attrNames config.house.tv)}";
           };
-        };      
-        insecure = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Allow insecure HTTP for Bridge (use with caution!)";
-        };
-        skipCertCheck = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Skip SSL certificate verification for Sync Box (self-signed cert)";
         };
       };
     });
     default = null;
     description = "Philips Hue Bridge & Sync Box configuration for TV to lights syncing";
 
-  };}    
+  };}

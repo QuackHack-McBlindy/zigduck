@@ -4,7 +4,8 @@
   pkgs,
   ...
 } : let
-  inherit (lib) mkOption types;
+  inherit (lib)
+  mkOption types;
   Types = import ./types.nix { inherit lib; };
 in {
 
@@ -19,4 +20,4 @@ in {
     };
     description = "A set of rooms in the house with their attributes.";
 
-  };}    
+  };}

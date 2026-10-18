@@ -1,4 +1,4 @@
-{ 
+{
   self,
   config,
   lib,
@@ -6,14 +6,14 @@
   ...
 } : with lib;
 let
-  cfg = config.services.zigduck;  
+  cfg = config.services.zigduck;
   house = config.house;
   zigduckPkgs = self.inputs.zigduck.packages.${pkgs.system};
 
   format = pkgs.formats.yaml { };
   configFile = format.generate "zigbee2mqtt.yaml" house.zigbee.settings;
 
-  zigbeeDevices = house.zigbee.devices;  
+  zigbeeDevices = house.zigbee.devices;
   scenes = house.zigbee.scenes;
   sceneConfig = pkgs.writeText "scene-config.json" (builtins.toJSON {
     scenes = scenes;
@@ -25,7 +25,7 @@ let
       devices = sceneDevices;
     }) scenes
   ));
-        
+
   byRoom = lib.groupBy (id: zigbeeDevices.${id}.room) (lib.attrNames zigbeeDevices);
   rooms = lib.mapAttrs (_: tv: tv.ip) house.tv;
 
@@ -33,7 +33,7 @@ let
     name = room;
     value = {
       friendly_name = room;
-      devices = map (id: 
+      devices = map (id:
         let dev = zigbeeDevices.${id};
         in "${id}/${toString dev.endpoint}"
       ) ids;
@@ -51,20 +51,20 @@ let
             type = dev.type;
             endpoint = dev.endpoint;
             ieee = ieee;
-          
+
             # CLI
             friendly_name = dev.friendly_name;
             hue_id = dev.hue_id or null;
             supports_color = dev.supports_color or null;
             supports_temperature = dev.supports_temperature or null;
             icon = dev.icon or null;
-            battery_type = dev.battery_type or null;
+            battery_type = dev.batteryType or null;
           };
         }) zigbeeDevices
       )
     )
   );
-  
+
   deviceConfig = lib.mapAttrs (_: dev: { friendly_name = dev.friendly_name; })
   (lib.filterAttrs (_: dev: dev.type != "hue_light") zigbeeDevices);
 
@@ -75,34 +75,40 @@ let
   jsonFormat = pkgs.formats.json { };
 
   mainConfig = {
+    devices = house.devices;
+    zigduck = {
+      state_dir = cfg.stateDir;
+    };
     mosquitto = {
       broker = house.zigbee.mosquitto.host;
       user = house.zigbee.mosquitto.username;
-      password_file = house.zigbee.mosquitto.passwordFile; 
+      password_file = house.zigbee.mosquitto.passwordFile;
       base_topic = house.zigbee.mosquitto.baseTopic;
     };
     hue = {
-      bridge_ip = house.zigbee.hueSyncBox.bridge.ip;
+      bridge_ip     = house.zigbee.hueSyncBox.bridge.ip;
       password_file = house.zigbee.hueSyncBox.bridge.passwordFile;
+      sync_box_ip   = house.zigbee.hueSyncBox.syncBox.ip;
+      sync_box_token_file = house.zigbee.hueSyncBox.syncBox.passwordFile;
     };
     dark_time = {
-      enabled = house.zigbee.motion.when.dark.enable;
+      enabled    = house.zigbee.motion.when.dark.enable;
       transition = house.zigbee.motion.trigger.lights.transition;
-      after = house.zigbee.motion.trigger.lights.after;
-      before = house.zigbee.motion.trigger.lights.before;
-      duration = house.zigbee.motion.trigger.lights.duration;
+      after      = house.zigbee.motion.trigger.lights.after;
+      before     = house.zigbee.motion.trigger.lights.before;
+      duration   = house.zigbee.motion.trigger.lights.duration;
     };
     dimmer = {
       message_key = house.zigbee.dimmer.message;
       actions = {
-        on_press = house.zigbee.dimmer.actions.onPress;
-        on_hold = house.zigbee.dimmer.actions.onHold;
+        on_press  = house.zigbee.dimmer.actions.onPress;
+        on_hold   = house.zigbee.dimmer.actions.onHold;
         off_press = house.zigbee.dimmer.actions.offPress;
-        off_hold = house.zigbee.dimmer.actions.offHold;
-        up_press = house.zigbee.dimmer.actions.upPress;
-        up_hold = house.zigbee.dimmer.actions.upHold;
+        off_hold  = house.zigbee.dimmer.actions.offHold;
+        up_press  = house.zigbee.dimmer.actions.upPress;
+        up_hold   = house.zigbee.dimmer.actions.upHold;
         down_press = house.zigbee.dimmer.actions.downPress;
-        down_hold = house.zigbee.dimmer.actions.downHold;
+        down_hold  = house.zigbee.dimmer.actions.downHold;
       };
       double_click_timeout_ms = house.zigbee.dimmer.doubleClickTimeout;
     };
@@ -125,7 +131,7 @@ let
             else null;
       password_file = cfg.dashboard.passwordFile;
     };
-    motion = {    
+    motion = {
       enabled = house.zigbee.motion.enable;
     };
     no_motion = {
@@ -138,22 +144,22 @@ let
   zigduckConfigFile = jsonFormat.generate "config.json" mainConfig;
 
 in {
-  imports = [ ./dashboard.nix ./tv.nix ];
-  
+  imports = [ ./dashboard.nix ./tv.nix ./gnomeExtension.nix ];
+
   config = mkMerge [
     (mkIf cfg.enable {
-      environment.systemPackages = [ 
+      environment.systemPackages = [
         pkgs.mosquitto
-        pkgs.zigbee2mqtt      
+        pkgs.zigbee2mqtt
       ];
-  
+
       networking.firewall.allowedTCPPorts =
         (map (l: l.port) config.services.mosquitto.listeners)
         ++ lib.optionals cfg.dashboard.openFirewall [
              house.zigbee.settings.frontend.port
              cfg.dashboard.port
            ];
-    
+
       house.zigbee = {
         enable = true;
         dataDir = "/var/lib/zigbee";
@@ -169,10 +175,10 @@ in {
             port = "/dev/" + house.zigbee.coordinator.symlink;
             adapter = house.zigbee.coordinator.adapter;
           };
-          frontend = { 
+          frontend = {
             enabled = true;
-            host = "0.0.0.0";   
-            port = 8099; 
+            host = "0.0.0.0";
+            port = 8099;
           };
           advanced = {
             homeassistant_legacy_entity_attributes = false;
@@ -191,15 +197,15 @@ in {
           groups = groupConfig // {
             all_lights = {
               friendly_name = "all";
-              devices = lib.concatMap (id: 
+              devices = lib.concatMap (id:
                 let dev = zigbeeDevices.${id};
                 in if dev.type == "light" then ["${id}/${toString dev.endpoint}"] else []
               ) (lib.attrNames zigbeeDevices);
             };
           };
-        }; 
+        };
       };
-      
+
       systemd.services.zigbee2mqtt = {
         wantedBy = [ "multi-user.target" ];
         after = [ "sops-nix.service" "network.target" "systemd-tmpfiles-setup.service" ];
@@ -212,7 +218,7 @@ in {
           network_key=$(cat ${house.zigbee.networkKeyFile})
           sed -i "s|/run/secrets/mosquitto|$mosquitto_password|" ${house.zigbee.dataDir}/configuration.yaml
           TMPFILE="${house.zigbee.dataDir}/config.yaml"
-          CFGFILE="${house.zigbee.dataDir}/configuration.yaml"          
+          CFGFILE="${house.zigbee.dataDir}/configuration.yaml"
           ${pkgs.gawk}/bin/awk -v keyfile="${house.zigbee.networkKeyFile}" '
             /(^|[[:space:]])network_key:/ { found = 1 }
             { lines[NR] = $0 }
@@ -236,10 +242,10 @@ in {
                 }
               }
             }
-          ' "$CFGFILE" > "$TMPFILE"   
+          ' "$CFGFILE" > "$TMPFILE"
           mv "$TMPFILE" "$CFGFILE"
         '';
-  
+
         serviceConfig = {
           ExecStart = "${pkgs.zigbee2mqtt}/bin/zigbee2mqtt";
           User = "zigbee2mqtt";
@@ -278,7 +284,7 @@ in {
           UMask = "0077";
         };
       };
-  
+
       services.mosquitto = {
         enable = true;
         listeners = [
@@ -288,7 +294,7 @@ in {
             omitPasswordAuth = false;
             users.${house.zigbee.mosquitto.username}.passwordFile = house.zigbee.mosquitto.passwordFile;
             settings.allow_anonymous = false;
-          }   
+          }
           {
             acl = [ "pattern readwrite #" ];
             port = 9001;
@@ -297,16 +303,16 @@ in {
             users.${house.zigbee.mosquitto.username}.passwordFile = house.zigbee.mosquitto.passwordFile;
             settings.allow_anonymous = false;
             settings.require_certificate = false;
-          } 
+          }
         ];
       };
-  
+
       systemd.services.zigduck = {
         description = "Zigduck Home Automation Service";
         after = [ "network.target" "mosquitto.service" ];
         wants = [ "mosquitto.service" ];
         wantedBy = [ "multi-user.target" ];
-  
+
         serviceConfig = {
           Type = "simple";
           User = "zigduck";
@@ -315,7 +321,7 @@ in {
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
           ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck";
-          
+
           Restart = "on-failure";
           RestartSec = "45s";
 
@@ -333,7 +339,7 @@ in {
           in mapAttrsToList (name: value: "${name}=${value}") env;
         };
       };
-      
+
       services.udev.extraRules = let
         port = house.zigbee.coordinator;
       in
@@ -382,7 +388,7 @@ in {
 
     (mkIf (cfg.enable || cfg.cli.enable) {
       environment.systemPackages = [ zigduckPkgs.zigduck-cli ];
-      
+
       environment.etc."zigduck/config.json".source = zigduckConfigFile;
       environment.etc."zigduck/devices.json".source = devices-json;
       environment.etc."zigduck/automations.json".source = automationsFile;
@@ -398,13 +404,13 @@ in {
        "L+ ${cfg.stateDir}/scenes.json - - - - /etc/zigduck/scenes.json"
        "L+ ${cfg.stateDir}/automations.json - - - - /etc/zigduck/automations.json"
       ];
-      
+
       users.users.zigbee2mqtt = {
         isSystemUser = true;
         group = "zigbee2mqtt";
         home = house.zigbee.dataDir;
         createHome = true;
-      }; 
+      };
       users.users.zigduck = {
         isSystemUser = true;
         group = "zigduck";
@@ -412,8 +418,8 @@ in {
         createHome = true;
       };
 
-      users.groups.zigbee2mqtt = {};  
+      users.groups.zigbee2mqtt = {};
       users.groups.zigduck = { };
     })
-    
+
   ];}

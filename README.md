@@ -11,34 +11,34 @@
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.4-black?style=flat)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.6-black?style=flat)
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
-![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
+![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.2-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
 ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
 
 <!-- VERSIONS_END -->
 
 
-<br>
+
 
 # **A Flake For Your House**
 
 
-**zigduck** is the flake that brings version control to your smart home.
-A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.
-Nix for configuration, Rust for responsive async runtime.
-Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.
+**zigduck** is the flake that brings version control to your smart home.<br>
+A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.<br>
+Nix for configuration, Rust for responsive async runtime.<br>
+Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.<br>
 
 **Define once, deploy forever.**
 
-**zigduck** uses smart defaults, after defining your rooms & devices --
-most users don’t need to write any automations at all.
-Lights, dimmers, motion sensors - it should all work as expected **out of the box**.
-**Everything** is configurable via NixOS options.
+**zigduck** uses smart defaults, after defining your rooms & devices --<br>
+most users don’t need to write any automations at all.<br>
+Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
+**Everything** is configurable via NixOS options.<br>
 
-An optional **dashboard** page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.
+Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
 
 
 ```markdown
@@ -104,6 +104,11 @@ An optional **dashboard** page is generated from the defined Nix configuration t
     services.zigduck = {
       enable = true;
       cli.enable = true;
+
+      # enable to install the package and get a gnome widget in top bar
+      # enable extension with `gnome-extensions enable zigduck@quackhack-mcblindy.com`
+      gnomeExtension.enable = true;
+      
       # for security reasons, it's highly recommended to serve the dashboard over a reverse proxy (Nginx, Caddy, Traefik, etc).
       dashboard = {
         enable = true;
@@ -113,12 +118,6 @@ An optional **dashboard** page is generated from the defined Nix configuration t
         openFirewall = true;
         passwordFile = config.sops.secrets.dashboard.path;
       };
-      # if using `yo` and want to execute scripts from the `zigduck` user
-      extraEnv.PATH =
-        "/run/current-system/sw/bin:"
-        + "/optional/wrappers";
-      };
-
     };
 ```
 
@@ -129,7 +128,7 @@ An optional **dashboard** page is generated from the defined Nix configuration t
 
 ## **Configuration**
 
-If anything about the configuration is unclear or if you have questions,
+If anything about the configuration is unclear or if you have questions,<br>
 a good starter point would be to study the [options](https://github.com/QuackHack-McBlindy/zigduck/tree/main/options) which has detailed descriptions for everything.
 <br>
 
@@ -199,7 +198,11 @@ a good starter point would be to study the [options](https://github.com/QuackHac
       kitchen.icon    = "mdi:food-fork-drink";
       livingroom.icon = "mdi:sofa";
       wc.icon         = "mdi:toilet";
-      tv-area.icon    = "mdi:television";
+      tv-area = {
+        icon          = "mdi:television";
+        # optional Philips Hue Play HDMI Sync Box integration
+        entertainment = true;
+      };  
     };
 ```
 
@@ -211,8 +214,8 @@ a good starter point would be to study the [options](https://github.com/QuackHac
 
 <br>
 
-zigduck always uses smart defaults.
-Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.
+zigduck always uses smart defaults.<br>
+Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.<br>
 
 **Example configuration:**
 
@@ -225,8 +228,8 @@ Define a dimmer, or motion sensor and those devices would default to control it'
           room = "kitchen"; # bind to group
           type = "dimmer"; # device type (light, hue_light, dimmer, motion, sensor, blinds, ...)
           endpoint = 1; # zigbee endpoint
-          icon = "mdi:toggle-switch"; # icon used on dashboard
-          batteryType = "CR2450"; # optional - currently only used as a note to self
+          icon = "mdi:toggle-switch"; # icon used on dashboard/widget
+          batteryType = "CR2450"; # optional - displayed inside widget
         };
         "0x0017880402750848a" = {
           friendly_name = "Spotlight 1";
@@ -273,6 +276,29 @@ Define a dimmer, or motion sensor and those devices would default to control it'
 
 <br>
 
+Users may also define additional *(non-zigbee)* devices.<br>
+These devices are read-only but may still be useful.<br>
+
+**Example configuration:**
+
+```nix
+  house = {
+    devices = {
+      "desktop" = {
+        enable = true;
+        room   = "other";
+        icon   = "mdi:desktop-tower";
+        ip     = "192.168.1.111";
+      };
+    };
+  };  
+```
+
+<br>
+User can now for example publish JSON health data to `zigduck/desktop` and it can be viewed by zigduck.
+<br>
+
+
 </details>
 
 
@@ -290,8 +316,10 @@ Define a dimmer, or motion sensor and those devices would default to control it'
     house.zigbee = {
       dimmer = {
         message = "action";
-        # double clicking on automatically cycles defined scenes in the dimmers room.
+
+        # double clicking automatically cycles defined scenes in the dimmers room.
         doubleClickTimeout = 500; # ms
+
         # optional as these defaults match most dimmers
         #actions = {
         #  onPress = "on_press_release";
@@ -550,6 +578,13 @@ To customize these actions, configure the automation type `house.zigbee.automati
 📺 Media (optional)
 </strong></summary>
 
+**Zigduck** can control your TV's using `adb` via the included package `tv`.<br>
+Everything is handled declaratively even the EPG scraping options.<br>
+Scraping also uses smart defaults but overrides can be applied globally or on a per-channel basis.<br>
+
+The `tv-scraper` binary can output an EPG in three different formats, XML, JSON and HTML.<br>
+The zigduck GNOME Shell extension expects the JSON file to be located at `~/.local/share/zigduck/epg.json` to be able to view the TV-Guide from the widget.  
+
 **Example configuraiton:**
 
 ```nix
@@ -591,6 +626,7 @@ To customize these actions, configure the automation type `house.zigbee.automati
           telenor = "se.telenor.stream/.MainActivity";
           tv4 = "se.tv4.tv4playtab/se.tv4.tv4play.ui.mobile.main.BottomNavigationActivity";
         };
+        
         channels = {
           "1" = {
             name = "SVT1";
@@ -599,6 +635,22 @@ To customize these actions, configure the automation type `house.zigbee.automati
             # stream_url = "https://url.com/";
             # command to start a application based channel
             cmd = "open_telenor && wait 5 && start_channel_1";
+            
+            # url used by tv-scraper to fetch TV guide data for this channel
+            scrape_url = "https://tv-tabla.se/tabla/svt1/";
+            
+            # per-channel scraper overrides
+            scraper = {
+              row_xpath   = ''//table[@id="channel-schedule"]//tr'';
+              time_xpath  = ".//time";
+              time_attr   = "datetime";
+              title_xpath = ''..//a[contains(@class, "program-title")]'';
+              desc_xpath  = ".//p";
+              time_formats = [ "%H:%M" "%H.%M" ];
+              time_strip_pattern = "[^\\d:\\.]";
+              default_duration_minutes = 30;
+              pm_heuristic_after_hour = 12;
+            };
           };
           # ...
         };
@@ -608,12 +660,13 @@ To customize these actions, configure the automation type `house.zigbee.automati
         room = "livingroom";
         isDefault = true;
       };
-
     };
   };
 ```
 
 <br>
+
+
 
 </details>
 
@@ -762,172 +815,106 @@ Commandline
 Usage: zigduck-cli [OPTIONS] [COMMAND]
 
 Commands:
-  timer
-  alarm
-  snapshot
+  timer     
+  alarm     
+  snapshot  
   help      Print this message or the help of the given subcommand(s)
 
 Options:
   -b, --broker <BROKER>
-          MQTT broker host
-
-          [env: MQTT_BROKER=]
-          [default: 127.0.0.1]
-
+          MQTT broker host [env: MQTT_BROKER=] [default: 127.0.0.1]
   -u, --user <USER>
-          MQTT username
-
-          [env: MQTT_USER=]
-          [default: mqtt]
-
+          MQTT username [env: MQTT_USER=] [default: mqtt]
       --password-file <PASSWORD_FILE>
-          MQTT password file
-
-          [env: MQTT_PASSWORD_FILE=]
-
+          MQTT password file [env: MQTT_PASSWORD_FILE=]
       --password <PASSWORD>
-          MQTT password
-
-          [env: MQTT_PASSWORD=]
-
+          MQTT password [env: MQTT_PASSWORD=]
   -v, --verbose...
           Verbosity level
-
       --devices-config <DEVICES_CONFIG>
-          Path to devices configuration
-
-          [env: DEVICES_CONFIG=]
-
+          Path to devices configuration [env: DEVICES_CONFIG=]
       --scenes-config <SCENES_CONFIG>
-          Path to scenes configuration
-
-          [env: SCENES_CONFIG=]
-
+          Path to scenes configuration [env: SCENES_CONFIG=]
       --hue-bridge-ip <HUE_BRIDGE_IP>
-          Hue Bridge IP
-
-          [env: HUE_BRIDGE_IP=]
-
+          Hue Bridge IP [env: HUE_BRIDGE_IP=]
       --hue-api-key <HUE_API_KEY>
-          Hue Bridge API key
-
-          [env: HUE_API_KEY=]
-
+          Hue Bridge API key [env: HUE_API_KEY=]
       --hue-key-file <HUE_KEY_FILE>
-          Hue Bridge API key file
-
-          [env: HUE_KEY_FILE=]
-
+          Hue Bridge API key file [env: HUE_KEY_FILE=]
       --device <DEVICE>
           Device name (friendly name)
-
       --room <ROOM>
           Room name
-
       --scene <SCENE>
           Scene name
-
       --list [<LIST>]
-          List devices, rooms, scenes, lights, or sensors
-
-          [possible values: devices, rooms, scenes, lights, sensors]
-
+          List devices, rooms, scenes, lights, or sensors [possible values: devices, rooms, scenes, lights, sensors]
       --status
           Show a formatted device status table including state, battery, temperature
-
+      --state-json
+          Dump full state.json (all devices) as JSON
       --get-temp [<GET_TEMP>]
           Get temperature readings from devices in a room (requires --room)
-
       --get-bat [<GET_BAT>]
           Get battery level for a device (requires --device)
-
+      --notify <NOTIFY>
+          Send a notification to the API (message text)
+      --tag <TAG>
+          Optional tag; a new notification with the same tag replaces the old one
+      --get-notify
+          Get all notifications as JSON
+      --clear-notify
+          Clear all notifications
+      --cards
+          Get all cards (with resolved value, details, history) as JSON
       --state-file <STATE_FILE>
-          Path to local state.json (overrides API fetch)
-
-          [env: ZIGDUCK_STATE_FILE=]
-
+          Path to local state.json (overrides API fetch) [env: ZIGDUCK_STATE_FILE=]
       --pair [<PAIR>]
           Pairing duration in seconds (default: 120)
-
       --all-lights [<ALL_LIGHTS>]
           Control all lights (optional true/false)
-
       --blinds <BLINDS>
           Control all blinds globally (up or down)
-
       --cheap-mode <CHEAP_MODE>
           Room name for cheap mode
-
       --publish
           Publish a raw MQTT message
-
       --topic <TOPIC>
           MQTT topic (used with --publish)
-
       --json-cmd
           Send raw JSON to a device
-
       --state <STATE>
           Device state: on/off/toggle/max/dark
-
       --brightness <BRIGHTNESS>
           Brightness percentage (1-100)
-
       --color <COLOR>
           Color name or hex code
-
       --temperature <TEMPERATURE>
           Color temperature (153-500)
-
       --transition <TRANSITION>
           Transition time in seconds
-
       --payload <PAYLOAD>
           Raw JSON payload (used with --json-cmd or --publish)
-
       --backend <BACKEND>
-          Backend type (auto/zigbee/hue)
-
-          [default: auto]
-          [possible values: auto, zigbee, hue]
-
+          Backend type (auto/zigbee/hue) [default: auto] [possible values: auto, zigbee, hue]
       --json-output
           Output list as JSON
-
       --watch
           Watch for new devices during pairing
-
       --random
           Pick a random scene
-
       --scene-room <SCENE_ROOM>
           Restrict scene to a specific room
-
       --delay <DELAY>
-          Delay in seconds for cheap mode
-
-          [default: 300]
-
+          Delay in seconds for cheap mode [default: 300]
       --api-url <API_URL>
-          zigduck API URL
-
-          [env: API_URL=]
-
+          zigduck API URL [env: API_URL=]
       --api-password-file <API_PASSWORD_FILE>
-          File containing API password
-
-          [env: API_PASSWORD_FILE=]
-
+          File containing API password [env: API_PASSWORD_FILE=]
       --api-password <API_PASSWORD>
-          API password directly
-
-          [env: API_PASSWORD=]
-
+          API password directly [env: API_PASSWORD=]
   -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
+          Print help (see more with '--help')
 ```
 
 <br>
@@ -1011,6 +998,9 @@ API
 | `/` | GET | Service info and list of all endpoints | None |
 | `/browse`<br>`/browsev2`<br>`/api/browse`<br>`/api/browsev2` | GET | Browse media directory (legacy `ls` or improved `find`). `browsev2` returns full path. | `path` (relative to media root) |
 | **Timers** | | | |
+| `POST` | `/notify`<br>`/api/notify` | Add/update a notification. Message from `?message=...` or raw POST body. Optional `tag`; same tag replaces the old notification. |
+| `GET` | `/get-notify`<br>`/api/get-notify` | Get all notifications as JSON. |
+| `POST` | `/clear-notify`<br>`/api/clear-notify` | Clear all notifications. |
 | `/timers` | GET | List all timers | None |
 | `/timers/set` | POST | Create a new timer | `hours`, `minutes`, `seconds` (at least one >0), `topic`, `payload`, optional `name` |
 | `/timers/pause` | POST | Pause a running timer | `id` (timer ID) |
@@ -1080,7 +1070,7 @@ for a full real configuration example, view:
 
 ## **License**
 
-This project is licensed under the terms of the MIT license.
-See the `LICENSE` file in the repository for full details.
+This project is licensed under the terms of the MIT license.<br>
+See the `LICENSE` file in the repository for full details.<br>
 
 Contributions are welcomed.

@@ -499,7 +499,8 @@ def main():
                         help='Which device key under "tvs" to use (default: %(default)s)')
     parser.add_argument("--xml-out", default="epg.xml",
                         help="Output EPG XML file path (default: %(default)s)")
-    parser.add_argument("--json-out", default="epg.json",
+    parser.add_argument("--json-out",
+                        default=os.path.expanduser("~/.local/share/zigduck/epg.json"),
                         help='Output EPG JSON file path. Use empty string to disable (default: %(default)s)')
     parser.add_argument("--html-out", default="tv.html",
                         help='Output HTML TV guide file path. Use empty string to disable (default: %(default)s)')

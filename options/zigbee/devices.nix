@@ -21,13 +21,13 @@ in {
           example = "kitchen";
         };
         type = mkOption {
-          type = types.enum [ "light" "hue_light" "dimmer" "sensor" "motion" "outlet" "remote" "pusher" "blind" ];
+          type = types.enum [ "light" "hue_light" "dimmer" "sensor" "motion" "outlet" "remote" "pusher" "blind" "custom" ];
           description = "The type of device.";
           example = "light";
         };
         icon = mkOption {
           type = types.str;
-          default = "mdi:monitor-shimmer";
+          default = "mdi:duck";
           description = "Material Design icon name representing this device.";
         };
         batteryType = mkOption {
@@ -60,4 +60,4 @@ in {
     default = {};
     description = "Zigbee device definitions keyed by device ID.";
 
-  };}    
+  };}

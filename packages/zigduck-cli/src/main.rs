@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
     collections::HashMap,
-};    
+};
 use clap::{
     Parser,
     ValueEnum,
@@ -22,7 +22,7 @@ use clap::Subcommand;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::*;
 
- 
+
 #[derive(Debug, Deserialize, Clone)]
 struct CliConfig {
     mosquitto: Option<MosquittoConfig>,
@@ -55,6 +55,8 @@ fn default_base_topic() -> String {
 struct HueConfig {
     bridge_ip: Option<String>,
     password_file: Option<String>,
+    sync_box_ip: Option<String>,
+    sync_box_token_file: Option<String>,
 }
 
 
@@ -70,11 +72,16 @@ enum Commands {
     Alarm {
         #[command(subcommand)]
         action: AlarmAction,
-    },    
+    },
     #[command(name = "snapshot")]
     Snapshot {
         #[command(subcommand)]
         action: SnapshotAction,
+    },
+    #[command(name = "hue")]
+    Hue {
+        #[command(subcommand)]
+        action: HueAction,
     },
 }
 
@@ -126,6 +133,59 @@ enum SnapshotAction {
 }
 
 #[derive(Subcommand, Debug)]
+enum HueAction {
+    Bridge {
+        #[command(subcommand)]
+        action: HueBridgeAction,
+    },
+    Sync {
+        #[command(subcommand)]
+        action: HueSyncAction,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum HueBridgeAction {
+    Lights,
+    LightRaw { id: u16 },
+    LightInfo { name: String },
+    Scenes,
+    Groups,
+    Scene { id: String },
+    Group {
+        id: String,
+        #[command(subcommand)]
+        action: HueGroupAction,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum HueGroupAction {
+    On,
+    Off,
+    Bri { value: u8 },
+}
+
+#[derive(Subcommand, Debug)]
+enum HueSyncAction {
+    On,
+    Off,
+    Toggle,
+    Status,
+    Mode { #[arg(value_enum)] mode: SyncMode },
+    Intensity { #[arg(value_enum)] level: SyncIntensity },
+    Brightness { value: u8 },
+    HdmiInput { input: u8 },
+    EntertainmentArea { id: String },
+}
+
+#[derive(Clone, ValueEnum, Debug)]
+enum SyncMode { Video, Music, Game }
+
+#[derive(Clone, ValueEnum, Debug)]
+enum SyncIntensity { Subtle, Moderate, High, Intense }
+
+#[derive(Subcommand, Debug)]
 enum TimerAction {
     List,
     Set {
@@ -141,7 +201,7 @@ enum TimerAction {
         payload: Option<String>,
         #[arg(long, help = "Human‑readable name for the timer")]
         name: Option<String>,
-    },    
+    },
     Pause {
         #[arg(long, help = "Timer ID")]
         id: u64,
@@ -195,6 +255,14 @@ struct Cli {
     #[arg(long, help = "Hue Bridge API key file", env = "HUE_KEY_FILE")]
     hue_key_file: Option<PathBuf>,
 
+    #[arg(long, help = "Hue Sync Box IP", env = "HUE_SYNC_BOX_IP")]
+    hue_sync_box_ip: Option<String>,
+
+    #[arg(long, help = "Hue Sync Box token (Bearer JWT)", env = "HUE_SYNC_BOX_TOKEN")]
+    hue_sync_box_token: Option<String>,
+
+    #[arg(long, help = "Hue Sync Box token file", env = "HUE_SYNC_BOX_TOKEN_FILE")]
+    hue_sync_box_token_file: Option<PathBuf>,
 
     #[arg(long, help = "Device name (friendly name)")]
     device: Option<String>,
@@ -211,11 +279,29 @@ struct Cli {
     #[arg(long, help = "Show a formatted device status table including state, battery, temperature")]
     status: bool,
 
+    #[arg(long, help = "Dump full state.json (all devices) as JSON")]
+    state_json: bool,
+
     #[arg(long, num_args = 0..=1, default_missing_value = "true", help = "Get temperature readings from devices in a room (requires --room)")]
     get_temp: Option<String>,
 
     #[arg(long, num_args = 0..=1, default_missing_value = "true", help = "Get battery level for a device (requires --device)")]
     get_bat: Option<String>,
+
+    #[arg(long, help = "Send a notification to the API (message text)")]
+    notify: Option<String>,
+
+    #[arg(long, requires = "notify", help = "Optional tag; a new notification with the same tag replaces the old one")]
+    tag: Option<String>,
+
+    #[arg(long, help = "Get all notifications as JSON")]
+    get_notify: bool,
+
+    #[arg(long, help = "Clear all notifications")]
+    clear_notify: bool,
+
+    #[arg(long, help = "Get all cards (with resolved value, details, history) as JSON")]
+    cards: bool,
 
     #[arg(long, help = "Path to local state.json (overrides API fetch)", env = "ZIGDUCK_STATE_FILE")]
     state_file: Option<PathBuf>,
@@ -225,7 +311,7 @@ struct Cli {
 
     #[arg(long, num_args = 0..=1, default_missing_value = "true", help = "Control all lights (optional true/false)")]
     all_lights: Option<String>,
-    
+
     #[arg(long, help = "Control all blinds globally (up or down)")]
     blinds: Option<String>,
 
@@ -234,7 +320,7 @@ struct Cli {
 
     #[arg(long, requires = "topic", help = "Publish a raw MQTT message")]
     publish: bool,
-    
+
     #[arg(long, help = "MQTT topic (used with --publish)")]
     topic: Option<String>,
 
@@ -276,7 +362,7 @@ struct Cli {
 
     #[arg(long, default_value_t = 300, requires = "cheap_mode", help = "Delay in seconds for cheap mode")]
     delay: u64,
-    
+
     #[command(subcommand)]
     command: Option<Commands>,
 
@@ -384,12 +470,86 @@ impl HueClient {
         }
         Ok(response.json()?)
     }
+    fn get_raw(&self, path: &str) -> Result<serde_json::Value> {
+        let url = format!("{}{}", self.base_url, path);
+        let resp = self.client.get(&url).send()
+            .context("Hue bridge request failed")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("Hue bridge error {}: {}",
+                resp.status(),
+                resp.text().unwrap_or_default());
+        }
+        Ok(resp.json()?)
+    }
+
+    fn put_raw(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value> {
+        let url = format!("{}{}", self.base_url, path);
+        let resp = self.client.put(&url).json(&body).send()
+            .context("Hue bridge request failed")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("Hue bridge error {}: {}",
+                resp.status(),
+                resp.text().unwrap_or_default());
+        }
+        Ok(resp.json().unwrap_or(serde_json::Value::Null))
+    }
 }
 
+struct SyncBoxClient {
+    base_url: String,
+    token: String,
+    client: HttpClient,
+}
+
+impl SyncBoxClient {
+    fn new(ip: &str, token: &str) -> Result<Self> {
+        let client = HttpClient::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .context("Failed to build Sync Box HTTP client")?;
+        Ok(Self {
+            base_url: format!("https://{}/api/v1", ip),
+            token: token.trim().to_string(),
+            client,
+        })
+    }
+
+    fn get(&self, path: &str) -> Result<serde_json::Value> {
+        let url = format!("{}{}", self.base_url, path);
+        let resp = self.client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", self.token))
+            .send()
+            .context("Failed to reach Sync Box")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("Sync Box error {}: {}",
+                resp.status(),
+                resp.text().unwrap_or_default());
+        }
+        Ok(resp.json()?)
+    }
+
+    fn put(&self, path: &str, body: serde_json::Value) -> Result<serde_json::Value> {
+        let url = format!("{}{}", self.base_url, path);
+        let resp = self.client
+            .put(&url)
+            .header("Authorization", format!("Bearer {}", self.token))
+            .json(&body)
+            .send()
+            .context("Failed to reach Sync Box")?;
+        if !resp.status().is_success() {
+            anyhow::bail!("Sync Box error {}: {}",
+                resp.status(),
+                resp.text().unwrap_or_default());
+        }
+        Ok(resp.json().unwrap_or(serde_json::Value::Null))
+    }
+}
 
 struct ZigduckController {
 	mqtt_client: Client,
 	hue_client: Option<HueClient>,
+	sync_box_client: Option<SyncBoxClient>,
 	devices: HashMap<String, DeviceConfig>,
 	scenes: HashMap<String, SceneConfig>,
 	verbose: bool,
@@ -402,7 +562,9 @@ impl ZigduckController {
 	    user: String,
 	    password: String,
 	    hue_bridge_ip: Option<String>,
-	    hue_api_key: Option<String>,    
+	    hue_api_key: Option<String>,
+	    sync_box_ip: Option<String>,
+	    sync_box_token: Option<String>,
 	    devices_config: Option<PathBuf>,
 	    scenes_config: Option<PathBuf>,
 	    verbose: bool,
@@ -411,15 +573,17 @@ impl ZigduckController {
 	    let mut mqttoptions = MqttOptions::new("zigduck-cli", &broker, 1883);
 	    mqttoptions.set_credentials(&user, &password);
 	    mqttoptions.set_keep_alive(Duration::from_secs(5));
-	    
+
 	    let hue_client = if let (Some(ip), Some(key)) = (hue_bridge_ip, hue_api_key) {
 	        Some(HueClient::new(&ip, &key)?)
-	    } else {
-	        None
-	    };
-	    
+	    } else { None };
+
+        let sync_box_client = if let (Some(ip), Some(tok)) = (sync_box_ip, sync_box_token) {
+            Some(SyncBoxClient::new(&ip, &tok)?)
+        } else { None };
+
 	    let (mqtt_client, mut connection) = Client::new(mqttoptions, 10);
-	    
+
 	    let mqtt_client_clone = mqtt_client.clone();
 	    std::thread::spawn(move || {
 	        for notification in connection.iter() {
@@ -432,12 +596,12 @@ impl ZigduckController {
 	            }
 	        }
 	    });
-	    
+
 	    std::thread::sleep(Duration::from_millis(100));
-	    
+
 	    let devices = Self::load_devices(devices_config)?;
 	    let scenes = Self::load_scenes(scenes_config)?;
-	    
+
 	    if verbose {
 	        println!("{} Connected to MQTT broker: {}", "✅".green(), broker);
 	        println!("{} Loaded {} devices", "📱".blue(), devices.len());
@@ -445,58 +609,180 @@ impl ZigduckController {
 	        if hue_client.is_some() {
 	            println!("{} Hue Bridge connected", "💡".yellow());
 	        }
+            if sync_box_client.is_some() {
+                println!("{} Sync Box connected", "📺".yellow());
+            }
 	    }
-	    
+
 	    Ok(Self {
 	        mqtt_client: mqtt_client_clone,
 	        hue_client,
+	        sync_box_client,
 	        devices,
 	        scenes,
 	        verbose,
 	        base_topic,
 	    })
 	}
-	
+
+    fn handle_hue_bridge(&self, action: HueBridgeAction) -> Result<()> {
+        let hc = self.hue_client.as_ref()
+            .context("Hue bridge not configured")?;
+
+        match action {
+            HueBridgeAction::Lights => {
+                let v = hc.get_raw("/lights")?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueBridgeAction::LightRaw { id } => {
+                let v = hc.get_raw(&format!("/lights/{}", id))?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueBridgeAction::LightInfo { name } => {
+                let device = self.find_device(&name)?;
+                let hue_id = device.hue_id
+                    .ok_or_else(|| anyhow::anyhow!("Device '{}' has no hue_id", name))?;
+                println!("{} Device:", "📱".blue());
+                println!("  friendly_name: {}", device.friendly_name);
+                println!("  hue_id:        {}", hue_id);
+                println!("  room:          {}", device.room);
+                println!("  type:          {}", device.device_type);
+                println!("{} Bridge state:", "💡".yellow());
+                let v = hc.get_raw(&format!("/lights/{}", hue_id))?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueBridgeAction::Scenes => {
+                let v = hc.get_raw("/scenes")?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueBridgeAction::Groups => {
+                let v = hc.get_raw("/groups")?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueBridgeAction::Scene { id } => {
+                hc.put_raw("/groups/0/action", serde_json::json!({"scene": id}))?;
+                println!("{} Activated bridge scene {}", "🎬".green(), id);
+            }
+            HueBridgeAction::Group { id, action } => {
+                let payload = match action {
+                    HueGroupAction::On  => serde_json::json!({"on": true}),
+                    HueGroupAction::Off => serde_json::json!({"on": false}),
+                    HueGroupAction::Bri { value } => {
+                        if value > 254 { anyhow::bail!("bri must be 0-254"); }
+                        serde_json::json!({"bri": value})
+                    }
+                };
+                hc.put_raw(&format!("/groups/{}/action", id), payload)?;
+                println!("{} Group {} updated", "💡".green(), id);
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_hue_sync(&self, action: HueSyncAction) -> Result<()> {
+        let sc = self.sync_box_client.as_ref()
+            .context("Sync Box not configured")?;
+
+        match action {
+            HueSyncAction::On => {
+                sc.put("/execution", serde_json::json!({"syncActive": true}))?;
+                println!("{} Sync ON", "📺".green());
+            }
+            HueSyncAction::Off => {
+                sc.put("/execution", serde_json::json!({"syncActive": false}))?;
+                println!("{} Sync OFF", "📺".green());
+            }
+            HueSyncAction::Toggle => {
+                let cur = sc.get("/execution")?;
+                let is_on = cur.get("syncActive").and_then(|v| v.as_bool()).unwrap_or(false);
+                sc.put("/execution", serde_json::json!({"syncActive": !is_on}))?;
+                println!("{} Sync {}", "📺".green(), if is_on { "OFF" } else { "ON" });
+            }
+            HueSyncAction::Status => {
+                let v = sc.get("/execution")?;
+                println!("{}", serde_json::to_string_pretty(&v)?);
+            }
+            HueSyncAction::Mode { mode } => {
+                let m = match mode {
+                    SyncMode::Video => "video",
+                    SyncMode::Music => "music",
+                    SyncMode::Game  => "game",
+                };
+                sc.put("/execution", serde_json::json!({"mode": m}))?;
+                println!("{} Sync mode: {}", "📺".green(), m);
+            }
+            HueSyncAction::Intensity { level } => {
+                let cur = sc.get("/execution")?;
+                let mode = cur.get("mode").and_then(|v| v.as_str()).unwrap_or("video");
+                let lvl = match level {
+                    SyncIntensity::Subtle   => "subtle",
+                    SyncIntensity::Moderate => "moderate",
+                    SyncIntensity::High     => "high",
+                    SyncIntensity::Intense  => "intense",
+                };
+                sc.put("/execution",
+                    serde_json::json!({ mode: {"intensity": lvl} }))?;
+                println!("{} Sync intensity ({}): {}", "📺".green(), mode, lvl);
+            }
+            HueSyncAction::Brightness { value } => {
+                if value > 100 { anyhow::bail!("brightness must be 0-100"); }
+                sc.put("/execution", serde_json::json!({"brightness": value}))?;
+                println!("{} Sync brightness: {}", "📺".green(), value);
+            }
+            HueSyncAction::HdmiInput { input } => {
+                if !(1..=4).contains(&input) { anyhow::bail!("hdmi input must be 1-4"); }
+                sc.put("/execution",
+                    serde_json::json!({"hdmiSource": format!("input{}", input)}))?;
+                println!("{} HDMI input: {}", "📺".green(), input);
+            }
+            HueSyncAction::EntertainmentArea { id } => {
+                sc.put("/execution", serde_json::json!({"hueTarget": id}))?;
+                println!("{} Entertainment area: {}", "📺".green(), id);
+            }
+        }
+        Ok(())
+    }
+
 	fn load_devices(config_path: Option<PathBuf>) -> Result<HashMap<String, DeviceConfig>> {
 	    let config_path = config_path.ok_or_else(|| anyhow::anyhow!("No devices config provided"))?;
-	    
+
 	    if !config_path.exists() {
 	        println!("{} No devices config found, using empty list", "⚠️".yellow());
 	        return Ok(HashMap::new());
 	    }
-	    
+
 	    let devices_json = fs::read_to_string(config_path)
 	        .context("Failed to read devices config file")?;
-	    
+
 	    let devices: HashMap<String, DeviceConfig> = serde_json::from_str(&devices_json)
 	        .map_err(|e| anyhow::anyhow!("Failed to parse devices JSON: {}", e))?;
-	    
+
 	    Ok(devices)
 	}
-	
+
 	fn load_scenes(config_path: Option<PathBuf>) -> Result<HashMap<String, SceneConfig>> {
 	    let config_path = config_path.ok_or_else(|| anyhow::anyhow!("No scenes config provided"))?;
-	    
+
 	    if !config_path.exists() {
 	        println!("{} No scenes config found, using empty list", "⚠️".yellow());
 	        return Ok(HashMap::new());
 	    }
-	    
+
 	    let scenes_json = fs::read_to_string(config_path)
 	        .context("Failed to read scenes config file")?;
-	    
+
 	    let scenes: HashMap<String, SceneConfig> = serde_json::from_str(&scenes_json)
 	        .map_err(|e| anyhow::anyhow!("Failed to parse scenes JSON: {}", e))?;
-	    
+
 	    Ok(scenes)
 	}
-	
+
     fn publish_message(&mut self, topic: &str, payload: &str) -> Result<()> {
         let json: serde_json::Value = serde_json::from_str(payload)
             .unwrap_or_else(|_| serde_json::Value::String(payload.to_string()));
         self.publish_mqtt(topic, json)
     }
-	
+
     fn control_blinds(&mut self, direction: &str) -> Result<()> {
         let position = match direction.to_lowercase().as_str() {
             "up" | "open"   => 100,
@@ -523,10 +809,10 @@ impl ZigduckController {
         }
         Ok(())
     }
-	
+
 	fn color_name_to_hue_sat(&self, color_name: &str) -> Result<(u16, u8)> {
 	    let mut rng = rand::thread_rng();
-	    
+
 	    match color_name.to_lowercase().as_str() {
 	        "red" => Ok((rng.gen_range(0..6000), 254)),
 	        "orange" => Ok((rng.gen_range(6000..10000), 254)),
@@ -544,41 +830,41 @@ impl ZigduckController {
 	        _ => anyhow::bail!("Unknown color: {}", color_name),
 	    }
 	}
-	
+
 	fn hex_to_xy(&self, hex: &str) -> Result<(f32, f32)> {
 	    let hex = hex.trim_start_matches('#');
 	    if hex.len() != 6 {
 	        anyhow::bail!("Invalid hex color: {}", hex);
 	    }
-	    
+
 	    let r = u8::from_str_radix(&hex[0..2], 16)? as f32 / 255.0;
 	    let g = u8::from_str_radix(&hex[2..4], 16)? as f32 / 255.0;
 	    let b = u8::from_str_radix(&hex[4..6], 16)? as f32 / 255.0;
-	    
+
 	    let r = if r > 0.04045 {
 	        ((r + 0.055) / 1.055).powf(2.4)
 	    } else {
 	        r / 12.92
 	    };
-	    
+
 	    let g = if g > 0.04045 {
 	        ((g + 0.055) / 1.055).powf(2.4)
 	    } else { g / 12.92 };
-	    
+
 	    let b = if b > 0.04045 {
 	        ((b + 0.055) / 1.055).powf(2.4)
 	    } else { b / 12.92 };
-	    
+
 	    let x = r * 0.649926 + g * 0.103455 + b * 0.197109;
 	    let y = r * 0.234327 + g * 0.743075 + b * 0.022598;
 	    let z = r * 0.000000 + g * 0.053077 + b * 1.035763;
-	    
+
 	    let sum = x + y + z;
 	    if sum == 0.0 {
 	        Ok((0.5, 0.4))
 	    } else { Ok((x / sum, y / sum)) }
 	}
-	
+
 fn color_name_to_hex(&self, color_name: &str) -> Result<String> {
  let hex = match color_name.to_lowercase().as_str() {
      "red" => "#FF0000".to_string(),
@@ -616,22 +902,76 @@ fn color_name_to_hex(&self, color_name: &str) -> Result<String> {
 
  Ok(hex)
 }
-	
+
+fn hue_state_to_zigbee(raw: &serde_json::Value) -> serde_json::Value {
+    let state = raw.get("state").cloned().unwrap_or(serde_json::json!({}));
+    let mut out = serde_json::Map::new();
+
+    if let Some(on) = state.get("on").and_then(|v| v.as_bool()) {
+        out.insert("state".into(),
+            serde_json::Value::String(if on { "ON" } else { "OFF" }.into()));
+    }
+    if let Some(bri) = state.get("bri").and_then(|v| v.as_u64()) {
+        out.insert("brightness".into(), serde_json::Value::Number(bri.into()));
+    }
+    if let Some(reachable) = state.get("reachable").and_then(|v| v.as_bool()) {
+        out.insert("reachable".into(), serde_json::Value::Bool(reachable));
+    }
+    if let Some(xy) = state.get("xy").and_then(|v| v.as_array()) {
+        if xy.len() == 2 {
+            if let (Some(x), Some(y)) = (xy[0].as_f64(), xy[1].as_f64()) {
+                out.insert("color".into(), serde_json::json!({"x": x, "y": y}));
+                out.insert("color_mode".into(),
+                    serde_json::Value::String("xy".into()));
+            }
+        }
+    }
+    if let Some(ct) = state.get("ct").and_then(|v| v.as_u64()) {
+        out.insert("color_temp".into(), serde_json::Value::Number(ct.into()));
+    }
+    if let Some(hue) = state.get("hue").and_then(|v| v.as_u64()) {
+        out.insert("hue".into(), serde_json::Value::Number(hue.into()));
+    }
+    if let Some(sat) = state.get("sat").and_then(|v| v.as_u64()) {
+        out.insert("saturation".into(), serde_json::Value::Number(sat.into()));
+    }
+
+    serde_json::Value::Object(out)
+}
+
+fn sync_hue_to_mqtt(&mut self, device: &DeviceConfig, hue_id: u16) -> Result<()> {
+    let flat = {
+        let hc = self.hue_client.as_ref()
+            .context("Hue client not initialized")?;
+        let raw = hc.get_light_state(hue_id)?;
+        Self::hue_state_to_zigbee(&raw)
+    };
+
+    let topic = format!("{}/{}", self.base_topic, device.friendly_name);
+
+    if self.verbose {
+        println!("{} Hue -> MQTT {} -> {}", "🔁".cyan(), topic.blue(), flat.to_string().yellow());
+    }
+
+    self.publish_mqtt(&topic, flat)
+}
+
+
 	fn publish_mqtt(&mut self, topic: &str, payload: serde_json::Value) -> Result<()> {
 	    let payload_str = serde_json::to_string(&payload)?;
-	    
+
 	    if self.verbose {
 	        println!("{} {} → {}", "🦆 MQTT".cyan(), topic.blue(), payload_str.yellow());
 	    }
-	    
+
 	    self.mqtt_client
 	        .publish(topic, QoS::AtMostOnce, false, payload_str)
 	        .map_err(|e| anyhow::anyhow!("Failed to publish MQTT message: {}", e))?;
-	    
+
 	    std::thread::sleep(Duration::from_millis(50));
 	    Ok(())
 	}
-	
+
 fn find_device(&self, query: &str) -> Result<DeviceConfig> {
  let query_lower = query.to_lowercase();
 
@@ -650,11 +990,11 @@ fn find_device(&self, query: &str) -> Result<DeviceConfig> {
  anyhow::bail!("Device not found: {}", query)
 }
 
-	
+
 	fn is_hue_device(&self, device: &DeviceConfig) -> bool {
 	    device.hue_id.is_some() && (device.device_type == "light" || device.device_type == "hue_light")
 	}
-	
+
 fn control_device_with_params(
  &mut self,
  device_name: &str,
@@ -664,7 +1004,7 @@ fn control_device_with_params(
  temperature: Option<u16>,
  transition: Option<f32>,
 ) -> Result<()> {
- let device = self.find_device(device_name)?.clone();  // Clone the device
+ let device = self.find_device(device_name)?.clone();
 
  if self.is_hue_device(&device) {
      self.control_hue_device(&device, state, brightness, color, temperature, transition)
@@ -672,7 +1012,7 @@ fn control_device_with_params(
      self.control_zigbee_device(&device.friendly_name, state, brightness, color, temperature, transition)
  }
 }
-	
+
 	fn control_hue_device(
 	    &mut self,
 	    device: &DeviceConfig,
@@ -685,13 +1025,13 @@ fn control_device_with_params(
 	    let hue_id = device.hue_id.unwrap();
 	    let hue_client = self.hue_client.as_ref()
 	        .context("Hue client not initialized")?;
-	    
+
 	    let mut payload = serde_json::Map::new();
-	    
+
 	    match state {
 	        DeviceState::On => {
 	            payload.insert("on".to_string(), serde_json::Value::Bool(true));
-	            
+
 	            if let Some(bri) = brightness {
 	                if !(1..=100).contains(&bri) {
 	                    anyhow::bail!("Brightness must be between 1-100");
@@ -701,7 +1041,7 @@ fn control_device_with_params(
 	                    payload.insert("bri".to_string(), serde_json::Value::Number(hue_bri.into()));
 	                }
 	            }
-	            
+
 	            if let Some(color_val) = &color {
 	                if let Some(temp_val) = temperature {
 	                    payload.insert("ct".to_string(), serde_json::Value::Number(temp_val.into()));
@@ -719,7 +1059,7 @@ fn control_device_with_params(
 	                        payload.insert("xy".to_string(), serde_json::json!([xy.0, xy.1]));
 	                        (0, 0)
 	                    };
-	                    
+
 	                    if hue > 0 || sat > 0 {
 	                        payload.insert("hue".to_string(), serde_json::Value::Number(hue.into()));
 	                        payload.insert("sat".to_string(), serde_json::Value::Number(sat.into()));
@@ -728,7 +1068,7 @@ fn control_device_with_params(
 	            } else if let Some(temp_val) = temperature {
 	                payload.insert("ct".to_string(), serde_json::Value::Number(temp_val.into()));
 	            }
-	            
+
 	            if let Some(trans) = transition {
 	                let trans_time = (trans * 10.0).round() as u16;
 	                payload.insert("transitiontime".to_string(), serde_json::Value::Number(trans_time.into()));
@@ -743,21 +1083,25 @@ fn control_device_with_params(
 	                .and_then(|s| s.get("on"))
 	                .and_then(|o| o.as_bool())
 	                .unwrap_or(false);
-	            
+
 	            payload.insert("on".to_string(), serde_json::Value::Bool(!is_on));
 	        }
 	    }
-	    
+
 	    let payload_json = serde_json::Value::Object(payload);
-	    
-	    if self.verbose {
-	        println!("{} Hue Light {} (ID: {}) → {}", "💡".yellow(), 
-	            device.friendly_name, hue_id, payload_json.to_string());
-	    }
-	    
-	    hue_client.set_light_state(hue_id, payload_json)
+
+        if self.verbose {
+            println!("{} Hue Light {} (ID: {}) → {}", "💡".yellow(),
+                device.friendly_name, hue_id, payload_json.to_string());
+        }
+
+        hue_client.set_light_state(hue_id, payload_json)?;
+
+        let device_clone = device.clone();
+        drop(hue_client);
+        self.sync_hue_to_mqtt(&device_clone, hue_id)
 	}
-	
+
 	fn control_zigbee_device(
 	    &mut self,
 	    device_name: &str,
@@ -768,11 +1112,11 @@ fn control_device_with_params(
 	    transition: Option<f32>,
 	) -> Result<()> {
 	    let mut payload = serde_json::Map::new();
-	    
+
 	    match state {
 	        DeviceState::On => {
 	            payload.insert("state".to_string(), "ON".into());
-	            
+
 	            if let Some(bri) = brightness {
 	                if !(1..=100).contains(&bri) {
 	                    anyhow::bail!("Brightness must be between 1-100");
@@ -780,17 +1124,17 @@ fn control_device_with_params(
 	                let mqtt_bri = (bri as f32 * 2.54).round() as u8;
 	                payload.insert("brightness".to_string(), mqtt_bri.into());
 	            }
-	            
+
 	            if let Some(color_val) = &color {
 	                let hex = self.color_name_to_hex(color_val)?;
-	                payload.insert("color".to_string(), 
+	                payload.insert("color".to_string(),
 	                    serde_json::json!({"hex": hex}));
 	            }
-	            
+
 	            if let Some(temp_val) = temperature {
 	                payload.insert("color_temp".to_string(), temp_val.into());
 	            }
-	            
+
 	            if let Some(trans) = transition {
 	                payload.insert("transition".to_string(), trans.into());
 	            }
@@ -802,11 +1146,11 @@ fn control_device_with_params(
 	            payload.insert("state".to_string(), "TOGGLE".into());
 	        }
 	    }
-	    
+
   	    let topic = format!("{}/{}/set", self.base_topic, device_name);
 	    self.publish_mqtt(&topic, serde_json::Value::Object(payload))
 	}
-	
+
 
 fn control_device_with_json(
  &mut self,
@@ -814,7 +1158,7 @@ fn control_device_with_json(
  json_str: &str,
  backend_type: &BackendType,
 ) -> Result<()> {
- let device = self.find_device(device_name)?.clone();  // Clone the device
+ let device = self.find_device(device_name)?.clone();
  let payload: serde_json::Value = serde_json::from_str(json_str)
      .context("Failed to parse JSON")?;
 
@@ -834,25 +1178,29 @@ fn control_device_with_json(
      }
  }
 }
-	
+
 	fn control_hue_with_json(&mut self, device: &DeviceConfig, payload: serde_json::Value) -> Result<()> {
 	    let hue_id = device.hue_id.unwrap();
 	    let hue_client = self.hue_client.as_ref()
 	        .context("Hue client not initialized")?;
-	    
-	    if self.verbose {
-	        println!("{} Hue Light {} (ID: {}) → {}", "💡".yellow(), 
-	            device.friendly_name, hue_id, payload.to_string());
-	    }
-	    
-	    hue_client.set_light_state(hue_id, payload)
+
+        if self.verbose {
+            println!("{} Hue Light {} (ID: {}) → {}", "💡".yellow(),
+                device.friendly_name, hue_id, payload.to_string());
+        }
+
+         hue_client.set_light_state(hue_id, payload)?;
+
+        let device_clone = device.clone();
+        drop(hue_client);
+        self.sync_hue_to_mqtt(&device_clone, hue_id)
 	}
-	
+
 	fn control_zigbee_with_json(&mut self, device_name: &str, payload: serde_json::Value) -> Result<()> {
 	    let topic = format!("{}/{}/set", self.base_topic, device_name);
 	    self.publish_mqtt(&topic, payload)
 	}
-	
+
 	fn control_room(
 	    &mut self,
 	    room_name: &str,
@@ -863,7 +1211,7 @@ fn control_device_with_json(
 	) -> Result<()> {
 	    let device_names: Vec<String> = self.devices
 	        .values()
-	        .filter(|d| d.room.to_lowercase() == room_name.to_lowercase() && 
+	        .filter(|d| d.room.to_lowercase() == room_name.to_lowercase() &&
 	                  (d.device_type == "light" || d.device_type == "hue_light"))
 	        .map(|d| d.friendly_name.clone())
 	        .collect();
@@ -872,7 +1220,7 @@ fn control_device_with_json(
 	        anyhow::bail!("No lights found in room: {}", room_name);
 	    }
 
-	    println!("{} Controlling {} lights in {}", 
+	    println!("{} Controlling {} lights in {}",
 	        "💡".green(), device_names.len(), room_name.bold());
 
 	    for device_name in device_names {
@@ -889,7 +1237,7 @@ fn control_device_with_json(
 
 	    Ok(())
 	}
-	
+
 fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option<&str>) -> Result<()> {
     let scene_to_activate = if random {
         let scene_names: Vec<String> = self.scenes.keys().cloned().collect();
@@ -933,7 +1281,7 @@ fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option
     }
 
     if self.verbose {
-        println!("{} Scene '{}' has {} devices (filtered to {})", 
+        println!("{} Scene '{}' has {} devices (filtered to {})",
             "🔍".cyan(), scene_to_activate, scene.devices.len(), devices.len());
     }
 
@@ -943,19 +1291,25 @@ fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option
     for (device_name, settings) in devices {
         if let Ok(device) = self.find_device(&device_name) {
             if self.is_hue_device(&device) {
-                if let Some(hue_client) = &self.hue_client {
-                    let hue_id = device.hue_id.unwrap();
-                    let hue_payload = self.convert_to_hue_payload(&settings)?;
+                let hue_id = device.hue_id.unwrap();
+                let hue_payload = self.convert_to_hue_payload(&settings)?;
 
+                let applied = if let Some(hue_client) = &self.hue_client {
                     if self.verbose {
-                        println!("{} Hue {} (ID: {}) → {}", "💡".yellow(), 
+                        println!("{} Hue {} (ID: {}) → {}", "💡".yellow(),
                             device_name, hue_id, hue_payload.to_string());
                     }
-
                     hue_client.set_light_state(hue_id, hue_payload)?;
-                    hue_count += 1;
+                    true
                 } else {
                     println!("{} Skipping Hue device {}: Hue client not initialized", "⚠️".yellow(), device_name);
+                    false
+                };
+
+                if applied {
+                    let device_clone = device.clone();
+                    self.sync_hue_to_mqtt(&device_clone, hue_id)?;
+                    hue_count += 1;
                 }
             } else {
                 let topic = format!("{}/{}/set", self.base_topic, device_name);
@@ -972,7 +1326,7 @@ fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option
         std::thread::sleep(Duration::from_millis(10));
     }
 
-    println!("{} Scene '{}' activated ({} Hue, {} Zigbee)", 
+    println!("{} Scene '{}' activated ({} Hue, {} Zigbee)",
         "✅".green(), scene_to_activate, hue_count, zigbee_count);
     Ok(())
 }
@@ -1034,18 +1388,18 @@ if let Some(t) = transition.as_f64() {
 
 Ok(serde_json::Value::Object(payload))
 }
-	
+
 	fn enter_pairing_mode(&mut self, duration: u16, watch: bool) -> Result<()> {
 	    println!("{} Entering pairing mode for {} seconds...", "📡".blue(), duration);
-	    
+
 	    let enable_payload = serde_json::json!({
 	        "value": true,
 	        "time": duration
 	    });
-	    
+
   	    let pairing_topic = format!("{}/bridge/request/permit_join", self.base_topic);
         self.publish_mqtt(&pairing_topic, enable_payload)?;
-	    
+
 	    if watch {
 	        println!("{} Watching for new devices...", "👀".cyan());
 	        println!("{} Put your device in pairing mode now!", "👉".yellow());
@@ -1054,17 +1408,17 @@ Ok(serde_json::Value::Object(payload))
 	        println!("{} Pairing mode active for {} seconds", "⏰".yellow(), duration);
 	        std::thread::sleep(Duration::from_secs(duration as u64));
 	    }
-	    
+
 	    let disable_payload = serde_json::json!({
 	        "value": false
 	    });
-	    
+
    	    self.publish_mqtt(&pairing_topic, disable_payload)?;
-	    
+
 	    println!("{} Pairing mode finished", "✅".green());
 	    Ok(())
 	}
-	
+
 	fn control_all_lights(&mut self, state: &DeviceState, brightness: Option<u8>, color: Option<String>) -> Result<()> {
 	    let device_names: Vec<String> = self.devices
 	        .values()
@@ -1084,26 +1438,26 @@ Ok(serde_json::Value::Object(payload))
 	            None,
 	        )?;
 	        std::thread::sleep(Duration::from_millis(50));
-	    }    
+	    }
 	    Ok(())
 	}
-	
+
 	fn cheap_mode(&mut self, room: &str, delay: u64) -> Result<()> {
-	    println!("{} Energy saving mode for {} ({} seconds delay)", 
+	    println!("{} Energy saving mode for {} ({} seconds delay)",
 	        "💰".green(), room, delay);
-	    
+
 	    self.control_room(room, &DeviceState::On, Some(50), None, None)?;
-	    
+
 	    println!("{} Lights on, will turn off in {} seconds...", "⏰".yellow(), delay);
-	    
+
 	    std::thread::sleep(Duration::from_secs(delay));
-	    
-	    self.control_room(room, &DeviceState::Off, None, None, None)?;            
+
+	    self.control_room(room, &DeviceState::Off, None, None, None)?;
 	    println!("{} Lights turned off for energy saving", "✅".green());
-	    
+
 	    Ok(())
 	}
-	
+
 	fn list_items(&self, what: &ListType, json: bool) -> Result<()> {
 	    match what {
 	        ListType::Devices => {
@@ -1118,9 +1472,9 @@ Ok(serde_json::Value::Object(payload))
 	                    } else {
 	                        "".to_string()
 	                    };
-	                    println!("  • {} [{}]{}{}", 
-	                        device.friendly_name.bold(), 
-	                        device.room, 
+	                    println!("  • {} [{}]{}{}",
+	                        device.friendly_name.bold(),
+	                        device.room,
 	                        hue_info,
 	                        if device.supports_color.unwrap_or(false) { " 🎨" } else { "" });
 	                }
@@ -1131,7 +1485,7 @@ Ok(serde_json::Value::Object(payload))
 	            for device in self.devices.values() {
 	                *rooms.entry(&device.room).or_insert(0) += 1;
 	            }
-	            
+
 	            if json {
 	                println!("{}", serde_json::to_string_pretty(&rooms)?);
 	            } else {
@@ -1158,7 +1512,7 @@ Ok(serde_json::Value::Object(payload))
 	            let lights: Vec<_> = self.devices.values()
 	                .filter(|d| d.device_type == "light" || d.device_type == "hue_light")
 	                .collect();
-	            
+
 	            if json {
 	                println!("{}", serde_json::to_string_pretty(&lights)?);
 	            } else {
@@ -1173,11 +1527,11 @@ Ok(serde_json::Value::Object(payload))
 	        }
 	        ListType::Sensors => {
 	            let sensors: Vec<_> = self.devices.values()
-	                .filter(|d| d.device_type.contains("sensor") || 
-	                           d.device_type.contains("motion") || 
+	                .filter(|d| d.device_type.contains("sensor") ||
+	                           d.device_type.contains("motion") ||
 	                           d.device_type.contains("contact"))
 	                .collect();
-	            
+
 	            if json {
 	                println!("{}", serde_json::to_string_pretty(&sensors)?);
 	            } else {
@@ -1188,7 +1542,7 @@ Ok(serde_json::Value::Object(payload))
 	            }
 	        }
 	    }
-	    
+
 	    Ok(())
 	}
 }
@@ -1387,6 +1741,73 @@ fn api_toggle_alarm(api_url: &str, password: &str, time: &str, days: Option<&str
     Ok(())
 }
 
+fn api_notify(api_url: &str, password: &str, message: &str, tag: Option<&str>) -> Result<()> {
+    let client = HttpClient::new();
+    let mut params = vec![("message", message.to_string())];
+    if let Some(t) = tag {
+        if !t.is_empty() {
+            params.push(("tag", t.to_string()));
+        }
+    }
+    let resp = client
+        .post(format!("{}/notify", api_url))
+        .query(&params)
+        .header("Authorization", format!("Bearer {}", password))
+        .send()
+        .context("Failed to reach API")?;
+    if !resp.status().is_success() {
+        anyhow::bail!("API error: {}", resp.status());
+    }
+    let body: serde_json::Value = resp.json()?;
+    println!("{}", serde_json::to_string_pretty(&body)?);
+    Ok(())
+}
+
+fn api_get_notify(api_url: &str, password: &str) -> Result<()> {
+    let client = HttpClient::new();
+    let resp = client
+        .get(format!("{}/get-notify", api_url))
+        .header("Authorization", format!("Bearer {}", password))
+        .send()
+        .context("Failed to reach API")?;
+    if !resp.status().is_success() {
+        anyhow::bail!("API error: {}", resp.status());
+    }
+    let body: serde_json::Value = resp.json()?;
+    println!("{}", serde_json::to_string_pretty(&body)?);
+    Ok(())
+}
+
+fn api_clear_notify(api_url: &str, password: &str) -> Result<()> {
+    let client = HttpClient::new();
+    let resp = client
+        .post(format!("{}/clear-notify", api_url))
+        .header("Authorization", format!("Bearer {}", password))
+        .send()
+        .context("Failed to reach API")?;
+    if !resp.status().is_success() {
+        anyhow::bail!("API error: {}", resp.status());
+    }
+    let body: serde_json::Value = resp.json()?;
+    println!("{}", serde_json::to_string_pretty(&body)?);
+    Ok(())
+}
+
+fn api_get_cards(api_url: &str, password: &str) -> Result<()> {
+    let client = HttpClient::new();
+    let resp = client
+        .get(format!("{}/cards", api_url))
+        .header("Authorization", format!("Bearer {}", password))
+        .send()
+        .context("Failed to reach API")?;
+    if !resp.status().is_success() {
+        anyhow::bail!("API error: {}", resp.status());
+    }
+    let body: serde_json::Value = resp.json()?;
+    println!("{}", serde_json::to_string_pretty(&body)?);
+    Ok(())
+}
+
 fn fetch_and_print_room_temps(
     api_url: Option<&str>,
     api_password: &str,
@@ -1542,7 +1963,7 @@ fn fetch_and_print_status_table(
             if (pos - 100.0).abs() < f64::EPSILON {
                 Some("OPEN")
             } else { None }
-            
+
         } else if let Some(contact) = props.get("contact") {
             let is_closed = contact
                 .as_bool()
@@ -1619,14 +2040,14 @@ fn main() -> Result<()> {
         print_version();
         return Ok(());
     }
-    
+
     let debug = std::env::var("DEBUG").is_ok();
     if debug { std::env::set_var("DT_LOG_LEVEL", "DEBUG"); }
     dt_setup(None, None);
-    dt_debug!("Started zigduck-cli!");    
+    dt_debug!("Started zigduck-cli!");
 
 	let mut cli = Cli::parse();
-	
+
     let default_config_path = PathBuf::from("/etc/zigduck/config.json");
     let config: Option<CliConfig> = if default_config_path.exists() {
         match fs::read_to_string(&default_config_path) {
@@ -1667,6 +2088,19 @@ fn main() -> Result<()> {
                 }
             }
         }
+        if cli.hue_sync_box_ip.is_none() {
+            if let Some(hue) = &cfg.hue {
+                cli.hue_sync_box_ip = hue.sync_box_ip.clone();
+            }
+        }
+        if cli.hue_sync_box_token_file.is_none() && cli.hue_sync_box_token.is_none() {
+            if let Some(hue) = &cfg.hue {
+                if let Some(tf) = &hue.sync_box_token_file {
+                    cli.hue_sync_box_token_file = Some(PathBuf::from(tf));
+                }
+            }
+        }
+
     }
 
     let api_url = if let Some(url) = cli.api_url.clone() {
@@ -1721,6 +2155,13 @@ fn main() -> Result<()> {
         Some(fs::read_to_string(key_file)?.trim().to_string())
     } else { cli.hue_api_key.or_else(|| std::env::var("HUE_API_KEY").ok()) };
 
+    let sync_box_token = if let Some(tf) = cli.hue_sync_box_token_file {
+        Some(fs::read_to_string(tf)?.trim().to_string())
+    } else {
+        cli.hue_sync_box_token
+            .or_else(|| std::env::var("HUE_SYNC_BOX_TOKEN").ok())
+    };
+
     if cli.status {
         fetch_and_print_status_table(
             Some(&api_url),
@@ -1731,6 +2172,51 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+
+    if cli.state_json {
+        let json_str = if let Some(path) = cli.state_file.as_deref() {
+            fs::read_to_string(path).context("Failed to read state file")?
+        } else {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/state", api_url.trim_end_matches('/'));
+            let resp = client
+                .get(&url)
+                .header("Authorization", format!("Bearer {}", api_password))
+                .send()
+                .context("Failed to reach API")?;
+            if !resp.status().is_success() {
+                anyhow::bail!("API returned {}", resp.status());
+            }
+            resp.text()?
+        };
+        let v: serde_json::Value = serde_json::from_str(&json_str)
+            .context("Invalid state JSON")?;
+        println!("{}", serde_json::to_string_pretty(&v)?);
+        return Ok(());
+    }
+
+    if let Some(message) = cli.notify.clone() {
+        api_notify(&api_url, &api_password, &message, cli.tag.as_deref())?;
+        return Ok(());
+    }
+
+    if cli.get_notify {
+        api_get_notify(&api_url, &api_password)?;
+        return Ok(());
+    }
+
+    if cli.clear_notify {
+        api_clear_notify(&api_url, &api_password)?;
+        return Ok(());
+    }
+
+    if cli.cards {
+        api_get_cards(&api_url, &api_password)?;
+        return Ok(());
+    }
+
+
+
     let base_topic = if let Some(cfg) = &config {
         cfg.mosquitto.as_ref()
             .map(|m| m.base_topic.clone())
@@ -1740,6 +2226,7 @@ fn main() -> Result<()> {
     let mut controller = ZigduckController::new(
         cli.broker, cli.user, password,
         cli.hue_bridge_ip, hue_api_key,
+        cli.hue_sync_box_ip, sync_box_token,
         cli.devices_config, cli.scenes_config,
         cli.verbose > 0,
         base_topic.clone(),
@@ -1763,8 +2250,8 @@ fn main() -> Result<()> {
             return Ok(());
         }
     }
-  
-    
+
+
     if let Some(val) = cli.get_bat.clone() {
         let enabled = match val.to_lowercase().as_str() {
             "false" | "0" | "no" | "off" => false,
@@ -1783,7 +2270,7 @@ fn main() -> Result<()> {
             return Ok(());
         }
     }
-      
+
     if let Some(cmd) = cli.command {
         match cmd {
             Commands::Timer { action } => match action {
@@ -1846,10 +2333,17 @@ fn main() -> Result<()> {
                 }
                 return Ok(());
             }
+            Commands::Hue { action } => {
+                match action {
+                    HueAction::Bridge { action } => controller.handle_hue_bridge(action)?,
+                    HueAction::Sync   { action } => controller.handle_hue_sync(action)?,
+                }
+                return Ok(());
+            }
         }
         return Ok(());
     }
-    
+
 
     fn parse_state(state_str: &str, brightness: &mut Option<u8>, color: &mut Option<String>) -> Result<DeviceState> {
         match state_str.to_lowercase().as_str() {
@@ -1929,7 +2423,7 @@ fn main() -> Result<()> {
         let state = parse_state(state_str, &mut brightness, &mut color)?;
         controller.control_all_lights(&state, brightness, color)
     } else if let Some(room_name) = cli.cheap_mode {
-        controller.cheap_mode(&room_name, cli.delay)        
+        controller.cheap_mode(&room_name, cli.delay)
     } else if let Some(direction) = cli.blinds {
         controller.control_blinds(&direction)?;
         return Ok(());

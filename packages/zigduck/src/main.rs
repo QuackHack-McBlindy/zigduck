@@ -32,6 +32,18 @@ struct HueConfig {
     password_file: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HouseDevice {
+    #[serde(default = "default_true")]
+    enable: bool,
+    #[serde(default)]
+    room: Option<String>,
+    #[serde(default)]
+    ip: Option<String>,
+}
+
+fn default_true() -> bool { true }
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct HouseConfig {
@@ -42,7 +54,9 @@ struct HouseConfig {
     //greeting: GreetingConfig,
     #[serde(default)]
     no_motion: NoMotionConfig,
-    double_click_timeout_ms: Option<u64>,    
+    double_click_timeout_ms: Option<u64>,
+    #[serde(default)]
+    devices: HashMap<String, HouseDevice>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -237,7 +251,7 @@ struct ZigduckState {
     devices: HashMap<String, Device>,
     scene_config: SceneConfig,
     room_scenes: HashMap<String, Vec<String>>,
-    scene_index: Arc<RwLock<HashMap<String, usize>>>,    
+    scene_index: Arc<RwLock<HashMap<String, usize>>>,
     automations: AutomationConfig,
     motion_tracker: Arc<RwLock<MotionTracker>>,
     motion_timers: HashMap<String, tokio::task::JoinHandle<()>>,
@@ -249,7 +263,7 @@ struct ZigduckState {
     config: HouseConfig,
     last_button_press: Arc<Mutex<HashMap<String, SystemTime>>>,
     double_click_timeout: Duration,
-    motion_triggered: Arc<RwLock<HashMap<String, bool>>>,    
+    motion_triggered: Arc<RwLock<HashMap<String, bool>>>,
 }
 
 impl Clone for ZigduckState {
@@ -267,7 +281,7 @@ impl Clone for ZigduckState {
             devices: self.devices.clone(),
             scene_config: self.scene_config.clone(),
             room_scenes: self.room_scenes.clone(),
-            scene_index: self.scene_index.clone(),            
+            scene_index: self.scene_index.clone(),
             automations: self.automations.clone(),
             motion_tracker: self.motion_tracker.clone(),
             motion_timers: HashMap::new(),
@@ -401,7 +415,7 @@ impl ZigduckState {
             _ => false,
         }
     }
-    
+
     async fn create_snapshot(
         &self,
         name: &str,
@@ -412,14 +426,14 @@ impl ZigduckState {
         if name.is_empty() || name.contains('/') || name.contains('\\') {
             return Err("Invalid snapshot name".into());
         }
-    
+
         let snapshots_dir = format!("{}/snapshots", self.state_dir);
         tokio::fs::create_dir_all(&snapshots_dir).await?;
-    
+
         let states = self.device_states.read().unwrap().clone();
-    
+
         let mut snapshot_data: HashMap<String, serde_json::Value> = HashMap::new();
-    
+
         for (device_name, device) in &self.devices {
             let include = match scope {
                 "global" => device.device_type == "light" || device.device_type == "hue_light",
@@ -438,14 +452,14 @@ impl ZigduckState {
             if !include {
                 continue;
             }
-    
+
             if let Some(device_state) = states.get(device_name) {
                 let mut json_state = serde_json::Map::new();
                 for (key, value_str) in device_state {
                     if !self.is_controllable_field(&device.device_type, key) {
                         continue;
                     }
-    
+
                     let value = match serde_json::from_str::<serde_json::Value>(value_str) {
                         Ok(v) if v.is_object() || v.is_array() => v,
                         _ => {
@@ -458,23 +472,23 @@ impl ZigduckState {
                             } else { serde_json::Value::String(value_str.clone()) }
                         }
                     };
-    
+
                     json_state.insert(key.clone(), value);
                 }
-    
+
                 if !json_state.is_empty() { snapshot_data.insert(device_name.clone(), serde_json::Value::Object(json_state)); }
             }
         }
-    
+
         let json_str = serde_json::to_string_pretty(&snapshot_data)?;
         let file_path = format!("{}/{}.json", snapshots_dir, name);
         tokio::fs::write(&file_path, json_str).await?;
         dt_info!("Snapshot '{}' saved with {} devices", name, snapshot_data.len());
         Ok(())
     }
-    
-    
-    
+
+
+
     async fn restore_snapshot(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         let snapshots_dir = format!("{}/snapshots", self.state_dir);
         let file_path = format!("{}/{}.json", snapshots_dir, name);
@@ -486,13 +500,13 @@ impl ZigduckState {
                 return Ok(());
             }
         };
-    
+
         let snapshot_data: HashMap<String, serde_json::Value> = serde_json::from_str(&content)?;
-    
+
         for (device_name, state_value) in snapshot_data {
             if let Some(device) = self.devices.get(&device_name) {
                 let state_map = state_value.as_object().cloned().unwrap_or_default();
-    
+
                 match device.device_type.as_str() {
                     "hue_light" => {
                         if let Some(hue_id) = device.hue_id {
@@ -510,11 +524,11 @@ impl ZigduckState {
                 }
             } else { dt_warning!("Device '{}' not found in current config, skipping", device_name); }
         }
-    
+
         dt_info!("Snapshot '{}' restored", name);
         Ok(())
     }
-        
+
     async fn activate_scene_filtered(&self, scene_name: &str, room_filter: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
         let scene = self.scene_config.scenes.get(scene_name)
             .ok_or_else(|| format!("Scene '{}' not found", scene_name))?;
@@ -649,15 +663,15 @@ impl ZigduckState {
         }
     }
 
-    
+
     async fn check_time_range(&self, start: &Option<String>, end: &Option<String>, days: &[String]) -> bool {
         let now = Local::now();
         let current_day = now.format("%a").to_string().to_lowercase();
-    
+
         if !days.iter().any(|day| day == &current_day) {
             return false;
         }
-    
+
         if end.is_none() {
             if let Some(start_str) = start {
                 if let Ok(start_time) = chrono::NaiveTime::parse_from_str(start_str, "%H:%M") {
@@ -668,7 +682,7 @@ impl ZigduckState {
             }
             return false;
         }
-    
+
         if let (Some(start_str), Some(end_str)) = (start, end) {
             if let (Ok(start_time), Ok(end_time)) = (
                 chrono::NaiveTime::parse_from_str(start_str, "%H:%M"),
@@ -678,7 +692,7 @@ impl ZigduckState {
                 return current_time >= start_time && current_time <= end_time;
             }
         }
-    
+
         if let Some(start_str) = start {
             if let Ok(start_time) = chrono::NaiveTime::parse_from_str(start_str, "%H:%M") {
                 if now.time() < start_time {
@@ -1225,17 +1239,17 @@ impl ZigduckState {
     }
 
 
-    
+
     async fn execute_automation_action_mqtt(&self, action: &AutomationAction, device_name: &str, room: &str, topic: &str, payload: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing MQTT automation action for {} in {}", device_name, room);
-    
+
         std::env::set_var("AUTOMATION_DEVICE", device_name);
         std::env::set_var("AUTOMATION_ROOM", room);
         std::env::set_var("MQTT_TOPIC", topic);
         std::env::set_var("MQTT_PAYLOAD", payload);
         std::env::set_var("MQTT_DEVICE", device_name);
         std::env::set_var("MQTT_ROOM", room);
-    
+
         if let Ok(data) = serde_json::from_str::<serde_json::Value>(payload) {
             if let Some(action_val) = data.get("action").and_then(|v| v.as_str()) {
                 std::env::set_var("MQTT_ACTION", action_val);
@@ -1244,7 +1258,7 @@ impl ZigduckState {
                 std::env::set_var("MQTT_STATE", state_val);
             }
         }
-    
+
         match action {
             AutomationAction::Simple(cmd) => {
                 let output = TokioCommand::new("sh")
@@ -1301,19 +1315,19 @@ impl ZigduckState {
         }
         Ok(())
     }
-    
+
 
     async fn check_double_click(&self, device_name: &str, room: &str, button_type: &str) -> Result<(), Box<dyn std::error::Error>> {
         let key = format!("{}:{}", device_name, button_type);
         let now = SystemTime::now();
         let mut last_press_map = self.last_button_press.lock().unwrap();
-    
+
         if let Some(last) = last_press_map.get(&key) {
             if now.duration_since(*last).unwrap() < self.double_click_timeout {
                 dt_info!("Double-click detected: device={}, room={}, button={}", device_name, room, button_type);
                 let elapsed = now.duration_since(*last).unwrap().as_millis();
                 dt_info!("Time between presses: {} ms", elapsed);
-    
+
                 if button_type == "on" {
                     if let Some(scenes) = self.room_scenes.get(room) {
                         if !scenes.is_empty() {
@@ -1370,6 +1384,33 @@ impl ZigduckState {
             dt_debug!("Skipping state update for {} (set/availability topic)", device_name);
             return Ok(());
         }
+
+        if let Some(dev) = self.config.devices.get(device_name) {
+            if !dev.enable {
+                dt_debug!("Device {} is disabled in house.devices, skipping", device_name);
+                return Ok(());
+            }
+
+            if let Some(obj) = data.as_object() {
+                for (key, value) in obj {
+                    let value_str = match value {
+                        Value::String(s) => s.clone(),
+                        Value::Number(n) => n.to_string(),
+                        Value::Bool(b)   => b.to_string(),
+                        Value::Null      => continue,
+                        other => other.to_string(),
+                    };
+                    self.update_device_state(device_name, key, &value_str)?;
+                }
+            }
+
+            let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            self.update_device_state(device_name, "last_updated", &timestamp.to_string())?;
+            dt_debug!("house.devices passthrough: {} ({} fields)", device_name,
+            data.as_object().map(|o| o.len()).unwrap_or(0));
+            return Ok(());
+        }
+
 
         dt_debug!("Updating all state fields for: {}", device_name);
 
@@ -1518,7 +1559,7 @@ impl ZigduckState {
         Ok(())
     }
 
-    // 🦆 says ⮞ TURN OFF ROOM LIGHTS    
+    // 🦆 says ⮞ TURN OFF ROOM LIGHTS
     async fn room_lights_off(&self, room: &str) -> Result<(), Box<dyn std::error::Error>> {
         for (device_id, device) in &self.devices {
             if device.room == room && device.device_type == "light" {
@@ -1531,13 +1572,13 @@ impl ZigduckState {
         }
         Ok(())
     }
-        
+
     async fn room_lights_off_with_transition(&self, room: &str, transition_secs: u64) -> Result<(), Box<dyn std::error::Error>> {
         for (device_id, device) in &self.devices {
             if device.room != room {
                 continue;
             }
-    
+
             match device.device_type.as_str() {
                 "light" => {
                     let message = json!({
@@ -1565,7 +1606,7 @@ impl ZigduckState {
         }
         Ok(())
     }
-    
+
     // 🦆 says ⮞ check if dark (static time configured)
     fn is_dark_time(&self) -> bool {
         // 🦆 says ⮞ if dark time is disabled, it's always dark
@@ -1646,7 +1687,7 @@ impl ZigduckState {
         }
         false
     }
-    
+
     fn get_motion_sensor_names(&self) -> Vec<String> {
         let mut names: Vec<String> = self
             .devices
@@ -1664,7 +1705,7 @@ impl ZigduckState {
         }
         names
     }
-    
+
     async fn all_lights_off_except(&self, exclude: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         for (device_id, device) in &self.devices {
             if exclude.iter().any(|e| e == device_id || e == &device.id) {
@@ -1695,22 +1736,22 @@ impl ZigduckState {
         }
         Ok(())
     }
-    
-    
+
+
     async fn check_no_motion_global(&self) {
         if !self.config.no_motion.enabled {
             return;
         }
-    
+
         let sensors = self.get_motion_sensor_names();
         if sensors.is_empty() {
             dt_debug!("no motion sensors found; skipping global no-motion check");
             return;
         }
-    
+
         let after_seconds = self.config.no_motion.after * 60;
         let now = SystemTime::now();
-    
+
         let all_no_motion = match self.motion_tracker.read() {
             Ok(tracker) => sensors.iter().all(|sensor| {
                 tracker
@@ -1722,20 +1763,20 @@ impl ZigduckState {
             }),
             Err(_) => false,
         };
-    
+
         if all_no_motion {
             dt_info!(
                 "no motion for {} minutes on all sensors; turning off lights (excluding {:?})",
                 self.config.no_motion.after,
                 self.config.no_motion.exclude
             );
-    
+
             if let Err(e) = self.all_lights_off_except(&self.config.no_motion.exclude).await {
                 dt_warning!("failed to turn off all lights: {}", e);
             }
         }
     }
-    
+
     // 🦆 says ⮞ unified devices controller (hue api/zigbee2mqtt)
     fn handle_device_command<'a>(
         &'a self,
@@ -1876,7 +1917,7 @@ impl ZigduckState {
         let tv_prefix               = format!("{}/tv/", self.mqtt_base_topic);
         let snapshot_control_prefix = format!("{}/control/snapshot/", self.mqtt_base_topic);
 
-        
+
         // 🦆 says ⮞ handle snapshot control commands (create / restore)
         if topic.starts_with(&snapshot_control_prefix) {
             let command = topic.strip_prefix(&snapshot_control_prefix).unwrap_or("");
@@ -1892,7 +1933,7 @@ impl ZigduckState {
                                 .filter_map(|v| v.as_str().map(String::from))
                                 .collect::<Vec<String>>()
                             );
-        
+
                         if let Err(e) = self.create_snapshot(name, scope, room, device_list.as_deref()).await {
                             dt_warning!("Failed to create snapshot via MQTT: {}", e);
                         } else { dt_info!("Snapshot '{}' created via MQTT", name); }
@@ -2006,8 +2047,8 @@ impl ZigduckState {
             // 🦆 says ⮞ 🕵️ MOTION SENSORS
             if let Some(occupancy) = data["occupancy"].as_bool() {
                 if occupancy {
-                    self.update_motion_tracker(device_name);     
-            
+                    self.update_motion_tracker(device_name);
+
                     dt_info!("🕵️ Motion in {} {}", device_name, room);
 
                     self.execute_automations("motion", "motion_detected", device_name, &room).await?;
@@ -2027,7 +2068,7 @@ impl ZigduckState {
                 } else {
                     dt_debug!("🛑 No more motion in {} {}", device_name, room);
                     self.execute_automations("motion", "motion_not_detected", device_name, &room).await?;
-                
+
                     if self.is_motion_triggered(&room) {
                         // 🦆 says ⮞ if transition is enabled, fade out over duration instead of waiting
                         if self.config.dark_time.transition {
@@ -2036,7 +2077,7 @@ impl ZigduckState {
                             }
                             let transition_secs = self.config.dark_time.duration;
                             dt_debug!("💡 Motion stopped in {}, fading lights off over {}s", room, transition_secs);
-                
+
                             if let Err(e) = self.room_lights_off_with_transition(&room, transition_secs).await {
                                 dt_warning!("Failed to turn off lights with transition in {}: {}", room, e);
                             }
@@ -2057,7 +2098,7 @@ impl ZigduckState {
                             self.motion_timers.insert(room.clone(), timer_handle);
                         }
                     }
-                }      
+                }
             }
 
             // 🦆 says ⮞ 💧 WATER SENSORS
@@ -2076,7 +2117,7 @@ impl ZigduckState {
                             let last_motion_str = self.get_state("apartment", "last_motion").unwrap_or_else(|| "0".to_string());
                             let last_motion: u64 = last_motion_str.parse().unwrap_or(0);
                             let time_diff = current_time.saturating_sub(last_motion);
-            
+
                             if time_diff > greeting.away_duration {
                                 dt_info!("🚪 Door '{}' opened. Welcome home!", greeting.door);
                                 let greeting = greeting.clone();
@@ -2097,7 +2138,7 @@ impl ZigduckState {
                     }
                 }
             }
-            
+
             // 🦆 says ⮞ BLINDz
             if let Some(position) = data["position"].as_u64() {
                 if device_type == "blind" {
@@ -2136,9 +2177,9 @@ impl ZigduckState {
                     self.handle_room_dimmer_action(action, device_name, &room, async |r: String| {
                         dt_info!("💡 Turning on lights in {}", r);
                         self.room_lights_on(&r).await
-                    }).await?;                  
+                    }).await?;
                     self.check_double_click(device_name, &room, "on").await?;
-                } else if action == self.config.dimmer.actions.on_hold {                    
+                } else if action == self.config.dimmer.actions.on_hold {
                     self.handle_room_dimmer_action(action, device_name, &room, async |_| {
                         self.control_all_lights("ON", Some(254)).await?;
                         dt_info!("✅💡 MAX LIGHTS ON");

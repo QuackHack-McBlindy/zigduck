@@ -6,6 +6,7 @@
     ./rooms.nix
     ./tv.nix
     ./service.nix
+    ./devices.nix
     ./zigbee
   ];
 }

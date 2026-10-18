@@ -38,6 +38,23 @@ struct DashboardConfig {
     webserver_secret_file: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct CardConfig {
+    id: String,
+    #[serde(default)] title: Option<String>,
+    #[serde(default)] group: Option<String>,
+    #[serde(default)] icon: Option<String>,
+    #[serde(default)] color: Option<String>,
+    #[serde(default)] chart: bool,
+    file_path: String,
+    json_field: String,
+    #[serde(default)] format: Option<String>,
+    #[serde(default)] details_json_field: Option<String>,
+    #[serde(default)] details_format: Option<String>,
+    #[serde(default)] history_field: Option<String>,
+}
+
 lazy_static! {
     static ref CONFIG: DashboardConfig = {
         let config_path = std::env::var("ZIGDUCK_CONFIG_FILE")
@@ -47,6 +64,76 @@ lazy_static! {
         serde_json::from_str(&content)
             .expect("Failed to parse dashboard config")
     };
+}
+
+const CARDS_FILE: &str = "/etc/zigduck/status-cards-config.json";
+
+#[derive(Debug, Deserialize)]
+struct CardsFile {
+    cards: HashMap<String, CardEntry>,
+    #[serde(default)]
+    enabled: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CardEntry {
+    #[serde(default)] title: Option<String>,
+    #[serde(default)] group: Option<String>,
+    #[serde(default)] icon: Option<String>,
+    #[serde(default)] color: Option<String>,
+    #[serde(default)] chart: bool,
+    file_name: String,
+    json_field: String,
+    #[serde(default)] format: Option<String>,
+    #[serde(default)] details_json_field: Option<String>,
+    #[serde(default)] details_format: Option<String>,
+    #[serde(default)] history_field: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct MainConfig {
+    zigduck: MainZigduckConfig,
+}
+
+#[derive(Debug, Deserialize)]
+struct MainZigduckConfig {
+    state_dir: String,
+}
+
+lazy_static! {
+    static ref MAIN_CONFIG: MainConfig = {
+        let path = std::env::var("ZIGDUCK_MAIN_CONFIG_FILE")
+            .unwrap_or_else(|_| "/etc/zigduck/config.json".to_string());
+        match std::fs::read_to_string(&path) {
+            Ok(content) => serde_json::from_str(&content).unwrap_or_else(|e| {
+                eprintln!(
+                    "[API] Failed to parse {}: {} — falling back to /var/lib/zigduck",
+                    path, e
+                );
+                MainConfig {
+                    zigduck: MainZigduckConfig {
+                        state_dir: "/var/lib/zigduck".to_string(),
+                    },
+                }
+            }),
+            Err(e) => {
+                eprintln!(
+                    "[API] Cannot read {}: {} — falling back to /var/lib/zigduck",
+                    path, e
+                );
+                MainConfig {
+                    zigduck: MainZigduckConfig {
+                        state_dir: "/var/lib/zigduck".to_string(),
+                    },
+                }
+            }
+        }
+    };
+}
+
+fn cards_data_root() -> &'static str {
+    &MAIN_CONFIG.zigduck.state_dir
 }
 
 fn get_playlist_path() -> &'static str {
@@ -64,6 +151,10 @@ lazy_static! {
 
 lazy_static! {
     static ref PLAYLIST_MUTEX: Mutex<()> = Mutex::new(());
+}
+
+lazy_static! {
+    static ref NOTIFICATIONS_MUTEX: Mutex<()> = Mutex::new(());
 }
 
 lazy_static! {
@@ -722,6 +813,10 @@ fn is_api_path(path: &str) -> bool {
         "/browsev2",
         "/playlist",
         "/media",
+        "/notify",
+        "/get-notify",
+        "/clear-notify",
+        "/cards",
     ];
 
     if api_roots.iter().any(|root| p == *root || p == format!("/api{}", root)) {
@@ -895,6 +990,196 @@ fn handle_state_room(room: &str) -> String {
         }
     }
 }
+
+fn load_cards_config() -> Vec<CardConfig> {
+    let content = match fs::read_to_string(CARDS_FILE) {
+        Ok(c) => c,
+        Err(e) => {
+            dt_warning(&format!("cards config not readable: {}", e));
+            return Vec::new();
+        }
+    };
+
+    let file: CardsFile = match serde_json::from_str(&content) {
+        Ok(f) => f,
+        Err(e) => {
+            dt_warning(&format!("cards config parse failed: {}", e));
+            return Vec::new();
+        }
+    };
+
+    let root = cards_data_root().trim_end_matches('/');
+
+    let ids: Vec<String> = if file.enabled.is_empty() {
+        file.cards.keys().cloned().collect()
+    } else { file.enabled };
+
+    ids.into_iter()
+        .filter_map(|id| {
+            let entry = file.cards.get(&id)?;
+
+            if entry.file_name.contains('/')
+                || entry.file_name.contains("..")
+                || entry.file_name.is_empty()
+            {
+                dt_warning(&format!(
+                    "cards config: {} has invalid fileName '{}' — skipped",
+                    id, entry.file_name
+                ));
+                return None;
+            }
+
+            Some(CardConfig {
+                id,
+                title: entry.title.clone(),
+                group: entry.group.clone(),
+                icon: entry.icon.clone(),
+                color: entry.color.clone(),
+                chart: entry.chart,
+                file_path: format!("{}/{}", root, entry.file_name),
+                json_field: entry.json_field.clone(),
+                format: entry.format.clone(),
+                details_json_field: entry.details_json_field.clone(),
+                details_format: entry.details_format.clone(),
+                history_field: entry.history_field.clone(),
+            })
+        })
+        .collect()
+}
+
+fn is_safe_card_path(path: &str) -> bool {
+    let root = cards_data_root().trim_end_matches('/');
+    let inside = path == root || path.starts_with(&format!("{}/", root));
+    if !inside { return false; }
+    !path.split('/').any(|seg| seg == "..")
+}
+
+fn format_value(template: &str, value: &Value) -> String {
+    let s = match value {
+        Value::String(s) => s.clone(),
+        Value::Null      => String::new(),
+        Value::Bool(b)   => b.to_string(),
+        Value::Number(n) => n.to_string(),
+        _                => value.to_string(),
+    };
+    template.replace("{value}", &s)
+}
+
+fn scalar_to_string(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.clone(),
+        Value::Null      => String::new(),
+        Value::Bool(b)   => b.to_string(),
+        Value::Number(n) => n.to_string(),
+        _                => v.to_string(),
+    }
+}
+
+fn file_mtime_rfc3339(path: &str) -> Option<String> {
+    let mtime = fs::metadata(path).ok()?.modified().ok()?;
+    let dt: chrono::DateTime<chrono::Utc> = mtime.into();
+    Some(dt.to_rfc3339())
+}
+
+fn resolve_card(card: &CardConfig) -> Value {
+    let mut out = Map::new();
+    out.insert("id".into(),    Value::String(card.id.clone()));
+    if let Some(t) = &card.title { out.insert("title".into(), Value::String(t.clone())); }
+    if let Some(g) = &card.group { out.insert("group".into(), Value::String(g.clone())); }
+    if let Some(i) = &card.icon  { out.insert("icon".into(),  Value::String(i.clone())); }
+    if let Some(c) = &card.color { out.insert("color".into(), Value::String(c.clone())); }
+    out.insert("chart".into(), Value::Bool(card.chart));
+
+    if let Some(ts) = file_mtime_rfc3339(&card.file_path) {
+        out.insert("last_updated".into(), Value::String(ts));
+    }
+
+    if !is_safe_card_path(&card.file_path) {
+        out.insert("available".into(), Value::Bool(false));
+        out.insert(
+            "error".into(),
+            Value::String("filePath outside cards_data_root".into()),
+        );
+        return Value::Object(out);
+    }
+
+    let data: Value = match fs::read_to_string(&card.file_path) {
+        Ok(content) => match serde_json::from_str(&content) {
+            Ok(v) => v,
+            Err(e) => {
+                out.insert("available".into(), Value::Bool(false));
+                out.insert(
+                    "error".into(),
+                    Value::String(format!("parse failed: {}", e)),
+                );
+                return Value::Object(out);
+            }
+        },
+        Err(e) => {
+            out.insert("available".into(), Value::Bool(false));
+            out.insert(
+                "error".into(),
+                Value::String(format!("read failed: {}", e)),
+            );
+            return Value::Object(out);
+        }
+    };
+
+    let raw_value = data.get(&card.json_field).cloned().unwrap_or(Value::Null);
+    out.insert("raw_value".into(), raw_value.clone());
+    let value_str = match &card.format {
+        Some(f) => format_value(f, &raw_value),
+        None    => scalar_to_string(&raw_value),
+    };
+    out.insert("value".into(), Value::String(value_str));
+
+    if let Some(field) = &card.details_json_field {
+        let dv = data.get(field).cloned().unwrap_or(Value::Null);
+        if !dv.is_null() {
+            let ds = match &card.details_format {
+                Some(f) => format_value(f, &dv),
+                None    => scalar_to_string(&dv),
+            };
+            if !ds.is_empty() {
+                out.insert("details".into(), Value::String(ds));
+            }
+        }
+    }
+
+    if let Some(field) = &card.history_field {
+        if let Some(hist) = data.get(field) {
+            out.insert("history".into(), hist.clone());
+        }
+    }
+
+    out.insert("available".into(), Value::Bool(true));
+    Value::Object(out)
+}
+
+fn handle_cards_list() -> String {
+    let cards = load_cards_config();
+    let resolved: Vec<Value> = cards.iter().map(resolve_card).collect();
+    serde_json::to_string(&resolved).unwrap_or_else(|_| "[]".to_string())
+}
+
+fn handle_card_get(id: &str) -> (bool, String) {
+    let cards = load_cards_config();
+    for card in &cards {
+        if card.id == id {
+            return (true, resolve_card(card).to_string());
+        }
+    }
+    (
+        false,
+        json!({"error": format!("Card not found: {}", id)}).to_string(),
+    )
+}
+
+
+
+
+
+
 
 fn handle_browse(path_arg: &str, use_v2: bool) -> String {
     let media_root = get_root_dir().trim_end_matches('/');
@@ -1314,6 +1599,84 @@ fn handle_m3u_list() -> String {
 }
 
 
+fn get_notifications_path() -> String {
+    std::env::var("NOTIFICATIONS_FILE")
+        .unwrap_or_else(|_| "/var/lib/zigduck/notifications.json".to_string())
+}
+
+fn read_notifications() -> Vec<Value> {
+    match fs::read_to_string(get_notifications_path()) {
+        Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
+        Err(_) => Vec::new(),
+    }
+}
+
+fn write_notifications(notifications: &[Value]) -> Result<(), String> {
+    let path = get_notifications_path();
+    if let Some(parent) = Path::new(&path).parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    let json = serde_json::to_string_pretty(notifications)
+        .map_err(|e| format!("Serialize error: {}", e))?;
+    fs::write(&path, json).map_err(|e| format!("Write error: {}", e))
+}
+
+fn handle_notify_add(query: &str, body: &[u8]) -> String {
+    let mut message = get_query_arg(query, "message");
+    if message.is_empty() {
+        message = String::from_utf8_lossy(body).trim().to_string();
+    }
+    if message.is_empty() {
+        return json!({"error":"Missing message (use ?message=... or POST body)"}).to_string();
+    }
+
+    let tag = get_query_arg(query, "tag");
+    let tag_opt = if tag.trim().is_empty() { None } else { Some(tag) };
+
+    let _lock = NOTIFICATIONS_MUTEX.lock().unwrap();
+    let mut notifications = read_notifications();
+
+    if let Some(ref t) = tag_opt {
+        notifications.retain(|n| {
+            n.get("tag").and_then(|v| v.as_str()) != Some(t.as_str())
+        });
+    }
+
+    let timestamp = chrono::Utc::now().to_rfc3339();
+    let mut entry = Map::new();
+    entry.insert("message".to_string(), Value::String(message));
+    entry.insert("timestamp".to_string(), Value::String(timestamp));
+    if let Some(t) = tag_opt {
+        entry.insert("tag".to_string(), Value::String(t));
+    }
+
+    notifications.push(Value::Object(entry));
+
+    match write_notifications(&notifications) {
+        Ok(_) => json!({
+            "status": "ok",
+            "action": "add",
+            "count": notifications.len(),
+        })
+        .to_string(),
+        Err(e) => json!({"error": e}).to_string(),
+    }
+}
+
+fn handle_notify_get() -> String {
+    let _lock = NOTIFICATIONS_MUTEX.lock().unwrap();
+    let notifications = read_notifications();
+    serde_json::to_string(&notifications).unwrap_or_else(|_| "[]".to_string())
+}
+
+fn handle_notify_clear() -> String {
+    let _lock = NOTIFICATIONS_MUTEX.lock().unwrap();
+    match write_notifications(&[]) {
+        Ok(_) => json!({"status":"ok","action":"clear","count":0}).to_string(),
+        Err(e) => json!({"error": e}).to_string(),
+    }
+}
+
 fn handle_alarm_list() -> String {
     let alarms = ALARM_MANAGER.list();
     serde_json::to_string(&alarms).unwrap_or_else(|_| "[]".to_string())
@@ -1584,10 +1947,9 @@ fn handle_request(mut stream: TcpStream) {
         ("GET", "/") => {
             dt_info("Root endpoint requested");
             send_response(&mut stream, "200 OK",
-                r#"{"service":"zigduck-api","endpoints":["/timers","/alarms","/alarms/add","/alarms/remove","/alarms/toggle","/browse","/browsev2","/device/list","/device/{device}/...","/device/rooms","/device/types","/scene/{scene}","/state","/state/{device}","/state/room/{room}","/playlist/list","/playlist/add","/playlist/remove","/playlist/shuffle","/playlist/clear","/media/playlist","/media/next","/media/previous","/media/play","/media/pause","/media/volume/up","/media/volume/down","/media/power/on","/media/power/off"]}"#,
+                r#"{"service":"zigduck-api","endpoints":["/timers","/alarms","/alarms/add","/alarms/remove","/alarms/toggle","/browse","/browsev2","/cards","/cards/{id}","/device/list","/device/{device}/...","/device/rooms","/device/types","/scene/{scene}","/state","/state/{device}","/state/room/{room}","/playlist/list","/playlist/add","/playlist/remove","/playlist/shuffle","/playlist/clear","/media/playlist","/media/next","/media/previous","/media/play","/media/pause","/media/volume/up","/media/volume/down","/media/power/on","/media/power/off"]}"#,
                 None);
         }
-
 
 
         ("GET", "/browsev2") | ("GET", "/api/browsev2") => {
@@ -1809,6 +2171,28 @@ fn handle_request(mut stream: TcpStream) {
             send_response(&mut stream, "200 OK", &response, Some("application/json"));
         }
 
+
+        ("GET", "/cards") | ("GET", "/api/cards") => {
+            let response = handle_cards_list();
+            send_response(&mut stream, "200 OK", &response, Some("application/json"));
+        }
+
+        ("GET", path)
+            if path.starts_with("/cards/") || path.starts_with("/api/cards/") =>
+        {
+            let id = if let Some(s) = path.strip_prefix("/api/cards/") {
+                s
+            } else if let Some(s) = path.strip_prefix("/cards/") {
+                s
+            } else { path };
+            let decoded = urldecode(id);
+            let (found, response) = handle_card_get(&decoded);
+            if found {
+                send_response(&mut stream, "200 OK", &response, Some("application/json"));
+            } else { send_response(&mut stream, "404 Not Found", &response, Some("application/json")); }
+        }
+
+
         ("GET", path) if path.starts_with("/state/") || path.starts_with("/api/state/") => {
             let rest = if let Some(stripped) = path.strip_prefix("/api/state/") {
                 stripped
@@ -1888,7 +2272,6 @@ fn handle_request(mut stream: TcpStream) {
                 stripped
             } else { path };
 
-            //let decoded_scene_name = scene_name.replace('+', " ");
             let decoded_scene_name = urldecode(scene_name);
             dt_info(&format!("Scene activation: {}", decoded_scene_name));
 
@@ -1912,6 +2295,20 @@ fn handle_request(mut stream: TcpStream) {
             send_response(&mut stream, "200 OK", &response, None);
         }
 
+        ("POST", "/notify") | ("POST", "/api/notify") => {
+            let response = handle_notify_add(query, &body);
+            send_response(&mut stream, "200 OK", &response, None);
+        }
+
+        ("GET", "/get-notify") | ("GET", "/api/get-notify") => {
+            let response = handle_notify_get();
+            send_response(&mut stream, "200 OK", &response, None);
+        }
+
+        ("POST", "/clear-notify") | ("POST", "/api/clear-notify") => {
+            let response = handle_notify_clear();
+            send_response(&mut stream, "200 OK", &response, None);
+        }
 
         _ => { send_response(&mut stream, "404 Not Found", &format!(r#"{{"error":"Endpoint not found","path":"{}"}}"#, raw_path), None); }
     }
@@ -1955,6 +2352,8 @@ fn main() {
     log("  POST /alarms/add?hours=...&minutes=...&name=...&days=...[&topic=...&payload=...] - Add alarm");
     log("  POST /alarms/remove?hours=...&minutes=...   - Remove alarm by time");
     log("  POST /alarms/toggle?hours=...&minutes=...   - Toggle alarm by time");
+    log("  GET  /cards                        - List all cards with resolved data");
+    log("  GET  /cards/{id}                   - Single card with resolved data");
     log("  GET  /browse?path=...            - Browse media directory (legacy)");
     log("  GET  /browsev2?path=...          - Browse media directory (improved)");
     log("  GET  /playlist/list              - Get current m3u playlist");
@@ -1962,6 +2361,10 @@ fn main() {
     log("  POST /playlist/remove?index=...  - Remove entry from m3u playlist");
     log("  POST /playlist/shuffle           - Shuffle m3u playlist");
     log("  POST /playlist/clear             - Clear m3u playlist");
+    log("  POST /notify?message=...[&tag=...] - Append notification (tag replaces existing)");
+    log("  POST /notify  (body)               - Append notification using raw body as message");
+    log("  GET  /get-notify                   - Get all notifications as JSON");
+    log("  POST /clear-notify                 - Clear all notifications");
     log("  GET  /state                     - Get full state of all devices");
     log("  GET  /state/{device}            - Get state for specific device");
     log("  GET  /state/room/{room}         - Get state for all devices in a room");

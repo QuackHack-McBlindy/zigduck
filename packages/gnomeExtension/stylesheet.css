@@ -1,0 +1,64 @@
+.zigduck-scene-btn {
+    padding: 12px 10px;
+    min-height: 46px;
+    border-radius: 8px;
+    color: #000;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.zigduck-scene-btn:hover {
+    border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.zigduck-scene-btn-dark {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.zigduck-pill {
+    padding: 3px 12px;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+.zigduck-pill-on {
+    background-color: rgba(53, 132, 228, 0.55);
+    border: 1px solid #3584e4;
+}
+.zigduck-pill-dot-on  { color: #9ecbff; }
+.zigduck-pill-dot-off { color: rgba(255, 255, 255, 0.6); }
+
+.zigduck-room-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 2px solid transparent;
+}
+.zigduck-room-circle-selected {
+    background-color: rgba(53, 132, 228, 0.35);
+    border: 2px solid #3584e4;
+}
+
+.zigduck-room-action {
+    padding: 4px 12px;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+.zigduck-room-action-on {
+    background-color: rgba(53, 132, 228, 0.55);
+    border: 1px solid #3584e4;
+}
+
+.zigduck-icon-btn {
+    padding: 3px 7px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.zigduck-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+}

@@ -9,12 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New package: `gnomeExtension` a GNOME Shell extension to get a zigduck widget in the top bar.
+- `zigduck-cli` new commands: `--notify`, `--get-notify`, `--clear-notify`, `--cards`.
+- `zigduck-cli` new subcommand: `hue` - handles the Philips Hue Sync Box integration. 
+- `zigduck-dashboard` new endpoints: `/api/notify`, `/api/get-notify`, `/api/clear-notify`, `/api/cards`, `/api/card/{id}`.
+- New room boolean option `house.rooms.<room>.entertainment` for Philips Hue Sync integration.
+- New Zigbee device type: `custom`.
+- New option: `house.devices`, for generic read only devices. 
+
 ### Changed
+
+- `tv-scraper`: Changed default path for --json-out to `~/.local/share/zigduck/epg.json`.  
 
 ### Fixed
 
 ### Removed
 
+- Removed insecure Philips Hue options.
+- `hue` script removed, no longer needed. Usage now handled with `zigduck-cli`.
 
 ## [0.2.5] - 2026-09-17
 
