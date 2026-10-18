@@ -15,50 +15,30 @@
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
-![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.1-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
+![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.2-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
 ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
 
 <!-- VERSIONS_END -->
 
 
-<br>
 
-**Screenshots**
-
-Screenshots of the GNOME SHell extension widget.  
-
-<br>
-
-<img src="images/screenshot01.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot02.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot03.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot04.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot05.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot06.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot07.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot08.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot09.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot010.png" alt="GNOME Shell extension screenshot" width="148">
-<img src="images/screenshot011.png" alt="GNOME Shell extension screenshot" width="148">
-
-<br>
 
 # **A Flake For Your House**
 
 
-**zigduck** is the flake that brings version control to your smart home.
-A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.
-Nix for configuration, Rust for responsive async runtime.
-Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.
+**zigduck** is the flake that brings version control to your smart home.<br>
+A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.<br>
+Nix for configuration, Rust for responsive async runtime.<br>
+Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.<br>
 
 **Define once, deploy forever.**
 
-**zigduck** uses smart defaults, after defining your rooms & devices --
-most users don’t need to write any automations at all.
-Lights, dimmers, motion sensors - it should all work as expected **out of the box**.
-**Everything** is configurable via NixOS options.
+**zigduck** uses smart defaults, after defining your rooms & devices --<br>
+most users don’t need to write any automations at all.<br>
+Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
+**Everything** is configurable via NixOS options.<br>
 
-Includes a gnome-shell-extension for a handy desktop widget and also an optional **dashboard** page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.
+Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
 
 
 ```markdown
@@ -148,7 +128,7 @@ Includes a gnome-shell-extension for a handy desktop widget and also an optional
 
 ## **Configuration**
 
-If anything about the configuration is unclear or if you have questions,
+If anything about the configuration is unclear or if you have questions,<br>
 a good starter point would be to study the [options](https://github.com/QuackHack-McBlindy/zigduck/tree/main/options) which has detailed descriptions for everything.
 <br>
 
@@ -234,8 +214,8 @@ a good starter point would be to study the [options](https://github.com/QuackHac
 
 <br>
 
-zigduck always uses smart defaults.
-Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.
+zigduck always uses smart defaults.<br>
+Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.<br>
 
 **Example configuration:**
 
@@ -295,6 +275,29 @@ Define a dimmer, or motion sensor and those devices would default to control it'
 ```
 
 <br>
+
+Users may also define additional *(non-zigbee)* devices.<br>
+These devices are read-only but may still be useful.<br>
+
+**Example configuration:**
+
+```nix
+  house = {
+    devices = {
+      "desktop" = {
+        enable = true;
+        room   = "other";
+        icon   = "mdi:desktop-tower";
+        ip     = "192.168.1.111";
+      };
+    };
+  };  
+```
+
+<br>
+User can now for example publish JSON health data to `zigduck/desktop` and it can be viewed by zigduck.
+<br>
+
 
 </details>
 
@@ -575,10 +578,11 @@ To customize these actions, configure the automation type `house.zigbee.automati
 📺 Media (optional)
 </strong></summary>
 
-**Zigduck** can control your TV's using `adb` via the included package `tv`.  
-Everything is handled declaratively even the EPG scraping options. Scraping also uses smart defaults but overrides can be applied globally or on a per-channel basis.  
+**Zigduck** can control your TV's using `adb` via the included package `tv`.<br>
+Everything is handled declaratively even the EPG scraping options.<br>
+Scraping also uses smart defaults but overrides can be applied globally or on a per-channel basis.<br>
 
-The `tv-scraper` binary can output an EPG in three different formats, XML, JSON and HTML.  
+The `tv-scraper` binary can output an EPG in three different formats, XML, JSON and HTML.<br>
 The zigduck GNOME Shell extension expects the JSON file to be located at `~/.local/share/zigduck/epg.json` to be able to view the TV-Guide from the widget.  
 
 **Example configuraiton:**
@@ -1066,7 +1070,7 @@ for a full real configuration example, view:
 
 ## **License**
 
-This project is licensed under the terms of the MIT license.
-See the `LICENSE` file in the repository for full details.
+This project is licensed under the terms of the MIT license.<br>
+See the `LICENSE` file in the repository for full details.<br>
 
 Contributions are welcomed.
