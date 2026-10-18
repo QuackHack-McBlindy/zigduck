@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.6] - 2026-10-18
+
+### Added
+
 - New package: `gnomeExtension` a GNOME Shell extension to get a zigduck widget in the top bar.
 - `zigduck-cli` new commands: `--notify`, `--get-notify`, `--clear-notify`, `--cards`.
 - `zigduck-cli` new subcommand: `hue` - handles the Philips Hue Sync Box integration. 
