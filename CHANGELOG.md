@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New Starlight wiki in `wiki/`, published to GitHub Pages by `.github/workflows/wiki.yml`. Guide pages are ported from the README and the option reference is generated from `hooks/options.json` and `hooks/service.json` on every build.
+
 ### Changed
 
 ### Fixed
