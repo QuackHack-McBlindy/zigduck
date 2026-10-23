@@ -149,6 +149,18 @@ in {
         scraper = mkOption {
           type = Types.scraperType;
           default = {};
+          example = {
+            row_xpath                = ''//table[@id="channel-schedule"]//tr'';
+            time_xpath               = ".//time";
+            time_attr                = "datetime";
+            title_xpath              = ''.//a[contains(@class, "program-title")]'';
+            desc_xpath               = ".//p";
+            time_formats             = [ "%H:%M" "%H.%M" ];
+            time_strip_pattern       = ''[^\d:\.]'';
+            default_duration_minutes = 30;
+            timezone_offset_hours    = null;
+            pm_heuristic_after_hour  = null;
+          };
           description = ''
             Scraper tunables applied to every channel on this device.
             Any subset may be overridden per channel via
@@ -208,5 +220,53 @@ in {
       };
     });
     default = {};
+    description = ''
+      Attrset of TV devices, keyed by an arbitrary device name
+      (e.g. `"livingroom"`). Each entry describes how to reach the TV
+      over ADB, its room, its channel lineup, and how to map logical
+      playback/navigation actions to Android keycodes.
+    '';
+    example = {
+      livingroom = {
+        enable = true;
+        room = "livingroom";
+        ip = "192.168.1.42";
+        isDefault = true;
+        apps = {
+          telenor = "se.telenor.stream/.MainActivity";
+          tv4     = "se.tv4.tv4playtab/se.tv4.tv4play.ui.mobile.main.BottomNavigationActivity";
+        };
+        keymap = {
+          power_off   = "KEYCODE_SLEEP";
+          power_on    = "KEYCODE_WAKEUP";
+          play_pause  = "KEYCODE_MEDIA_PLAY_PAUSE";
+          volume_up   = "KEYCODE_VOLUME_UP";
+          volume_down = "KEYCODE_VOLUME_DOWN";
+          nav_up      = "KEYCODE_DPAD_UP";
+          nav_down    = "KEYCODE_DPAD_DOWN";
+          nav_left    = "KEYCODE_DPAD_LEFT";
+          nav_right   = "KEYCODE_DPAD_RIGHT";
+          nav_select  = "KEYCODE_DPAD_CENTER";
+          nav_back    = "KEYCODE_BACK";
+          nav_home    = "KEYCODE_HOME";
+          nav_menu    = "KEYCODE_MENU";
+        };
+        channels = {
+          svt1 = {
+            name   = "SVT1";
+            id     = 1;
+            icon   = ./icons/svt1.png;
+            cmd    = "";
+            stream_url = "";
+            scrape_url = "https://www.svtplay.se/kanaler/svt1";
+          };
+          tv4 = {
+            name   = "TV4";
+            cmd    = "am start -n se.tv4.tv4playtab/.MainActivity";
+            scrape_url = "https://www.tv4play.se/kanaler/tv4";
+          };
+        };
+      };
+    };
 
   };}

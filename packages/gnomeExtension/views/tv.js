@@ -268,14 +268,13 @@ export function renderTvDetail(indicator, tv) {
     volRow.add_child(volPct);
 
     let targetVol = st.volume;
-    let volDebounce = 0;
     volSlider.connect('notify::value', () => {
         const pct = Math.round(volSlider.value * 100);
         volPct.set_text(`${pct}%`);
         targetVol = pct;
-        if (volDebounce) GLib.source_remove(volDebounce);
-        volDebounce = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
-            volDebounce = 0;
+        if (indicator._tvVolDebounce) GLib.source_remove(indicator._tvVolDebounce);
+        indicator._tvVolDebounce = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+            indicator._tvVolDebounce = 0;
             indicator._tvFlushVolume(tv, st, targetVol);
             return GLib.SOURCE_REMOVE;
         });

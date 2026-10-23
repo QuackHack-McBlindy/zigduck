@@ -109,14 +109,17 @@ export function loadHouseDevices() {
         const devices = (data && data.devices) || {};
         for (const [name, dev] of Object.entries(devices)) {
             if (!dev || dev.enable === false) continue;
+            const hasControls = dev.controls && Object.keys(dev.controls).length > 0;
             out.push({
                 id:            `house:${name}`,
                 hostKey:       name,
                 friendly_name: name,
-                type:          'host',
+                type:          dev.type || 'host',
                 room:          dev.room || 'other',
                 icon:          dev.icon || null,
                 ip:            dev.ip || null,
+                controls:      dev.controls || {},
+                stateEndpoint: dev.stateEndpoint || (hasControls ? '/api/sensors' : null),
             });
         }
     } catch (e) { logError(e, 'Zigduck: could not read config.json devices'); }

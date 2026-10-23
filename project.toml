@@ -1,0 +1,123 @@
+# project.toml — configuration for hooks/build-docs.py
+[options]
+include = ["house", "services.zigduck"]
+
+[project]
+name        = "zigduck"
+url         = "https://QuackHack-McBlindy.com"
+url_label   = "QuackHack-McBlindy.com"
+description = '''
+<p>
+  Welcome to the <strong>{name}</strong> Wiki.<br>
+  The options on this website are automatically generated on every release to stay in sync.<br>
+</p>
+<p>
+  Use the <strong>search box</strong> on the left to filter options,<br>
+  or click any group to expand it and browse the tree.<br>
+</p>
+<p>
+  For an <strong>advanced configuration example</strong>, see:<br>
+  <a href="https://github.com/QuackHack-McBlindy/dotfiles/blob/main/modules/myHouse.nix">https://github.com/QuackHack-McBlindy/dotfiles/modules/myHouse.nix</a><br>
+</p>
+'''
+
+quick_start_config = '''
+{
+  services.zigduck = {
+    enable = true;
+    cli.enable = true;
+    dashboard.enable = true;
+    dashboard.port = 13336;
+    dashboard.openFirewall = true;
+    dashboard.passwordFile = config.sops.secrets.api.path;
+    dashboard.secure = fakse;
+  };
+
+  house = {
+    rooms = {
+      bedroom.icon    = "mdi:bed";
+      hallway.icon    = "mdi:door";
+      kitchen.icon    = "mdi:food-fork-drink";
+      livingroom.icon = "mdi:sofa";
+      wc.icon         = "mdi:toilet";
+    };
+
+    zigbee = {
+      # points to the zigbee network encryption key. zigbee devices join a network using this key.
+      # if you lose/change it, all devices must be re-paired.
+      # without this network key there is no reproducibility!
+      networkKeyFile = config.sops.secrets.z2m_network_key.path;
+
+      # define coordinator stick
+      coordinator = {
+        vendorId =  "10c3"; # USB identifiers
+        productId = "ea61";
+        symlink = "zigbee"; # symlinks usb port as "/dev/zigbee"
+      };
+
+      mosquitto = {
+        host = "192.168.1.110";
+        username = "duckmqtt";
+        passwordFile = config.sops.secrets.mosquitto.path;
+      };
+
+      devices = {
+        "0x0016830103ba7e95" = { # 64bit IEEE address (this is the unique device ID)
+          friendly_name = "Dimmer Switch Kitchen"; # simple human readable friendly name
+          room = "kitchen"; # bind to group
+          type = "dimmer"; # device type (light, hue_light, dimmer, motion, sensor, blinds, ...)
+          endpoint = 1; # zigbee endpoint
+          icon = "mdi:toggle-switch"; # icon used on dashboard/widget
+          batteryType = "CR2450"; # optional - displayed inside widget
+        };
+
+        "0x0017880402750848a" = {
+          friendly_name = "Spotlight 1";
+          room = "kitchen";
+          type = "light";
+          icon = "mdi:spotlight";
+          supports_temperature = true;
+          endpoint = 11;
+        };
+
+        "0x00178801021311c4" = {
+          friendly_name = "Motion Sensor Hall";
+          room = "hallway";
+          type = "motion";
+          icon = "mdi:motion-sensor";
+          endpoint = 1;
+          batteryType = "AAA";
+        };
+      };
+
+      motion = {
+        trigger.lights = {
+          # time window in which motion trigger lights on
+          after = 14;
+          before = 9;
+          duration = 900;     # turn off lights again after x seconds of no motion
+          transition = false; # enable to fade off the lights
+        };
+      };
+
+      no.motion = {
+        trigger.all.lights.off = {
+          enable = true; # disabled by default
+          after = 60; # minutes
+        };
+      };
+    };
+  };
+}
+'''
+
+# overrides
+# github    = "https://github.com/quackhack-mcblindy/zigduck"
+# changelog = "https://github.com/quackhack-mcblindy/zigduck/blob/main/CHANGELOG.md"
+
+[paths]
+sources = ["hooks/options.json", "hooks/service.json"]
+dst = "docs/index.html"
+logo = "images/logo.png"
+screenshot_dirs = ["Screenshots", "screenshots"]
+screenshot_exts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"]

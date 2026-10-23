@@ -118,9 +118,9 @@ export function renderSyncSection(indicator) {
     s.connect('notify::value', () => {
         const v = Math.round(s.value * 100);
         pct.set_text(`${v}%`);
-        if (syncDebounce) GLib.source_remove(syncDebounce);
-        syncDebounce = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
-            syncDebounce = 0;
+        if (indicator._syncDebounce) GLib.source_remove(indicator._syncDebounce);
+        indicator._syncDebounce = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+            indicator._syncDebounce = 0;
             indicator._syncSetBrightness(v);
             return GLib.SOURCE_REMOVE;
         });

@@ -43,6 +43,153 @@ export function isOfflineFor(indicator, d, state) {
     return isOffline(state);
 }
 
+function renderControl(indicator, device, key, ctl, currentValue) {
+    const row = new St.BoxLayout({
+        x_expand: true, style: 'spacing: 8px; padding: 3px 0;',
+    });
+
+    if (ctl.icon) {
+        row.add_child(mdiIcon(ctl.icon, 16));
+    } else {
+        row.add_child(new St.Widget({ style: 'width: 20px;' }));
+    }
+
+    row.add_child(plainLabel(key,
+        'opacity: 0.75; font-size: 0.9em; min-width: 140px;'));
+
+    if (ctl.type === 'sensor') {
+        row.add_child(new St.Widget({ x_expand: true }));
+        row.add_child(plainLabel(formatSensorDisplay(key, currentValue),
+            'font-size: 0.9em; font-weight: bold;'));
+        return row;
+    }
+
+    const hasValues = Array.isArray(ctl.values) && ctl.values.length > 0;
+
+
+    if (ctl.type === 'bool') {
+        const hasValueList = Array.isArray(ctl.values) && ctl.values.length === 2;
+        const isOn = hasValueList
+            ? String(currentValue) === String(ctl.values[0])
+            : isTruthy(currentValue);
+        const onPayload  = hasValueList ? String(ctl.values[0]) : true;
+        const offPayload = hasValueList ? String(ctl.values[1]) : false;
+
+        const pill = togglePill(
+            isOn,
+            isOn ? 'On' : 'Off',
+            () => {
+                indicator._setControl(device, key, ctl, isOn ? offPayload : onPayload);
+            },
+            isOn ? GREEN : null,
+        );
+        row.add_child(pill);
+    } else if (ctl.type === 'slider') {
+        const dKey = `${device.friendly_name}:${key}`;
+
+        const schedule = (payload) => {
+            const prev = indicator._controlDebounces.get(dKey);
+            if (prev) GLib.source_remove(prev);
+            const tid = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+                indicator._controlDebounces.delete(dKey);
+                indicator._setControl(device, key, ctl, payload);
+                return GLib.SOURCE_REMOVE;
+            });
+            indicator._controlDebounces.set(dKey, tid);
+        };
+
+        if (hasValues) {
+            const values  = ctl.values.map(String);
+            const curStr  = String(currentValue ?? '');
+            const curIdx  = values.indexOf(curStr);
+            const start   = curIdx >= 0 ? curIdx : 0;
+            const startFrac = values.length > 1 ? start / (values.length - 1) : 0;
+
+            const sl = new Slider.Slider(startFrac);
+            sl.x_expand = true;
+            sl.y_align = Clutter.ActorAlign.CENTER;
+            row.add_child(sl);
+            const valLbl = plainLabel(
+                curIdx >= 0 ? values[curIdx] : '—',
+                'width: 90px; text-align: right; font-size: 0.9em;',
+            );
+            row.add_child(valLbl);
+            sl.connect('notify::value', () => {
+                const step = values.length > 1
+                    ? Math.round(sl.value * (values.length - 1))
+                    : 0;
+                const chosen = values[step];
+                valLbl.set_text(chosen);
+                schedule(chosen);
+            });
+
+        } else {
+            const min = ctl.min ?? 0;
+            const max = ctl.max ?? 100;
+            const cur = parseInt(currentValue, 10);
+            const startVal = Number.isFinite(cur) && max > min
+                ? Math.max(0, Math.min(1, (cur - min) / (max - min)))
+                : 0;
+
+            const sl = new Slider.Slider(startVal);
+            sl.x_expand = true;
+            sl.y_align = Clutter.ActorAlign.CENTER;
+            row.add_child(sl);
+
+            const valLbl = plainLabel(
+                Number.isFinite(cur) ? String(cur) : '—',
+                'width: 50px; text-align: right; font-size: 0.9em;',
+            );
+            row.add_child(valLbl);
+
+            sl.connect('notify::value', () => {
+                const v = Math.round(min + sl.value * (max - min));
+                valLbl.set_text(String(v));
+                schedule(v);
+            });
+        }
+    }
+
+    row.add_child(new St.Widget({ x_expand: true }));
+    return row;
+}
+
+function formatSensorDisplay(key, value) {
+    if (value === undefined || value === null || value === '') return '—';
+
+    if (value === true  || value === 'true')  return 'yes';
+    if (value === false || value === 'false') return 'no';
+
+    const str = String(value);
+
+    if (key === 'battery' || /battery_percent/i.test(key)) {
+        const n = parseFloat(str);
+        if (Number.isFinite(n)) return `${n}%`;
+    }
+
+    if (/battery_voltage|^voltage$/i.test(key)) {
+        const n = parseFloat(str);
+        if (Number.isFinite(n)) return `${n} mV`;
+    }
+
+    if (/temp(erature)?$/i.test(key)) {
+        const n = parseFloat(str);
+        if (Number.isFinite(n)) return `${n.toFixed(1)}°C`;
+    }
+
+    if (key === 'rssi' || /wifi_signal/i.test(key)) {
+        const n = parseInt(str, 10);
+        if (Number.isFinite(n)) return `${n} dBm`;
+    }
+
+    if (/cpu_freq|cpu_speed/i.test(key)) {
+        const n = parseInt(str, 10);
+        if (Number.isFinite(n)) return `${n} MHz`;
+    }
+
+    return str;
+}
+
 export function renderDeviceRow(indicator, d) {
     const state = indicator._states[d.friendly_name] || {};
     const offline = isOfflineFor(indicator, d, state);
@@ -96,6 +243,7 @@ export function renderDeviceRow(indicator, d) {
 export function renderDeviceDetail(indicator, d) {
     const state = indicator._states[d.friendly_name] || {};
     const offline = isOfflineFor(indicator, d, state);
+    const isHouseDevice = String(d.id || '').startsWith('house:');
 
     const wrap = new St.BoxLayout({
         vertical: true, x_expand: true, style: 'spacing: 8px; padding: 4px 0;',
@@ -230,7 +378,7 @@ export function renderDeviceDetail(indicator, d) {
 
     const isLight = LIGHT_TYPES.has(d.type);
     const hasBrightness = Number.isFinite(parseInt(state.brightness, 10));
-    if (isLight || hasBrightness) {
+    if (!isHouseDevice && (isLight || hasBrightness)) {
         const rawBri = parseInt(state.brightness, 10);
         const isOn = state.state === 'ON';
         const startValue = !isOn
@@ -287,6 +435,14 @@ export function renderDeviceDetail(indicator, d) {
         if (isOpen) {
             wrap.add_child(plainLabel('No actions defined for this device yet.',
                 'opacity: 0.6; padding: 8px; font-size: 0.9em;'));
+        }
+    }
+
+    if (d.controls && Object.keys(d.controls).length > 0) {
+        wrap.add_child(plainLabel('Controls',
+            'font-weight: bold; margin-top: 8px;'));
+        for (const [key, ctl] of Object.entries(d.controls)) {
+            wrap.add_child(renderControl(indicator, d, key, ctl, state[key]));
         }
     }
 

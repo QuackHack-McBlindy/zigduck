@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New auto generated Wiki page for documenting options.
+- New option: `house.zigbee.mosquitto.whitelist`, where users may define an optional list of additional JSON fields to be included in `states.json`.
+- New options for `house.devices`. Create control actions for any device and include in automations/control via Zigduck. These devices will also appear in the zigduck GNOME Shell extension/dashboard. 
+
+
 ### Changed
 
 ### Fixed

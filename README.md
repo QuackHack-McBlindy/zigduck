@@ -11,7 +11,7 @@
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.6-black?style=flat)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.7-black?style=flat)
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
@@ -21,7 +21,9 @@
 <!-- VERSIONS_END -->
 
 
-
+<br>
+<a href="docs/index.html">🦆 Zigduck Wiki</a>.
+<br>
 
 # **A Flake For Your House**
 
@@ -39,6 +41,7 @@ Lights, dimmers, motion sensors - it should all work as expected **out of the bo
 **Everything** is configurable via NixOS options.<br>
 
 Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
+
 
 
 ```markdown
@@ -61,6 +64,9 @@ Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a han
 
 <br>
 
+![Zigduck GNOME Shell extension](Screenshots/zigduck-widget.gif)
+
+<br>
 
 ## **Installation**
 
@@ -128,8 +134,7 @@ Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a han
 
 ## **Configuration**
 
-If anything about the configuration is unclear or if you have questions,<br>
-a good starter point would be to study the [options](https://github.com/QuackHack-McBlindy/zigduck/tree/main/options) which has detailed descriptions for everything.
+See all options in the <a href="docs/index.html">🦆 Zigduck Wiki</a>.
 <br>
 
 <details><summary><strong>
@@ -284,12 +289,26 @@ These devices are read-only but may still be useful.<br>
 ```nix
   house = {
     devices = {
-      "desktop" = {
+      "ESP32-S3" = {
         enable = true;
         room   = "other";
-        icon   = "mdi:desktop-tower";
+        icon   = "mdi:watch";
         ip     = "192.168.1.111";
-      };
+
+        stateEndpoint = "/api/sensors";
+             
+        # create action controls for automations / frontend control
+        controls = { # publish your devices payload @ "zigduck/watch" to show in frontend 
+          brightness  = { # if you interact with the "brightness" slider it will publish @ "zigduck/watch/set"
+            type        = "slider"; # which then will run the corresponding actions user defined.
+            icon        = "mdi:brightness-6";
+            min         = 0;
+            max         = 100;
+            description = "Controls the display backlight brightness level";
+            actions     = [ { type = "shell"; command = "curl http://$IP/api/settings/display/brightness/$VALUE"; } ];
+          };
+        };
+      };  
     };
   };  
 ```
@@ -1059,6 +1078,7 @@ for a full real configuration example, view:
 </details>
 
 <br>
+
 
 ## **More Protocols**
 
