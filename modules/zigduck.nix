@@ -333,7 +333,7 @@ in {
               ZIGDUCK_CONFIG = "/etc/zigduck/config.json";
               STATE_DIR = cfg.stateDir;
               DT_LOG_LEVEL = "INFO";
-              DT_LOG_FILE = cfg.stateDir + "/zigduck.log";
+              DT_LOG_FILE = cfg.logFile;
               PATH = "/run/current-system/sw/bin:/run/wrappers/bin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/run/current-system/sw/sbin";
             } // optionalAttrs cfg.debug { DEBUG = "1"; } // cfg.extraEnv;
           in mapAttrsToList (name: value: "${name}=${value}") env;
@@ -375,7 +375,7 @@ in {
               ZIGDUCK_DASHBOARD_SECURE_COOKIES = toString cfg.dashboard.secure;
               STATE_DIR = cfg.stateDir;
               DT_LOG_LEVEL = "INFO";
-              DT_LOG_FILE = cfg.stateDir + "/zigduck.log";
+              DT_LOG_FILE = cfg.dashboard.logFile;
               PATH = "/run/current-system/sw/bin:/run/wrappers/bin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/run/current-system/sw/sbin";
               HOME = cfg.stateDir;
             } // optionalAttrs cfg.debug { DEBUG = "1"; }

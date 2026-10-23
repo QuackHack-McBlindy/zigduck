@@ -1,0 +1,326 @@
+{
+  "services.zigduck.broker": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "\"127.0.0.1\""
+    },
+    "description": "MQTT broker hostname or IP address",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"0.0.0.0\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "broker"
+    ],
+    "readOnly": false,
+    "type": "string"
+  },
+  "services.zigduck.cli.enable": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "description": "Whether to install zigduck-cli package.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "cli",
+      "enable"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.dashboard.enable": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "description": "Whether to enable Zigduck dashboard service.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "enable"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.dashboard.host": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "\"0.0.0.0\""
+    },
+    "description": "Host to bind the webserver to",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"127.0.0.1\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "host"
+    ],
+    "readOnly": false,
+    "type": "string"
+  },
+  "services.zigduck.dashboard.logFile": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "\"/var/lib/zigduck/zigduck-api.log\""
+    },
+    "description": "Location to store zigduck API logfile.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/path/to/example/zigduck-api.log\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "logFile"
+    ],
+    "readOnly": false,
+    "type": "absolute path"
+  },
+  "services.zigduck.dashboard.openFirewall": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "description": "Whether to open the firewall for the specified port.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "openFirewall"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.dashboard.passwordFile": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "null"
+    },
+    "description": "Path to password file for API authentication (API_PASSWORD_FILE)",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/run/secrets/zigduck-dashboard-password\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "passwordFile"
+    ],
+    "readOnly": false,
+    "type": "null or absolute path"
+  },
+  "services.zigduck.dashboard.port": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "13336"
+    },
+    "description": "Port for the dashboard",
+    "example": {
+      "_type": "literalExpression",
+      "text": "13337"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "port"
+    ],
+    "readOnly": false,
+    "type": "16 bit unsigned integer; between 0 and 65535 (both inclusive)"
+  },
+  "services.zigduck.dashboard.secure": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "description": "Whether to set the Secure flag on authentication cookies. Set to false when serving over plain HTTP.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "dashboard",
+      "secure"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.debug": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "description": "Enable debug logging (sets DEBUG=1)",
+    "example": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "debug"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.enable": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "description": "Whether to enable Zigduck.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "enable"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.extraEnv": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "{ }"
+    },
+    "description": "Extra environment variables to pass to the service",
+    "example": {
+      "_type": "literalExpression",
+      "text": "{\n  LANG = \"sv_SE.UTF-8\";\n  TZ = \"Europe/Stockholm\";\n}"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "extraEnv"
+    ],
+    "readOnly": false,
+    "type": "attribute set of string"
+  },
+  "services.zigduck.gnomeExtension.enable": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "description": "Whether to install gnome-shell-extension zigduck package.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "gnomeExtension",
+      "enable"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
+  "services.zigduck.logFile": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "\"/var/lib/zigduck/zigduck.log\""
+    },
+    "description": "Location to store zigduck logfile.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/path/to/example/zigduck.log\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "logFile"
+    ],
+    "readOnly": false,
+    "type": "absolute path"
+  },
+  "services.zigduck.stateDir": {
+    "declarations": [
+      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "\"/var/lib/zigduck\""
+    },
+    "description": "Directory for runtime state files",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/path/to/example\""
+    },
+    "loc": [
+      "services",
+      "zigduck",
+      "stateDir"
+    ],
+    "readOnly": false,
+    "type": "absolute path"
+  }
+}

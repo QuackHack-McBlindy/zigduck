@@ -13,6 +13,7 @@ in {
     dataDir = lib.mkOption {
       description = "Zigbee2mqtt data directory";
       default = "/var/lib/zigbee";
+      example = "/var/lib/zigbee2mqtt";
       type = lib.types.path;
     };
     settings = lib.mkOption {
@@ -34,8 +35,10 @@ in {
         Check the [documentation](https://www.zigbee2mqtt.io/information/configuration.html) for possible options.
       '';
     };
+
     networkKeyFile = mkOption {
       type = types.path;
+      example = "/run/secrets/zigbee_key";
       description = ''
         Path to a file containing the Zigbee network key used by
         Zigbee2MQTT (`network_key`).

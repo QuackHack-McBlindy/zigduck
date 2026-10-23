@@ -14,6 +14,7 @@ in {
         message = lib.mkOption {
           type = lib.types.str;
           default = "action";
+          example = "action";
           description = "MQTT field name containing dimmer action";
         };
         # action mappings
@@ -21,6 +22,7 @@ in {
           onPress = lib.mkOption {
             type = lib.types.str;
             default = "on_press_release";
+            example = "on_press_release";
             description = "Action for single press of ON button";
           };
           onHold = lib.mkOption {
@@ -61,8 +63,9 @@ in {
         };
         doubleClickTimeout = mkOption {
           type = types.nullOr types.int;
-          default = null;
-          description = "Timeout for double‑click detection in milliseconds (defaults to 300).";
+          default = 300;
+          example = 500;
+          description = "Timeout for double‑click detection in milliseconds. Double clicking will result in scene cycle on the lights  in the dimmmers defined room.";
         };
       };
     };

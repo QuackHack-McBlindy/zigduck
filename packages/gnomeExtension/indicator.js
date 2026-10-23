@@ -101,6 +101,10 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._pingHideTimer = 0;
         this._sliderDebounce = 0;
         this._detailDebounce = 0;
+        this._tvVolDebounce   = 0;
+
+        this._scrollResetId  = 0;
+        this._lastRenderMode = null;
         this._tvView         = false;
         this._tvData         = null;
         this._tvIcons        = null;
@@ -111,7 +115,7 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._sceneDraft   = null;
         this._chatMessages = [];
         this._chatActive   = false;
-
+        this._controlDebounces = new Map();
         this._syncByRoom = {};
         this._syncStatus = null;
         this._baseTopic  = 'zigduck';
@@ -208,7 +212,14 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._contentBox = new St.BoxLayout({
             vertical: true, x_expand: true, style: 'spacing: 4px;',
         });
-        content.add_child(this._contentBox);
+        this._contentScroll = new St.ScrollView({
+            x_expand: true,
+            style: 'max-height: 700px;',
+        });
+        this._contentScroll.set_policy(St.PolicyType.NEVER, St.PolicyType.AUTOMATIC);
+        this._contentScroll.add_child(this._contentBox);
+        content.add_child(this._contentScroll);
+
         this._contentBox.add_child(plainLabel('Open again to load…',
             'opacity: 0.6; padding: 8px;'));
 
@@ -532,6 +543,81 @@ class ZigduckIndicator extends PanelMenu.Button {
         return [];
     }
 
+    _httpGet(url, timeoutSec = 10) {
+        return new Promise((resolve, reject) => {
+            const file = Gio.File.new_for_uri(url);
+            const cancellable = new Gio.Cancellable();
+            const tid = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, timeoutSec, () => {
+                cancellable.cancel();
+                return GLib.SOURCE_REMOVE;
+            });
+            file.load_contents_async(cancellable, (f, res) => {
+                GLib.source_remove(tid);
+                try {
+                    const [, contents] = f.load_contents_finish(res);
+                    resolve(new TextDecoder().decode(contents));
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        });
+    }
+
+
+    async _refreshDeviceState(device) {
+        if (!device.ip || !device.stateEndpoint) return;
+
+        try {
+            const body = await this._httpGet(`http://${device.ip}${device.stateEndpoint}`);
+            const parsed = JSON.parse(body);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+
+            const updates = {};
+            for (const [k, v] of Object.entries(parsed)) {
+                if (v === null || v === undefined) continue;
+                updates[k] = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+            }
+
+            if (Object.keys(updates).length) {
+                this._states[device.friendly_name] = {
+                    ...(this._states[device.friendly_name] || {}),
+                    ...updates,
+                };
+                this._renderContent();
+            }
+        } catch (_) {}
+    }
+
+    async _setControl(device, key, ctl, value) {
+        if (ctl.type === 'sensor') return;
+        if (value === null || value === undefined) {
+            this._status.set_text(`✗ ${key} needs a value`);
+            return;
+        }
+
+        const topic   = `${this._baseTopic}/${device.friendly_name}/set`;
+        const payload = JSON.stringify({ [key]: value });
+
+        this._states[device.friendly_name] = {
+            ...(this._states[device.friendly_name] || {}),
+            [key]: String(value),
+        };
+        this._renderContent();
+        this._updateRoomSelection();
+
+        this._status.set_text(`… ${device.friendly_name} ${key}`);
+        try {
+            await runCli(['--publish', '--topic', topic, '--payload', payload], 8);
+            this._status.set_text('● done');
+
+            if (device.stateEndpoint) {
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
+                    if (this._alive) this._refreshDeviceState(device);
+                    return GLib.SOURCE_REMOVE;
+                });
+            }
+        } catch (e) { this._status.set_text('✗ ' + (e.message || '').slice(0, 60)); }
+    }
 
     async _refresh() {
         if (!this._alive) return;
@@ -569,6 +655,10 @@ class ZigduckIndicator extends PanelMenu.Button {
             this._baseTopic   = loadBaseTopic();
 
             this._reloadSceneStylesheet();
+            const httpDevices = this._devices.filter(d =>
+                d.stateEndpoint || (d.controls && Object.keys(d.controls).length > 0)
+            );
+            await Promise.allSettled(httpDevices.map(d => this._refreshDeviceState(d)));
 
             if (!this._deviceMetaLoaded) {
                 this._deviceMeta = loadDeviceMeta();
@@ -604,7 +694,6 @@ class ZigduckIndicator extends PanelMenu.Button {
             logError(e, 'Zigduck refresh');
         }
     }
-
 
     _schedulePreview() {
         if (this._previewTimer) {
@@ -651,9 +740,7 @@ class ZigduckIndicator extends PanelMenu.Button {
             this._previewCmd = lines.length
                 ? lines.map(l => l.slice(0, 400))
                 : null;
-        } catch (e) {
-            this._previewCmd = null;
-        }
+        } catch (e) { this._previewCmd = null; }
         if (this._entry.get_text().trim() !== text) return;
         this._updatePreviewUI();
     }
@@ -735,8 +822,40 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._renderContent();
     }
 
-
     _renderContent() {
+        const prevMode = this._lastRenderMode;
+        const curMode  = this._getViewMode();
+        this._renderContentInner();
+        this._lastRenderMode = curMode;
+
+        if (prevMode !== curMode) {
+            if (this._scrollResetId) GLib.source_remove(this._scrollResetId);
+            this._scrollResetId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                this._scrollResetId = 0;
+                if (this._contentScroll) {
+                    const vadj = this._contentScroll.get_vadjustment();
+                    if (vadj) vadj.set_value(0);
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+    }
+
+    _getViewMode() {
+        if (this._sceneDraft !== null) return 'sceneDraft';
+        if (this._detailCard)          return `detailCard:${this._detailCard.id || ''}`;
+        if (this._detailDevice)        return `detailDevice:${this._detailDevice.friendly_name}`;
+        if (this._settingsView)        return 'settings';
+        if (this._notifyView)          return 'notify';
+        if (this._alarmsView)          return 'alarms';
+        if (this._tvView)              return 'tvView';
+        if (this._chatActive)          return 'chat';
+        if (this._searchQuery.trim())  return 'search';
+        if (this._selectedRoom)        return `room:${this._selectedRoom}`;
+        return 'home';
+    }
+
+    _renderContentInner() {
         this._contentBox.destroy_all_children();
 
         if (this._sceneDraft !== null) {
@@ -963,7 +1082,6 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._renderContent();
         await this._tvSend(tv, st.power ? 'on' : 'off');
     }
-
 
     async _openAlarmsView() {
         this._alarmsView   = true;
@@ -1244,9 +1362,23 @@ class ZigduckIndicator extends PanelMenu.Button {
             GLib.source_remove(this._detailDebounce);
             this._detailDebounce = 0;
         }
+        if (this._tvVolDebounce) {          // ← add this
+            GLib.source_remove(this._tvVolDebounce);
+            this._tvVolDebounce = 0;
+        }
+        if (this._scrollResetId) {
+            GLib.source_remove(this._scrollResetId);
+            this._scrollResetId = 0;
+        }
         if (this._pingHideTimer) {
             GLib.source_remove(this._pingHideTimer);
             this._pingHideTimer = 0;
+        }
+        if (this._controlDebounces) {
+            for (const tid of this._controlDebounces.values()) {
+                if (tid) GLib.source_remove(tid);
+            }
+            this._controlDebounces.clear();
         }
         super.destroy();
     }

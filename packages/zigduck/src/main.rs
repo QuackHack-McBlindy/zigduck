@@ -20,6 +20,8 @@ struct MosquittoConfig {
     password_file: Option<String>,
     #[serde(default = "default_base_topic")]
     base_topic: String,
+    #[serde(default)]
+    whitelist: Vec<String>,
 }
 
 fn default_base_topic() -> String {
@@ -40,10 +42,31 @@ struct HouseDevice {
     room: Option<String>,
     #[serde(default)]
     ip: Option<String>,
+    #[serde(default)]
+    state_endpoint: Option<String>,
+    #[serde(default)]
+    controls: HashMap<String, HouseControl>,
 }
 
 fn default_true() -> bool { true }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HouseControl {
+    #[serde(rename = "type")]
+    control_type: String,
+    #[serde(default)]
+    icon: Option<String>,
+    #[serde(default)]
+    endpoint: Option<String>,
+    #[serde(default)]
+    min: Option<i64>,
+    #[serde(default)]
+    max: Option<i64>,
+    #[serde(default)]
+    values: Vec<String>,
+    #[serde(default)]
+    actions: Vec<AutomationAction>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct HouseConfig {
@@ -245,6 +268,7 @@ struct ZigduckState {
     mqtt_password: String,
     mqtt_publisher: rumqttc::AsyncClient,
     mqtt_base_topic: String,
+    mqtt_whitelist: Vec<String>,
     dashboard_config: DashboardConfig,
     state_dir: String,
     state_file: String,
@@ -275,6 +299,7 @@ impl Clone for ZigduckState {
             mqtt_password: self.mqtt_password.clone(),
             mqtt_publisher: self.mqtt_publisher.clone(),
             mqtt_base_topic: self.mqtt_base_topic.clone(),
+            mqtt_whitelist: self.mqtt_whitelist.clone(),
             dashboard_config: self.dashboard_config.clone(),
             state_dir: self.state_dir.clone(),
             state_file: self.state_file.clone(),
@@ -360,6 +385,184 @@ struct MotionTracker {
 }
 
 impl ZigduckState {
+    async fn handle_house_device_set(
+        &self,
+        device_name: &str,
+        device: &HouseDevice,
+        data: &Value,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let obj = match data.as_object() {
+            Some(o) => o,
+            None => {
+                dt_debug!("Non-object control payload for {}: {}", device_name, data);
+                return Ok(());
+            }
+        };
+
+        let ip = device.ip.clone().unwrap_or_default();
+        let mut executed = false;
+
+        for (key, value) in obj {
+            let ctrl = match device.controls.get(key) {
+                Some(c) => c,
+                None => {
+                    dt_debug!("Unknown control '{}' on '{}'", key, device_name);
+                    continue;
+                }
+            };
+
+            if ctrl.control_type == "sensor" || ctrl.actions.is_empty() {
+                dt_debug!("Skipping control '{}.{}' ({} action(s))", device_name, key, ctrl.actions.len());
+                continue;
+            }
+
+            let value_str = match value {
+                Value::String(s) => s.clone(),
+                Value::Number(n) => n.to_string(),
+                Value::Bool(b)   => b.to_string(),
+                Value::Null      => continue,
+                other            => other.to_string(),
+            };
+
+            dt_info!("{}.{} = {}", device_name, key, value_str);
+            executed = true;
+
+            for action in &ctrl.actions {
+                if let Err(e) = self
+                    .execute_control_action(action, device_name, key, &value_str, &ip)
+                    .await
+                {
+                    dt_warning!("Control action failed for {}.{}: {}", device_name, key, e);
+                }
+            }
+        }
+
+        if executed {
+            if let (Some(endpoint), Some(ip)) = (&device.state_endpoint, &device.ip) {
+                let url = format!("http://{}{}", ip, endpoint);
+                dt_debug!("Refreshing state for {} from {}", device_name, url);
+
+                match reqwest::Client::new()
+                    .get(&url)
+                    .timeout(Duration::from_secs(5))
+                    .send()
+                    .await
+                {
+                    Ok(resp) if resp.status().is_success() => {
+                        match resp.json::<Value>().await {
+                            Ok(mut fresh) => {
+                                if let Some(map) = fresh.as_object_mut() {
+                                    map.insert(
+                                        "last_seen".into(),
+                                        Value::String(
+                                            chrono::Utc::now().to_rfc3339_opts(
+                                                chrono::SecondsFormat::Millis,
+                                                true,
+                                            ),
+                                        ),
+                                    );
+                                }
+                                if let Ok(payload) = serde_json::to_string(&fresh) {
+                                    let topic = format!("{}/{}", self.mqtt_base_topic, device_name);
+                                    if let Err(e) = self.mqtt_publish(&topic, &payload).await {
+                                        dt_warning!("Failed to publish refreshed state for {}: {}", device_name, e);
+                                    } else { dt_debug!("Republished state for {} to {} ({} fields)", device_name, topic, fresh.as_object().map(|o| o.len()).unwrap_or(0)); }
+                                }
+                            }
+                            Err(e) => dt_warning!("Failed to parse state JSON from {}: {}", url, e),
+                        }
+                    }
+                    Ok(resp) => dt_warning!("State refresh for {} returned HTTP {}", device_name, resp.status()),
+                    Err(e) => dt_warning!("State refresh for {} failed: {}", device_name, e),
+                }
+            } else { dt_debug!("No state_endpoint/ip configured for {}; skipping refresh", device_name); }
+        }
+        Ok(())
+    }
+
+    async fn execute_control_action(
+        &self,
+        action: &AutomationAction,
+        device_name: &str,
+        key: &str,
+        value: &str,
+        ip: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let subst = |s: &str| s.replace("{value}", value);
+
+        match action {
+            AutomationAction::Simple(cmd) => {
+                self.run_control_shell(cmd, device_name, key, value, ip).await?;
+            }
+            AutomationAction::Structured(a) => match a.action_type.as_str() {
+                "shell" => {
+                    if let Some(cmd) = &a.command {
+                        self.run_control_shell(cmd, device_name, key, value, ip).await?;
+                    }
+                }
+                "mqtt" => {
+                    if let (Some(t), Some(m)) = (&a.topic, &a.message) {
+                        self.mqtt_publish(&subst(t), &subst(m)).await?;
+                    }
+                }
+                "scene" => {
+                    if let Some(s) = &a.scene {
+                        self.activate_scene(s).await?;
+                    }
+                }
+                "wait" => {
+                    if let Some(d) = a.duration {
+                        tokio::time::sleep(Duration::from_secs(d)).await;
+                    }
+                }
+                "snapshot" => {
+                    let name = a.snapshot_name.clone().unwrap_or_else(|| "default".into());
+                    let scope = a.scope.clone().unwrap_or_else(|| "global".into());
+                    self.create_snapshot(
+                        &name,
+                        &scope,
+                        a.room.as_deref(),
+                        a.devices.as_deref(),
+                    ).await?;
+                }
+                "restore" => {
+                    let name = a.snapshot_name.clone().unwrap_or_else(|| "default".into());
+                    self.restore_snapshot(&name).await?;
+                }
+                _ => dt_debug!("Unknown control action type: {}", a.action_type),
+            },
+        }
+        Ok(())
+    }
+
+    async fn run_control_shell(
+        &self,
+        cmd: &str,
+        device_name: &str,
+        key: &str,
+        value: &str,
+        ip: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let output = TokioCommand::new("sh")
+            .arg("-c")
+            .arg(cmd)
+            .env("VALUE",  value)
+            .env("KEY",    key)
+            .env("DEVICE", device_name)
+            .env("IP",     ip)
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            dt_warning!(
+                "Control shell failed ({}.{}): {}",
+                device_name, key,
+                String::from_utf8_lossy(&output.stderr).trim()
+            );
+        }
+        Ok(())
+    }
+
     fn convert_to_hue_payload(&self, settings: &serde_json::Value) -> Result<serde_json::Value> {
         let mut payload = serde_json::Map::new();
 
@@ -911,21 +1114,16 @@ impl ZigduckState {
                     dt_warning!("Failed to read MQTT password file {}: {}", pw_file, e);
                     String::new()
                 })
-            } else {
-                String::new()
-            };
+            } else { String::new() };
             (broker, user, password)
         } else {
-            // fallback to environment variables
             let broker = std::env::var("MQTT_BROKER").unwrap_or_else(|_| "127.0.0.1".to_string());
             let user = std::env::var("MQTT_USER").unwrap_or_else(|_| "mqtt".to_string());
             let password = if let Ok(pw) = std::env::var("MQTT_PASSWORD") {
                 pw
             } else if let Ok(pw_file) = std::env::var("MQTT_PASSWORD_FILE") {
                 fs::read_to_string(pw_file).map(|s| s.trim().to_string()).unwrap_or_default()
-            } else {
-                String::new()
-            };
+            } else { String::new() };
             (broker, user, password)
         };
 
@@ -934,7 +1132,11 @@ impl ZigduckState {
             .map(|m| m.base_topic.clone())
             .unwrap_or_else(|| "zigbee2mqtt".to_string());
 
-        // load Hue client from config
+        let mqtt_whitelist = config.mosquitto
+            .as_ref()
+            .map(|m| m.whitelist.clone())
+            .unwrap_or_default();
+
         let hue_client = if let Some(hue) = &config.hue {
             if let (Some(ip), Some(pw_file)) = (&hue.bridge_ip, &hue.password_file) {
                 fs::read_to_string(pw_file).ok().and_then(|key| {
@@ -948,7 +1150,6 @@ impl ZigduckState {
                 })
             } else { None }
         } else {
-            // fallback to env vars
             if let (Ok(ip), Ok(key_file)) = (std::env::var("HUE_BRIDGE_IP"), std::env::var("HUE_API_KEY_FILE")) {
                 fs::read_to_string(&key_file).ok().and_then(|key| {
                     match HueClient::new(&ip, key.trim()) {
@@ -1003,16 +1204,12 @@ impl ZigduckState {
         let mut devices = std::collections::HashMap::new();
         for (friendly_name, device_value) in raw_devices {
             match serde_json::from_value::<Device>(device_value.clone()) {
-                Ok(device) => {
-                    devices.insert(friendly_name, device);
-                }
-                Err(e) => {
-                    dt_debug!("Failed to parse device {}: {}", friendly_name, e);
-                }
+                Ok(device) => { devices.insert(friendly_name, device); }
+                Err(e) => { dt_debug!("Failed to parse device {}: {}", friendly_name, e); }
             }
         }
 
-         // 🦆 says ⮞ build room scene map
+        // 🦆 says ⮞ build room scene map
         let mut room_scenes: HashMap<String, Vec<String>> = HashMap::new();
         for (scene_name, scene_devices) in &scene_config.scenes {
             for device_name in scene_devices.keys() {
@@ -1084,9 +1281,7 @@ impl ZigduckState {
         let (mqtt_publisher, mut pub_eventloop) = rumqttc::AsyncClient::new(pub_options, 5);
 
         tokio::spawn(async move {
-            loop {
-                pub_eventloop.poll().await.ok();
-            }
+            loop { pub_eventloop.poll().await.ok(); }
         });
 
         Self {
@@ -1095,6 +1290,7 @@ impl ZigduckState {
             mqtt_password,
             mqtt_publisher,
             mqtt_base_topic,
+            mqtt_whitelist,
             hue_client,
             state_dir,
             state_file,
@@ -1239,7 +1435,6 @@ impl ZigduckState {
     }
 
 
-
     async fn execute_automation_action_mqtt(&self, action: &AutomationAction, device_name: &str, room: &str, topic: &str, payload: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing MQTT automation action for {} in {}", device_name, room);
 
@@ -1340,9 +1535,7 @@ impl ZigduckState {
                                 next
                             };
                             self.activate_scene_filtered(&next_scene, Some(room)).await?;
-                        } else {
-                            dt_info!("No scenes available for room {}", room);
-                        }
+                        } else { dt_info!("No scenes available for room {}", room); }
                     } else { dt_info!("No scenes configured for room {}", room); }
                 }
             }
@@ -1463,71 +1656,152 @@ impl ZigduckState {
             self.update_device_state(device_name, "tamper", &tamper.to_string())?;
         }
 
-        // 🌡️ Temperature
+        // 🌡️ TEMPERATURE
         if let Some(temperature) = data["temperature"].as_f64() {
             let temp_str = format!("{:.1}", temperature); // optional: round to 1 decimal
             let prev = self.get_state(device_name, "temperature");
             if prev.as_deref() != Some(&temp_str) && prev.is_some() {
-                dt_debug!("🌡️ Temperature: {}: {}°C → {}°C",
+                dt_debug!("🌡️ Temperature: {}: {}°C -> {}°C",
                     device_name, prev.unwrap(), temperature);
             }
             self.update_device_state(device_name, "temperature", &temp_str)?;
         }
 
-        // 🔋 Battery
+        // 🔋 BATTERY
         if let Some(battery) = data["battery"].as_u64() {
             let battery_str = battery.to_string();
             let prev = self.get_state(device_name, "battery");
             if prev.as_deref() != Some(&battery_str) && prev.is_some() {
-                dt_info!("🔋 Battery: {}: {}% → {}%",
+                dt_info!("🔋 Battery: {}: {}% -> {}%",
                     device_name, prev.unwrap(), battery);
             }
             self.update_device_state(device_name, "battery", &battery_str)?;
         }
 
-        // ⚡ Power
+        // ⚡ POWER
         if let Some(power) = data["power"].as_f64() {
             let power_str = power.to_string();
             let prev = self.get_state(device_name, "power");
             if prev.as_deref() != Some(&power_str) && prev.is_some() {
-                dt_debug!("⚡ Power: {}: {}W → {}W", device_name, prev.unwrap(), power);
+                dt_debug!("⚡ Power: {}: {}W -> {}W", device_name, prev.unwrap(), power);
             }
             self.update_device_state(device_name, "power", &power_str)?;
         }
 
-        // ⚡ Energy
+        // ⚡ ENERGY
         if let Some(energy) = data["energy"].as_f64() {
             let energy_str = energy.to_string();
             let prev = self.get_state(device_name, "energy");
             if prev.as_deref() != Some(&energy_str) && prev.is_some() {
-                dt_debug!("🔋 Energy: {}: {} kWh → {} kWh", device_name, prev.unwrap(), energy);
+                dt_debug!("🔋 Energy: {}: {} kWh -> {} kWh", device_name, prev.unwrap(), energy);
             }
             self.update_device_state(device_name, "energy", &energy_str)?;
         }
 
-        // ⚡ Voltage
+        // ⚡ VOLTAGE
         if let Some(voltage) = data["voltage"].as_f64() {
             let voltage_str = voltage.to_string();
             let prev = self.get_state(device_name, "voltage");
             if prev.as_deref() != Some(&voltage_str) && prev.is_some() {
-                dt_debug!("⚡ Voltage: {}: {}V → {}V", device_name, prev.unwrap(), voltage);
+                dt_debug!("⚡ Voltage: {}: {}V ->-> {}V", device_name, prev.unwrap(), voltage);
             }
             self.update_device_state(device_name, "voltage", &voltage_str)?;
         }
 
-        // 🔋 Charging
+        // 🔋 CHARGING
         if let Some(charging) = data["charging"].as_u64() {
             let charging_str = charging.to_string();
             let prev = self.get_state(device_name, "charging");
             if prev.as_deref() != Some(&charging_str) && prev.is_some() {
-                dt_debug!("🔋 Charging: {}: {} → {}", device_name, prev.unwrap(), charging);
+                dt_debug!("🔋 Charging: {}: {} -> {}", device_name, prev.unwrap(), charging);
             }
             self.update_device_state(device_name, "charging", &charging_str)?;
         }
 
+        // 🔥 SMOKE
         if let Some(smoke) = data["smoke"].as_bool() {
-            self.update_device_state(device_name, "smoke", &smoke.to_string())?;
+            let smoke_str = smoke.to_string();
+            let prev = self.get_state(device_name, "smoke");
+            if prev.as_deref() != Some(&smoke_str) && prev.is_some() {
+                let prev_label = if prev.as_deref() == Some("true") { "DETECTED" } else { "clear" };
+                let cur_label  = if smoke { "DETECTED" } else { "clear" };
+                dt_info!("🔥🔥🔥 Smoke: {}: {} -> {}", device_name, prev_label, cur_label);
+            }
+            self.update_device_state(device_name, "smoke", &smoke_str)?;
         }
+
+        // 💧 HUMIDITY
+        if let Some(humidity) = data["humidity"].as_f64() {
+            let humidity_str = humidity.to_string();
+            let prev = self.get_state(device_name, "humidity");
+            if prev.as_deref() != Some(&humidity_str) && prev.is_some() {
+                dt_debug!("💧 Humidity: {}: {}% -> {}%", device_name, prev.unwrap(), humidity);
+            }
+            self.update_device_state(device_name, "humidity", &humidity_str)?;
+        }
+
+        // 🌫 PRESSURE
+        if let Some(pressure) = data["pressure"].as_f64() {
+            let pressure_str = pressure.to_string();
+            let prev = self.get_state(device_name, "pressure");
+            if prev.as_deref() != Some(&pressure_str) && prev.is_some() {
+                dt_debug!("🌫 Pressure: {}: {} hPa -> {} hPa", device_name, prev.unwrap(), pressure);
+            }
+            self.update_device_state(device_name, "pressure", &pressure_str)?;
+        }
+
+        // ☀️ ILLUMINANCE
+        if let Some(illuminance) = data["illuminance"].as_u64() {
+            let illuminance_str = illuminance.to_string();
+            let prev = self.get_state(device_name, "illuminance");
+            if prev.as_deref() != Some(&illuminance_str) && prev.is_some() {
+                dt_debug!("☀️ Illuminance: {}: {} lux -> {} lux", device_name, prev.unwrap(), illuminance);
+            }
+            self.update_device_state(device_name, "illuminance", &illuminance_str)?;
+        }
+
+        // 🌡️ DEVICE TEMPERATURE
+        if let Some(device_temperature) = data["device_temperature"].as_f64() {
+            let device_temperature_str = device_temperature.to_string();
+            let prev = self.get_state(device_name, "device_temperature");
+            if prev.as_deref() != Some(&device_temperature_str) && prev.is_some() {
+                dt_debug!("🌡️ Device temp: {}: {}°C -> {}°C", device_name, prev.unwrap(), device_temperature);
+            }
+            self.update_device_state(device_name, "device_temperature", &device_temperature_str)?;
+        }
+
+        // 📦 UPDATE AVAILABLE
+        if let Some(update_available) = data["update_available"].as_bool() {
+            let update_available_str = update_available.to_string();
+            let prev = self.get_state(device_name, "update_available");
+            if prev.as_deref() != Some(&update_available_str) && prev.is_some() {
+                dt_info!("📦 Update available: {}: {} -> {}",
+                    device_name,
+                    if prev.as_deref() == Some("true") { "yes" } else { "no" },
+                    if update_available { "yes" } else { "no" });
+            }
+            self.update_device_state(device_name, "update_available", &update_available_str)?;
+        }
+
+
+        // 🦆 says ⮞ process user-defined whitelist fields
+        for field in &self.mqtt_whitelist {
+            let Some(value) = data.get(field) else { continue; };
+            let value_str = match value {
+                Value::String(s) => s.clone(),
+                Value::Number(n) => n.to_string(),
+                Value::Bool(b)   => b.to_string(),
+                Value::Null      => continue,
+                other            => other.to_string(),
+            };
+
+            let prev = self.get_state(device_name, field);
+            if prev.as_deref() != Some(&value_str) && prev.is_some() {
+                dt_debug!("Whitelisted: {}: {}: {} -> {}", device_name, field, prev.unwrap(), value_str);
+            }
+            self.update_device_state(device_name, field, &value_str)?;
+        }
+
         // 🦆 says ⮞ update last_seen
         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         self.update_device_state(device_name, "last_updated", &timestamp.to_string())?;
@@ -1874,7 +2148,7 @@ impl ZigduckState {
                 // 🦆 says ⮞ not hue? publish to mqtt
                 _ => {
                     let topic = format!("{}/{}/set", self.mqtt_base_topic, device_info.id);
-                    dt_debug!("MQTT → {}", topic);
+                    dt_debug!("MQTT -> {}", topic);
                     self.mqtt_publish(&topic, payload).await?;
                 }
             }
@@ -1893,6 +2167,20 @@ impl ZigduckState {
         if payload.len() > 10000 {
             dt_debug!("Skipping large payload on topic: {} (size: {})", topic, payload.len());
             return Ok(());
+        }
+
+        let base_prefix = format!("{}/", self.mqtt_base_topic);
+        if let Some(rest) = topic.strip_prefix(&base_prefix) {
+            if let Some(device_name) = rest.strip_suffix("/set") {
+                if let Some(dev) = self.config.devices.get(device_name) {
+                    if !dev.controls.is_empty() {
+                        if let Ok(data) = serde_json::from_str::<Value>(payload) {
+                            self.handle_house_device_set(device_name, dev, &data).await?;
+                        } else { dt_debug!("Invalid JSON on control topic {}", topic); }
+                        return Ok(());
+                    }
+                }
+            }
         }
 
         // 🦆 says ⮞ MQTT TRIGGERED AUTOMATIONS
@@ -2101,13 +2389,24 @@ impl ZigduckState {
                 }
             }
 
+
             // 🦆 says ⮞ 💧 WATER SENSORS
             if data["water_leak"].as_bool() == Some(true) || data["waterleak"].as_bool() == Some(true) {
                 dt_info!("💧 WATER LEAK DETECTED in {} on {}", room, device_name);
                 self.execute_automations("water_leak", "leak_detected", device_name, &room).await?;
             }
 
-            // 🦆 says ⮞ DOOR / WINDOW SENSOR
+            // 🦆 says ⮞ 🚪 DOOR / WINDOW SENSOR
+            if let Some(contact) = data["contact"].as_bool() {
+                let trigger = if contact { "door_closed" } else { "door_opened" };
+                dt_info!("🚪 {} {} in {}", device_name, trigger, room);
+                if let Err(e) = self.execute_automations("contact", trigger, device_name, &room).await {
+                    dt_warning!("contact automation failed: {}", e);
+                }
+            }
+
+
+            // 🦆 says ⮞ 🚪 GREETING (DOOR SENSOR)
             if let Some(greeting) = &self.automations.greeting {
                 if greeting.enable {
                     if device_name == greeting.door {

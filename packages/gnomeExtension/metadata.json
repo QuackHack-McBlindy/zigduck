@@ -1,13 +1,9 @@
 {
   "uuid": "zigduck@quackhack-mcblindy.com",
   "name": "Zigduck Smart Home",
-  "description": "Control your Zigduck NixOS smart home from from the top bar.",
-  "gettext-domain": "zigduck",
+  "description": "Control your entire smart home with this handy Zigduck widget in the top bar. Zigduck is a complete home automation system for NixOS. Using this extension you can see and control Zigbee & Philips Hue (+Sync Box) devices, Android TVs, fetch, build and display EPG/TV-Guide, copy current lights state and create a Nix expression & copy it straight to clipboard. Extension uses clipboard only for copying that. There are no extension settings, all configuration comes from your Nix code. Create custom (non-zigbee) devices for monitoring and controlling and wire your own automations. This extension also provides a chat interface and users may write their own natural language commands (no LLM).",
   "shell-version": [
-    "48",
-    "49",
     "50"
   ],
-  "url": "https://github.com/quackhack-mcblindy/zigduck",
-  "version": 1
+  "url": "https://github.com/quackhack-mcblindy/zigduck-gnome-shell-extension"
 }
