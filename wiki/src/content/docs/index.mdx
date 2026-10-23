@@ -1,0 +1,50 @@
+---
+title: zigduck
+description: Declarative full-stack Zigbee home automation for NixOS. Nix for configuration, Rust for the runtime.
+template: splash
+hero:
+  tagline: A flake for your house. Define your rooms and devices once in Nix, then <strong>deploy forever</strong>.
+  image:
+    file: ../../assets/logo-full.webp
+    alt: zigduck logo, a yellow duck inside a house outline
+  actions:
+    - text: Get started
+      link: getting-started/introduction/
+      icon: right-arrow
+    - text: Option reference
+      link: reference/options/
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/quackhack-mcblindy/zigduck
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+	<Card title="Reproducible" icon="seti:config">
+		Your whole smart home lives in your NixOS configuration. Rebuild a machine and every room,
+		device, scene and automation comes back exactly as it was.
+	</Card>
+	<Card title="Smart defaults" icon="star">
+		Define rooms and devices and most homes need no automations at all. Dimmers control their
+		room and motion sensors turn on its lights out of the box.
+	</Card>
+	<Card title="Fast runtime" icon="rocket">
+		A Rust service built on tokio talks to zigbee2mqtt over Mosquitto and drives Android TVs over
+		ADB.
+	</Card>
+	<Card title="Desktop and web" icon="laptop">
+		A GNOME Shell top bar widget, a generated web dashboard, a full CLI and a REST API.
+	</Card>
+</CardGrid>
+
+## Where to go next
+
+<CardGrid>
+	<LinkCard title="Install the flake" href="getting-started/installation/" description="Add zigduck to your flake inputs and enable the service." />
+	<LinkCard title="Quick start config" href="getting-started/quick-start/" description="A complete working house config to copy and edit." />
+	<LinkCard title="Configure devices" href="configuration/devices/" description="Lights, dimmers, motion sensors, blinds and non-Zigbee devices." />
+	<LinkCard title="All 276 options" href="reference/options/" description="Every NixOS option, generated from the module source." />
+</CardGrid>
