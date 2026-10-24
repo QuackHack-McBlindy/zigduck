@@ -110,7 +110,7 @@ struct Config {
     rooms: HashMap<String, String>,
     tvs: HashMap<String, TvConfig>,
     directories: HashMap<String, String>,
-    webserver_url: Option<String>,    
+    webserver_url: Option<String>,
     webserver_file: Option<String>,
     playlist_file: String,
     max_items: usize,
@@ -156,7 +156,7 @@ impl Config {
             .to_string();
         Some(url)
     }
-    
+
     fn youtube_api_key(&self) -> Option<String> {
         let path = self.youtube_api_key_file.as_ref()?;
         let path = std::path::Path::new(path);
@@ -191,19 +191,47 @@ fn resolve_tv<'a>(args: &Args, config: &'a Config) -> &'a TvConfig {
         .expect("No TVs defined in config")
 }
 
+fn looks_disconnected(stderr: &str) -> bool {
+    let s = stderr.to_lowercase();
+    s.contains("device offline")
+        || s.contains("no devices")
+        || s.contains("device not found")
+        || s.contains("error: device")
+        || s.contains("connection refused")
+        || s.contains("unable to connect")
+}
 
 fn adb(ip: &str, cmd: &[&str]) -> std::process::Output {
-    let mut args = vec!["-s", ip];
-    args.extend(cmd);
-    let output = Command::new("adb")
-        .args(&args)
-        .output()
-        .expect("adb not found or not executable");
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("ADB command failed: adb -s {} {}\n{}", ip, cmd.join(" "),  stderr.trim());
+    let run = || {
+        let mut args = vec!["-s", ip];
+        args.extend(cmd);
+        Command::new("adb")
+            .args(&args)
+            .output()
+            .expect("adb not found or not executable")
+    };
+
+    let first = run();
+    if first.status.success() {
+        return first;
     }
-    output
+
+    let stderr = String::from_utf8_lossy(&first.stderr);
+    if !looks_disconnected(&stderr) {
+        eprintln!("ADB command failed: adb -s {} {}\n{}", ip, cmd.join(" "), stderr.trim());
+        return first;
+    }
+
+    eprintln!("ADB offline for {}, reconnecting...", ip);
+    let _ = Command::new("adb").args(["connect", ip]).output();
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    let second = run();
+    if !second.status.success() {
+        let stderr2 = String::from_utf8_lossy(&second.stderr);
+        eprintln!("ADB retry failed: adb -s {} {}\n{}", ip, cmd.join(" "), stderr2.trim());
+    }
+    second
 }
 
 fn adb_keyevent(ip: &str, key: &str) {
@@ -211,30 +239,19 @@ fn adb_keyevent(ip: &str, key: &str) {
 }
 
 fn wake_and_connect(ip: &str, wake_key: &str) {
-    let connect = Command::new("adb")
-        .args(["connect", ip])
-        .output()
-        .expect("Failed to run adb");
-    if !connect.status.success() {
-        let stderr = String::from_utf8_lossy(&connect.stderr);
-        eprintln!("ADB connect to {} failed:\n{}", ip, stderr.trim());
-        return;
-    }
+    let _ = Command::new("adb").args(["connect", ip]).output();
     adb_keyevent(ip, wake_key);
 }
 
 fn play_playlist(ip: &str, playlist_url: &str, wake_key: &str) {
     wake_and_connect(ip, wake_key);
-    let cmd = format!(
-        "am start -a android.intent.action.VIEW -d \"{}\" -t \"audio/x-mpegurl\"",
-        playlist_url
-    );
+    let cmd = format!("am start -a android.intent.action.VIEW -d \"{}\" -t \"audio/x-mpegurl\"", playlist_url);
     adb(ip, &["shell", &cmd]);
 }
 
 fn generate_folder_playlist(
     folder: &Path,
-    root_dir: &Path, 
+    root_dir: &Path,
     webserver: &str,
     shuffle: bool,
     max_items: usize,
@@ -409,11 +426,7 @@ fn get_current_track(ip: &str) -> Option<String> {
 }
 
 fn adb_output_string(ip: &str, cmd: &[&str]) -> String {
-    let output = Command::new("adb")
-        .args(["-s", ip])
-        .args(cmd)
-        .output()
-        .expect("adb not found or not executable");
+    let output = adb(ip, cmd);
     String::from_utf8_lossy(&output.stdout).to_string()
 }
 
@@ -653,7 +666,7 @@ fn main() {
             false
         } else { config.shuffle }
     });
-    
+
     let max_items = args.max_items.unwrap_or(config.max_items);
 
     let typ = args.typ.to_lowercase();
@@ -799,7 +812,7 @@ fn main() {
             adb(&device_ip, &["shell", cmd]);
             println!("Calling remote... beep ... beep!");
             return;
-        }        
+        }
         "youtube" => {
             let query = match &args.search {
                 Some(q) => q,
@@ -818,7 +831,7 @@ fn main() {
             }
             return;
         }
-        
+
         _ => {}
     }
 

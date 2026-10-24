@@ -35,6 +35,18 @@ struct HueConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TvConfig {
+    #[serde(default = "default_true")]
+    enable: bool,
+    ip: String,
+    #[serde(default = "default_tv_poll_secs")]
+    poll_interval: u64,
+}
+
+fn default_tv_poll_secs() -> u64 { 30 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct HouseDevice {
     #[serde(default = "default_true")]
     enable: bool,
@@ -45,10 +57,33 @@ struct HouseDevice {
     #[serde(default)]
     state_endpoint: Option<String>,
     #[serde(default)]
+    state: Option<DeviceStateConfig>,
+    #[serde(default)]
     controls: HashMap<String, HouseControl>,
 }
 
 fn default_true() -> bool { true }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DeviceStateConfig {
+    #[serde(default)]
+    endpoint: Option<String>,
+    #[serde(default)]
+    refresh: Option<u64>,
+}
+
+impl HouseDevice {
+    fn effective_state_endpoint(&self) -> Option<&str> {
+        self.state
+            .as_ref()
+            .and_then(|s| s.endpoint.as_deref())
+            .or(self.state_endpoint.as_deref())
+    }
+    fn refresh_interval_secs(&self) -> Option<u64> {
+        self.state.as_ref().and_then(|s| s.refresh).filter(|&n| n > 0)
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct HouseControl {
@@ -74,12 +109,13 @@ struct HouseConfig {
     hue: Option<HueConfig>,
     dimmer: DimmerConfig,
     dark_time: DarkTimeConfig,
-    //greeting: GreetingConfig,
     #[serde(default)]
     no_motion: NoMotionConfig,
     double_click_timeout_ms: Option<u64>,
     #[serde(default)]
     devices: HashMap<String, HouseDevice>,
+    #[serde(default)]
+    tv: HashMap<String, TvConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -384,6 +420,47 @@ struct MotionTracker {
     last_motion: HashMap<String, SystemTime>,
 }
 
+async fn check_tv_power(ip: &str) -> Option<bool> {
+    let serial = format!("{}:5555", ip);
+    let _ = tokio::time::timeout(
+        Duration::from_secs(3),
+        TokioCommand::new("adb").args(["connect", &serial]).output(),
+    ).await;
+
+    let output = match tokio::time::timeout(
+        Duration::from_secs(5),
+        TokioCommand::new("adb")
+            .args(["-s", &serial, "shell", "dumpsys", "power"])
+            .output(),
+    ).await {
+        Ok(Ok(o)) if o.status.success() => o,
+        Ok(Ok(o)) => {
+            dt_debug!("dumpsys power for {} exited {}: {}", ip, o.status, String::from_utf8_lossy(&o.stderr).trim());
+            return None;
+        }
+        Ok(Err(e)) => {
+            dt_debug!("adb dumpsys for {} failed to run: {}", ip, e);
+            return None;
+        }
+        Err(_) => {
+            dt_debug!("adb dumpsys for {} timed out", ip);
+            return None;
+        }
+    };
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if stdout.contains("mWakefulness=Awake") || stdout.contains("Display Power: state=ON") {
+        Some(true)
+    } else if stdout.contains("mWakefulness=Asleep")
+           || stdout.contains("mWakefulness=Dozing")
+           || stdout.contains("Display Power: state=OFF")
+    {
+        Some(false)
+    } else {
+        dt_debug!("dumpsys power for {} returned {} bytes with no wakefulness markers", ip, stdout.len());
+        None
+    }
+}
+
 impl ZigduckState {
     async fn handle_house_device_set(
         &self,
@@ -438,7 +515,7 @@ impl ZigduckState {
         }
 
         if executed {
-            if let (Some(endpoint), Some(ip)) = (&device.state_endpoint, &device.ip) {
+            if let (Some(endpoint), Some(ip)) = (device.effective_state_endpoint(), &device.ip) {
                 let url = format!("http://{}{}", ip, endpoint);
                 dt_debug!("Refreshing state for {} from {}", device_name, url);
 
@@ -823,6 +900,141 @@ impl ZigduckState {
             }
         }
         Ok(())
+    }
+
+    async fn start_tv_state_trackers(&self) {
+        if self.config.tv.is_empty() {
+            dt_info!("📺 No TVs configured; state tracking disabled");
+            return;
+        }
+
+        match TokioCommand::new("adb").arg("version").output().await {
+            Ok(o) if o.status.success() => {
+                dt_info!("📺 adb available: {}", String::from_utf8_lossy(&o.stdout).lines().next().unwrap_or("<no output>"));
+            }
+            Ok(o) => dt_warning!("📺 adb exited {}: {}", o.status, String::from_utf8_lossy(&o.stderr).trim()),
+            Err(e) => {
+                dt_error!("📺 adb binary not runnable: {} — TV state tracking will not work", e);
+                return;
+            }
+        }
+        for (name, tv) in &self.config.tv {
+            if !tv.enable {
+                dt_info!("📺 '{}' is disabled; skipping tracker", name);
+                continue;
+            }
+            let name = name.clone();
+            let ip = tv.ip.clone();
+            let interval_secs = tv.poll_interval.max(5);
+            let state = self.clone();
+
+            dt_info!("📺 Starting tracker for '{}' ({}) every {}s", name, ip, interval_secs);
+
+            tokio::spawn(async move {
+                let mut interval = tokio::time::interval(Duration::from_secs(interval_secs));
+                interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                loop {
+                    interval.tick().await;
+                    let probe = check_tv_power(&ip).await;
+                    let state_str = match probe {
+                        Some(true) => "ON",
+                        Some(false) => "OFF",
+                        None => "OFF",
+                    };
+                    let prev = state.get_state(&name, "state");
+                    if prev.as_deref() != Some(state_str) {
+                        dt_info!("📺 '{}' state {} -> {} (probe={:?})", name, prev.as_deref().unwrap_or("<none>"), state_str, probe);
+                    } else { dt_debug!("📺 '{}' unchanged: {} (probe={:?})", name, state_str, probe); }
+
+                    if let Err(e) = state.update_device_state(&name, "state", state_str) {
+                        dt_warning!("📺 '{}' failed to write state: {}", name, e);
+                    }
+                }
+            });
+        }
+    }
+
+    async fn start_state_refreshers(&self) {
+        for (name, device) in &self.config.devices {
+            if !device.enable {
+                continue;
+            }
+
+            let endpoint = match device.effective_state_endpoint() {
+                Some(e) => e.to_string(),
+                None => continue,
+            };
+            let ip = match device.ip.as_deref() {
+                Some(i) => i.to_string(),
+                None => {
+                    dt_warning!("Device '{}' has state endpoint but no IP", name);
+                    continue;
+                }
+            };
+            let refresh = match device.refresh_interval_secs() {
+                Some(r) => r,
+                None => continue,
+            };
+
+            let name = name.clone();
+            let state = self.clone();
+            let url = format!("http://{}{}", ip, endpoint);
+
+            dt_info!("State refresher for {} every {}s {}", name, refresh, url);
+
+            tokio::spawn(async move {
+                let client = reqwest::Client::new();
+                let mut interval = tokio::time::interval(Duration::from_secs(refresh));
+                interval.tick().await;
+
+                loop {
+                    interval.tick().await;
+                    match client
+                        .get(&url)
+                        .timeout(Duration::from_secs(5))
+                        .send()
+                        .await
+                    {
+                        Ok(resp) if resp.status().is_success() => {
+                            match resp.json::<Value>().await {
+                                Ok(json) => {
+                                    let fields = json.as_object().map(|o| o.len()).unwrap_or(0);
+                                    if let Some(obj) = json.as_object() {
+                                        for (key, value) in obj {
+                                            let value_str = match value {
+                                                Value::String(s) => s.clone(),
+                                                Value::Number(n) => n.to_string(),
+                                                Value::Bool(b) => b.to_string(),
+                                                Value::Null => continue,
+                                                other => other.to_string(),
+                                            };
+                                            if let Err(e) = state
+                                                .update_device_state(&name, key, &value_str)
+                                            {
+                                                dt_warning!("State refresh {}.{}: {}", name, key, e);
+                                            }
+                                        }
+                                        let ts = SystemTime::now()
+                                            .duration_since(UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_secs();
+                                        let _ = state.update_device_state(
+                                            &name,
+                                            "last_updated",
+                                            &ts.to_string(),
+                                        );
+                                        dt_debug!("Refreshed {} ({} fields)", name, fields);
+                                    }
+                                }
+                                Err(e) => { dt_warning!("Parse error for {}: {}", url, e) }
+                            }
+                        }
+                        Ok(resp) => { dt_warning!("Refresh {} returned HTTP {}", name, resp.status()) }
+                        Err(e) => dt_warning!("Refresh {} failed: {}", name, e),
+                    }
+                }
+            });
+        }
     }
 
     async fn start_periodic_checks(&self) {
@@ -2011,7 +2223,6 @@ impl ZigduckState {
         Ok(())
     }
 
-
     async fn check_no_motion_global(&self) {
         if !self.config.no_motion.enabled {
             return;
@@ -2561,6 +2772,8 @@ impl ZigduckState {
         dt_info!("🚀 Starting ZigDuck automation system");
         dt_info!("📡 Listening to all Zigbee events...");
         self.start_periodic_checks().await;
+        self.start_state_refreshers().await;
+        self.start_tv_state_trackers().await;
         let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
         mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
         mqttoptions.set_keep_alive(Duration::from_secs(5));

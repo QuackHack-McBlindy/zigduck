@@ -110,6 +110,7 @@ class ZigduckIndicator extends PanelMenu.Button {
         this._tvIcons        = null;
         this._tvIconsLoaded  = false;
         this._tvState        = {};
+        this._tvSyncedFromState = {};
         this._cards        = [];
         this._detailCard   = null;
         this._sceneDraft   = null;
@@ -639,6 +640,18 @@ class ZigduckIndicator extends PanelMenu.Button {
             ];
 
             this._states  = states;
+
+            for (const d of this._devices) {
+                if (d.type !== 'tv') continue;
+                const cached = this._tvGetState(d.tvKey);
+                const fresh = this._states[d.friendly_name]?.state;
+                if (fresh !== 'ON' && fresh !== 'OFF') continue;
+                const prevSynced = this._tvSyncedFromState[d.friendly_name];
+                if (prevSynced === fresh) continue;
+                cached.power = (fresh === 'ON');
+                this._tvSyncedFromState[d.friendly_name] = fresh;
+            }
+
             this._notifications = Array.isArray(notifArr) ? notifArr : [];
             this._updateBellBadge(this._notifications.length);
 

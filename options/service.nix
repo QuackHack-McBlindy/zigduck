@@ -53,6 +53,7 @@ in {
       host = mkOption {
         type = types.str;
         default = "0.0.0.0";
+        example = "127.0.0.1";
         description = "Host to bind the webserver to";
       };
       port = mkOption {

@@ -11,7 +11,7 @@
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.7-black?style=flat)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.8-black?style=flat)
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
@@ -38,7 +38,7 @@ Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.<br>
 **zigduck** uses smart defaults, after defining your rooms & devices --<br>
 most users don’t need to write any automations at all.<br>
 Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
-**Everything** is configurable via NixOS options.<br>
+**EVERYTHING** is configurable via NixOS options.<br>
 
 Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
 
@@ -295,7 +295,8 @@ These devices are read-only but may still be useful.<br>
         icon   = "mdi:watch";
         ip     = "192.168.1.111";
 
-        stateEndpoint = "/api/sensors";
+        state.endpoint = "/api/sensors";
+        state.refresh  = 60;
              
         # create action controls for automations / frontend control
         controls = { # publish your devices payload @ "zigduck/watch" to show in frontend 
