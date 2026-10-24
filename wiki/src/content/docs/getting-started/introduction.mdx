@@ -1,0 +1,64 @@
+---
+title: Introduction
+description: What zigduck is, how it fits together and what it includes.
+---
+
+**zigduck** is a NixOS flake that brings version control to your smart home. It's a full-stack
+Zigbee home automation system configured entirely through NixOS options, so your house is
+reproducible and deployable like any other part of your system.
+
+Nix handles configuration and a Rust service handles the runtime. Under the hood it uses
+[zigbee2mqtt](https://www.zigbee2mqtt.io/), [Mosquitto](https://mosquitto.org/), tokio and
+serde_json, and `adb` for Android TVs.
+
+## Smart defaults
+
+Once you've defined your rooms and devices, most homes don't need any automations at all.
+Lights, dimmers and motion sensors work as expected out of the box: a dimmer controls the lights in
+its own room and a motion sensor turns on its room's lights, unless you override it.
+
+Everything is configurable through NixOS options. See the [option reference](../../reference/options/)
+for the full list.
+
+## How it fits together
+
+```text
+            Nix
+             │
+             ▼
+          zigduck
+             │
+      ┌──────┴──────┐
+      ▼             ▼
+    MQTT         REST API
+      │             │
+      ▼             ▼
+ zigbee2mqtt    adb/media
+      │             │
+      └──────┬──────┘
+             ▼
+          Devices
+```
+
+Your Nix configuration generates the zigbee2mqtt and Mosquitto setup, the device, room and scene
+definitions, and the automation rules. The zigduck service subscribes to MQTT and acts on device
+events, and serves a REST API that the dashboard, the GNOME extension and the CLI all use.
+
+## What's included
+
+| Component | What it does |
+| --- | --- |
+| zigduck service | The Rust runtime that runs automations, tracks device state and serves the API. |
+| [zigduck-cli](../../usage/zigduck-cli/) | Control devices, scenes, timers, alarms and snapshots from the terminal. |
+| [Web dashboard](../../configuration/dashboard/) | An optional dashboard generated from your config, with custom status cards and pages. |
+| [GNOME extension](../../usage/gnome-extension/) | A top bar widget for rooms, devices, scenes and the TV guide. |
+| [tv](../../usage/tv/) | Casts media and live TV to Android TVs over ADB, with fuzzy search. |
+| tv-scraper | Builds an electronic program guide (EPG) from your channel config. |
+| [Voice](../../configuration/voice/) | Natural language and voice control through the companion flake [yo](https://github.com/QuackHack-McBlindy/yo). |
+
+![The zigduck GNOME Shell extension](/zigduck/images/zigduck-widget.gif)
+
+## Real-world example
+
+For a complete configuration running in a real house, see the author's
+[myHouse.nix](https://github.com/QuackHack-McBlindy/dotfiles/blob/main/modules/myHouse.nix).

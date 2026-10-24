@@ -1,0 +1,46 @@
+/* Accent colors taken from the zigduck logo: crimson "Zig" and duck yellow. */
+:root {
+	--sl-color-accent-low: #3d0b18;
+	--sl-color-accent: #e8345c;
+	--sl-color-accent-high: #ffc7d3;
+	--zd-yellow: #ffcb1f;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #ffd9e1;
+	--sl-color-accent: #c4163d;
+	--sl-color-accent-high: #5a0a1c;
+}
+
+/* Long option names in reference headings must wrap on phones. */
+.sl-markdown-content :is(h2, h3) code {
+	overflow-wrap: anywhere;
+}
+
+.sl-markdown-content h3 code {
+	font-size: 0.9em;
+	background: none;
+	border: none;
+	padding: 0;
+}
+
+.hero .tagline strong {
+	color: var(--zd-yellow);
+}
+
+:root[data-theme='light'] .hero .tagline strong {
+	color: var(--sl-color-accent);
+}
+
+.screenshot-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 1rem;
+}
+
+.screenshot-row img {
+	width: 100%;
+	height: auto;
+	border-radius: 0.75rem;
+	border: 1px solid var(--sl-color-gray-5);
+}
