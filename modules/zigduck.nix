@@ -76,6 +76,10 @@ let
 
   mainConfig = {
     devices = house.devices;
+    tv = lib.mapAttrs (_: tv: {
+      inherit (tv) enable ip;
+    }) house.tv;
+
     zigduck = {
       state_dir = cfg.stateDir;
     };

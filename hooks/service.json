@@ -1,7 +1,7 @@
 {
   "services.zigduck.broker": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -22,7 +22,7 @@
   },
   "services.zigduck.cli.enable": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -44,7 +44,7 @@
   },
   "services.zigduck.dashboard.enable": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -66,7 +66,7 @@
   },
   "services.zigduck.dashboard.host": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -88,7 +88,7 @@
   },
   "services.zigduck.dashboard.logFile": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -110,7 +110,7 @@
   },
   "services.zigduck.dashboard.openFirewall": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -132,17 +132,13 @@
   },
   "services.zigduck.dashboard.passwordFile": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
       "text": "null"
     },
     "description": "Path to password file for API authentication (API_PASSWORD_FILE)",
-    "example": {
-      "_type": "literalExpression",
-      "text": "\"/run/secrets/zigduck-dashboard-password\""
-    },
     "loc": [
       "services",
       "zigduck",
@@ -154,7 +150,7 @@
   },
   "services.zigduck.dashboard.port": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -176,7 +172,7 @@
   },
   "services.zigduck.dashboard.secure": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -198,7 +194,7 @@
   },
   "services.zigduck.debug": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -219,7 +215,7 @@
   },
   "services.zigduck.enable": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -240,17 +236,13 @@
   },
   "services.zigduck.extraEnv": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
     },
     "description": "Extra environment variables to pass to the service",
-    "example": {
-      "_type": "literalExpression",
-      "text": "{\n  LANG = \"sv_SE.UTF-8\";\n  TZ = \"Europe/Stockholm\";\n}"
-    },
     "loc": [
       "services",
       "zigduck",
@@ -261,7 +253,7 @@
   },
   "services.zigduck.gnomeExtension.enable": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -283,7 +275,7 @@
   },
   "services.zigduck.logFile": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -304,7 +296,7 @@
   },
   "services.zigduck.stateDir": {
     "declarations": [
-      "/nix/store/7alvliav9ag7ajcizb1896wd71hclp7b-source/options/service.nix"
+      "/nix/store/ck6yi0d28p0hsx4ddqvfds81ibwb40aw-source/options/service.nix"
     ],
     "default": {
       "_type": "literalExpression",

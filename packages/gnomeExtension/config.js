@@ -119,7 +119,7 @@ export function loadHouseDevices() {
                 icon:          dev.icon || null,
                 ip:            dev.ip || null,
                 controls:      dev.controls || {},
-                stateEndpoint: dev.stateEndpoint || (hasControls ? '/api/sensors' : null),
+                stateEndpoint: dev.state.endpoint || (hasControls ? '/api/sensors' : null),
             });
         }
     } catch (e) { logError(e, 'Zigduck: could not read config.json devices'); }
