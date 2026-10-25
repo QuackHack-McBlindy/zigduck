@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.8] - 2026-10-25
+
+### Added
+
 - New Starlight wiki in `wiki/`, published to GitHub Pages by `.github/workflows/wiki.yml`. Guide pages are ported from the README and the option reference is generated from `hooks/options.json` and `hooks/service.json` on every build.
 - New option: `house.devices.<name>.state.refresh`, configure the state refresh-rate for a device that's fetched into `state.json`. 
 - `zigduck` now tracks defined TV's power state in `state.json`.
@@ -22,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved retry logic in `tv` binary.
 
 ### Removed
-
 
 ## [0.2.7] - 2026-10-23
 
