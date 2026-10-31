@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.9] - 2026-10-31
+
+### Added
+
 - Zigduck now automatically tries to remember when Zigbee davices had it's batteries replaced.
 - New option: `house.presence`, enable/disable home/away awareness, default: true. 
 - New option: Per-room / per-device aliases.
@@ -21,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved `double_click_timeout_ms` in the `zigduck` Rust binary from top-level into `dimmerConfig`. 
 
 ### Removed
-
 
 ## [0.2.8] - 2026-10-25
 
