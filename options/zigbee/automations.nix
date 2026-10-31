@@ -10,6 +10,20 @@ in {
   options.house.zigbee.automations = mkOption {
     type = types.submodule {
       options = {
+        string = mkOption {
+          type = types.submodule {
+            options = {
+              prefix = mkOption {
+                type = types.str;
+                default = "";
+                description = "Optional prefix for string automation actions.";
+                example = "echo";
+              };
+            };
+          };
+          default = { };
+        };
+
         # MQTT triggered automations
         mqtt_triggered = mkOption {
           type = types.attrsOf (types.submodule {

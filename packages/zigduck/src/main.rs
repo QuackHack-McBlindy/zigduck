@@ -104,6 +104,43 @@ struct HouseControl {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct PresenceConfig {
+    #[serde(default)]
+    enabled: bool,
+    #[serde(default)]
+    probes: Vec<String>,
+    #[serde(default = "default_probe_interval")]
+    probe_interval_secs: u64,
+    #[serde(default = "default_probe_timeout")]
+    probe_timeout_secs: u64,
+    #[serde(default)]
+    home_actions: Vec<AutomationAction>,
+    #[serde(default)]
+    away_actions: Vec<AutomationAction>,
+}
+
+fn default_probe_interval() -> u64 { 60 }
+fn default_probe_timeout() -> u64 { 2 }
+
+impl Default for PresenceConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            probes: vec![],
+            probe_interval_secs: default_probe_interval(),
+            probe_timeout_secs: default_probe_timeout(),
+            home_actions: vec![],
+            away_actions: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct SimpleActionsConfig {
+    #[serde(default)]
+    prefix: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct HouseConfig {
     mosquitto: Option<MosquittoConfig>,
     hue: Option<HueConfig>,
@@ -111,17 +148,23 @@ struct HouseConfig {
     dark_time: DarkTimeConfig,
     #[serde(default)]
     no_motion: NoMotionConfig,
-    double_click_timeout_ms: Option<u64>,
     #[serde(default)]
     devices: HashMap<String, HouseDevice>,
     #[serde(default)]
     tv: HashMap<String, TvConfig>,
+    #[serde(default)]
+    presence: PresenceConfig,
+    #[serde(default)]
+    simple_actions: SimpleActionsConfig,
 }
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DimmerConfig {
     message_key: String,
     actions: DimmerActions,
+    #[serde(default)]
+    double_click_timeout_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -324,6 +367,7 @@ struct ZigduckState {
     last_button_press: Arc<Mutex<HashMap<String, SystemTime>>>,
     double_click_timeout: Duration,
     motion_triggered: Arc<RwLock<HashMap<String, bool>>>,
+    presence_state: Arc<RwLock<Option<bool>>>,
 }
 
 impl Clone for ZigduckState {
@@ -355,6 +399,7 @@ impl Clone for ZigduckState {
             last_button_press: Arc::new(Mutex::new(HashMap::new())),
             double_click_timeout: self.double_click_timeout,
             motion_triggered: self.motion_triggered.clone(),
+            presence_state: self.presence_state.clone(),
         }
     }
 }
@@ -459,6 +504,51 @@ async fn check_tv_power(ip: &str) -> Option<bool> {
         dt_debug!("dumpsys power for {} returned {} bytes with no wakefulness markers", ip, stdout.len());
         None
     }
+}
+
+async fn probe_reachable(addr: &str, timeout_secs: u64) -> bool {
+    let t = timeout_secs.max(1);
+    let is_hostport = addr.contains(':') && addr.matches(':').count() == 1;
+    if let Ok(Ok(o)) = tokio::time::timeout(
+        Duration::from_secs(t + 1),
+        TokioCommand::new("ping")
+            .args(["-c", "1", "-W", &t.to_string(), addr])
+            .output(),
+    ).await {
+        if o.status.success() {
+            dt_debug!("probe {}: ping ok", addr);
+            return true;
+        }
+    }
+
+    if !is_hostport {
+        if let Ok(Ok(o)) = tokio::time::timeout(
+            Duration::from_secs(2),
+            TokioCommand::new("ip").args(["neigh", "show", addr]).output(),
+        ).await {
+            let out = String::from_utf8_lossy(&o.stdout);
+            if out.contains("REACHABLE") || out.contains("STALE") || out.contains("DELAY") {
+                dt_debug!("probe {}: arp ok ({})", addr, out.trim());
+                return true;
+            }
+        }
+    }
+
+    if is_hostport {
+        match tokio::time::timeout(
+            Duration::from_secs(t),
+            tokio::net::TcpStream::connect(addr),
+        ).await {
+            Ok(Ok(_)) => { dt_debug!("probe {}: tcp ok", addr); return true; }
+            Ok(Err(e)) if e.kind() == std::io::ErrorKind::ConnectionRefused => {
+                dt_debug!("probe {}: tcp refused (host up)", addr); return true;
+            }
+            Ok(Err(e)) => dt_debug!("probe {}: tcp {}", addr, e),
+            Err(_)     => dt_debug!("probe {}: tcp timeout", addr),
+        }
+    }
+    dt_debug!("probe {}: offline", addr);
+    false
 }
 
 impl ZigduckState {
@@ -1055,6 +1145,7 @@ impl ZigduckState {
                 interval.tick().await;
                 state.check_presence_automations().await;
                 state.check_time_based_automations().await;
+                state.check_presence_transition().await;
             }
         });
     }
@@ -1485,7 +1576,18 @@ impl ZigduckState {
             }
         }
 
-        let double_click_timeout = Duration::from_millis(config.double_click_timeout_ms.unwrap_or(300));
+        let presence_state = Arc::new(RwLock::new(
+            device_states
+                .read()
+                .unwrap()
+                .get("apartment")
+                .and_then(|m| m.get("presence"))
+                .map(|v| v == "home"),
+        ));
+
+        let double_click_timeout = Duration::from_millis(
+            config.dimmer.double_click_timeout_ms.unwrap_or(300),
+        );
 
         let mut pub_options = MqttOptions::new("zigduck-pub", &mqtt_broker, 1883);
         pub_options.set_credentials(&mqtt_user, &mqtt_password);
@@ -1523,6 +1625,7 @@ impl ZigduckState {
             double_click_timeout,
             last_button_press: Arc::new(Mutex::new(HashMap::new())),
             motion_triggered: Arc::new(RwLock::new(HashMap::new())),
+            presence_state,
         }
     }
 
@@ -1572,6 +1675,46 @@ impl ZigduckState {
         Ok(())
     }
 
+    async fn run_simple_action(&self, cmd: &str, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let prefix = self.config.simple_actions.prefix.trim();
+        if prefix.is_empty() { return self.run_shell_raw(cmd, device_name, room).await; }
+        let mut parts = prefix.split_whitespace();
+        let program = parts.next().unwrap_or("yo");
+        let prefix_args: Vec<&str> = parts.collect();
+
+        dt_debug!("simple action via '{}': {:?}", prefix, cmd);
+        let output = TokioCommand::new(program)
+            .args(&prefix_args)
+            .arg(cmd)
+            .env("AUTOMATION_DEVICE", device_name)
+            .env("AUTOMATION_ROOM", room)
+            .output()
+            .await?;
+
+        let code = output.status.code();
+        if output.status.success() {
+            dt_debug!("simple action ok via '{}': exit={:?}", prefix, code);
+        } else {
+            dt_warning!("simple action FAILED via '{}' (exit={:?}) cmd={:?} stderr={:?}", prefix, code, cmd, String::from_utf8_lossy(&output.stderr).trim());
+        }
+        Ok(())
+    }
+
+    async fn run_shell_raw(&self, cmd: &str, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let output = TokioCommand::new("sh")
+            .arg("-c")
+            .arg(cmd)
+            .env("AUTOMATION_DEVICE", device_name)
+            .env("AUTOMATION_ROOM", room)
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            dt_warning!("shell FAILED (exit={:?}) cmd={:?} stderr={:?}", output.status.code(), cmd, String::from_utf8_lossy(&output.stderr).trim());
+        }
+        Ok(())
+    }
+
     async fn execute_automation_action(&self, action: &AutomationAction, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing automation action for {} in {}", device_name, room);
 
@@ -1580,21 +1723,7 @@ impl ZigduckState {
         std::env::set_var("AUTOMATION_ROOM", room);
 
         match action {
-            AutomationAction::Simple(cmd) => {
-                // 🦆 says ⮞ execute shell command with environment
-                let output = TokioCommand::new("sh")
-                    .arg("-c")
-                    .arg(cmd)
-                    .env("AUTOMATION_DEVICE", device_name)
-                    .env("AUTOMATION_ROOM", room)
-                    .output()
-                    .await?;
-
-
-                if !output.status.success() {
-                    dt_debug!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
-                }
-            }
+            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room).await?; }
             AutomationAction::Structured(action_config) => {
                 match action_config.action_type.as_str() {
                     "mqtt" => {
@@ -1646,7 +1775,6 @@ impl ZigduckState {
         Ok(())
     }
 
-
     async fn execute_automation_action_mqtt(&self, action: &AutomationAction, device_name: &str, room: &str, topic: &str, payload: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing MQTT automation action for {} in {}", device_name, room);
 
@@ -1667,18 +1795,7 @@ impl ZigduckState {
         }
 
         match action {
-            AutomationAction::Simple(cmd) => {
-                let output = TokioCommand::new("sh")
-                    .arg("-c")
-                    .arg(cmd)
-                    .env("AUTOMATION_DEVICE", device_name)
-                    .env("AUTOMATION_ROOM", room)
-                    .output()
-                    .await?;
-                if !output.status.success() {
-                    dt_debug!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
-                }
-            }
+            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room).await?; }
             AutomationAction::Structured(action_config) => {
                 match action_config.action_type.as_str() {
                     "mqtt" => {
@@ -1696,7 +1813,7 @@ impl ZigduckState {
                                 .output()
                                 .await?;
                             if !output.status.success() {
-                                dt_debug!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
+                                dt_warning!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
                             }
                         }
                     }
@@ -1723,6 +1840,68 @@ impl ZigduckState {
         Ok(())
     }
 
+    async fn execute_presence_action(
+        &self,
+        action: &AutomationAction,
+        new_state: &str,
+        old_state: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match action {
+            AutomationAction::Simple(cmd) => {
+                let prefix = self.config.simple_actions.prefix.trim();
+                if prefix.is_empty() {
+                    self.run_presence_shell(cmd, new_state, old_state).await?;
+                } else {
+                    let mut parts = prefix.split_whitespace();
+                    let program = parts.next().unwrap_or("sh");
+                    let output = TokioCommand::new(program)
+                        .args(parts)
+                        .arg(cmd)
+                        .env("PRESENCE_STATE", new_state)
+                        .env("PRESENCE_OLD_STATE", old_state)
+                        .env("AUTOMATION_DEVICE", "presence")
+                        .env("AUTOMATION_ROOM", "global")
+                        .output().await?;
+                    if !output.status.success() {
+                        dt_warning!("presence simple FAILED via '{}' (exit={:?}) cmd={:?} stderr={:?}",
+                            prefix, output.status.code(), cmd,
+                            String::from_utf8_lossy(&output.stderr).trim());
+                    }
+                }
+            }
+            AutomationAction::Structured(a) => match a.action_type.as_str() {
+                "shell" => { if let Some(cmd) = &a.command { self.run_presence_shell(cmd, new_state, old_state).await?; } }
+                _ => { self.execute_automation_action(action, "presence", "global").await?; }
+            },
+        }
+        Ok(())
+    }
+
+    async fn run_presence_shell(
+        &self,
+        cmd: &str,
+        new_state: &str,
+        old_state: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        dt_info!("presence shell: {} → {} cmd={:?}", old_state, new_state, cmd);
+        let output = TokioCommand::new("sh")
+            .arg("-c")
+            .arg(cmd)
+            .env("PRESENCE_STATE", new_state)
+            .env("PRESENCE_OLD_STATE", old_state)
+            .env("AUTOMATION_DEVICE", "presence")
+            .env("AUTOMATION_ROOM", "global")
+            .output()
+            .await?;
+
+        let code = output.status.code();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if output.status.success() {
+            dt_info!("presence shell ok (exit={:?}) stdout={:?} stderr={:?}", code, stdout.trim(), stderr.trim());
+        } else { dt_warning!("presence shell FAILED (exit={:?}) cmd={:?} stdout={:?} stderr={:?}", code, cmd, stdout.trim(), stderr.trim()); }
+        Ok(())
+    }
 
     async fn check_double_click(&self, device_name: &str, room: &str, button_type: &str) -> Result<(), Box<dyn std::error::Error>> {
         let key = format!("{}:{}", device_name, button_type);
@@ -1756,18 +1935,84 @@ impl ZigduckState {
         Ok(())
     }
 
-
-    // 🦆 says ⮞ check if someone is home
-    fn is_someone_home(&self) -> bool {
-        let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        let last_motion_str = self.get_state("apartment", "last_motion").unwrap_or_else(|| "0".to_string());
-        let last_motion: u64 = last_motion_str.parse().unwrap_or(0);
-        let time_diff = current_time.saturating_sub(last_motion);
-        let away_duration = self.automations.greeting
-            .as_ref()
+    fn away_duration_secs(&self) -> u64 {
+        self.automations.greeting.as_ref()
             .map(|g| g.away_duration)
-            .unwrap_or(7200);
-        time_diff <= away_duration
+            .unwrap_or(7200)
+    }
+
+    fn is_someone_home(&self) -> bool {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        if self.config.presence.enabled
+            && !self.config.presence.probes.is_empty()
+            && self.get_state("apartment", "probe_online").as_deref() == Some("true")
+        {
+            dt_debug!("is_someone_home: home (probe online)");
+            return true;
+        }
+
+        let last_motion: u64 = self.get_state("apartment", "last_motion")
+            .and_then(|s| s.parse().ok()).unwrap_or(0);
+        let last_open: u64 = self.get_state("apartment", "last_door_open")
+            .and_then(|s| s.parse().ok()).unwrap_or(0);
+        let last_close: u64 = self.get_state("apartment", "last_door_close")
+            .and_then(|s| s.parse().ok()).unwrap_or(0);
+
+        if last_close > last_open && last_close > 0
+            && now.saturating_sub(last_close) > 300
+        {
+            if last_motion > last_open {
+                dt_debug!("is_someone_home: home (came in via door: motion {}s > open {}s ago)", now - last_motion, now - last_open);
+                return true;
+            }
+            dt_debug!("is_someone_home: away (left via door: close {}s ago, motion {}s > open {}s ago)", now - last_close, now - last_motion, now - last_open);
+            return false;
+        }
+
+        let home = now.saturating_sub(last_motion) <= self.away_duration_secs();
+        dt_debug!("is_someone_home: {} (motion fallback, last motion {}s ago)", if home { "home" } else { "away" }, now.saturating_sub(last_motion));
+        home
+    }
+
+    async fn start_presence_probes(&self) {
+        if !self.config.presence.enabled || self.config.presence.probes.is_empty() {
+            let _ = self.update_device_state("apartment", "probe_online", "false");
+            dt_info!("presence probes disabled or no probes configured ({} probe(s))", self.config.presence.probes.len());
+            return;
+        }
+        let probes = self.config.presence.probes.clone();
+        let interval = self.config.presence.probe_interval_secs.max(10);
+        let timeout = self.config.presence.probe_timeout_secs.max(1);
+        let state = self.clone();
+        dt_info!("starting presence probes: {:?} every {}s (timeout {}s)", probes, interval, timeout);
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(Duration::from_secs(interval));
+            ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+            ticker.tick().await;
+
+            loop {
+                ticker.tick().await;
+                let mut any_online = false;
+                let mut winner: Option<&str> = None;
+                for probe in &probes {
+                    if probe_reachable(probe, timeout).await {
+                        any_online = true;
+                        winner = Some(probe);
+                        break;
+                    }
+                }
+
+                let prev = state.get_state("apartment", "probe_online");
+                let new_str = if any_online { "true" } else { "false" };
+                if prev.as_deref() != Some(new_str) {
+                    match winner {
+                        Some(w) => dt_info!("probe online (winner: {})", w),
+                        None => dt_info!("all probes offline ({})", probes.join(", ")),
+                    }
+                }
+                let _ = state.update_device_state("apartment", "probe_online", new_str);
+            }
+        });
     }
 
     fn update_device_state(&self, device: &str, key: &str, value: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -1775,6 +2020,66 @@ impl ZigduckState {
         let device_map = states.entry(device.to_string()).or_insert_with(HashMap::new);
         device_map.insert(key.to_string(), value.to_string());
         Ok(())
+    }
+
+    async fn check_presence_transition(&self) {
+        if !self.config.presence.enabled {
+            return;
+        }
+
+        let now_home = self.is_someone_home();
+
+        let (changed, seeded) = {
+            let mut guard = self.presence_state.write().unwrap();
+            match *guard {
+                None => {
+                    *guard = Some(now_home);
+                    (false, true)
+                }
+                Some(prev) if prev != now_home => {
+                    *guard = Some(now_home);
+                    (true, false)
+                }
+                _ => (false, false),
+            }
+        };
+
+        if seeded {
+            let s = if now_home { "home" } else { "away" };
+            dt_debug!("presence seeded: {}", s);
+            let _ = self.update_device_state("apartment", "presence", s);
+            return;
+        }
+        if !changed { return; }
+
+        let new_str = if now_home { "home" } else { "away" };
+        let old_str = if now_home { "away" } else { "home" };
+        dt_info!("🏠 PRESENCE {} → {}", old_str, new_str);
+
+        let _ = self.update_device_state("apartment", "presence", new_str);
+        let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let _ = self.update_device_state("apartment", "presence_changed", &ts.to_string());
+        let topic = format!("{}/apartment/presence", self.mqtt_base_topic);
+        if let Err(e) = self.mqtt_publish(&topic, new_str).await {
+            dt_warning!("failed to publish presence: {}", e);
+        }
+
+        let actions = if now_home {
+            &self.config.presence.home_actions
+        } else { &self.config.presence.away_actions };
+
+        if actions.is_empty() {
+            dt_debug!("no {} actions configured", new_str);
+            return;
+        }
+
+        dt_info!("running {} {} action(s) for {} → {}", actions.len(), new_str, old_str, new_str);
+        for (i, action) in actions.iter().enumerate() {
+            dt_debug!("{} action {}/{}", new_str, i + 1, actions.len());
+            if let Err(e) = self.execute_presence_action(action, new_str, old_str).await {
+                dt_warning!("presence {} action failed: {}", new_str, e);
+            }
+        }
     }
 
     fn get_state(&self, device: &str, key: &str) -> Option<String> {
@@ -1858,9 +2163,6 @@ impl ZigduckState {
         if let Some(temperature) = data["temperature"].as_f64() {
             self.update_device_state(device_name, "temperature", &temperature.to_string())?;
         }
-        if let Some(battery) = data["battery"].as_u64() {
-            self.update_device_state(device_name, "battery", &battery.to_string())?;
-        }
         if let Some(battery_state) = data["battery_state"].as_str() {
             self.update_device_state(device_name, "battery_state", battery_state)?;
         }
@@ -1882,13 +2184,21 @@ impl ZigduckState {
         // 🔋 BATTERY
         if let Some(battery) = data["battery"].as_u64() {
             let battery_str = battery.to_string();
-            let prev = self.get_state(device_name, "battery");
-            if prev.as_deref() != Some(&battery_str) && prev.is_some() {
-                dt_info!("🔋 Battery: {}: {}% -> {}%",
-                    device_name, prev.unwrap(), battery);
+            if let Some(prev_str) = self.get_state(device_name, "battery") {
+                if let Ok(prev_val) = prev_str.parse::<u64>() {
+                    if prev_val < 20 && battery >= 80 {
+                        let now = Local::now().to_rfc3339();
+                        self.update_device_state(device_name, "battery_replaced", &now)?;
+                        dt_info!("🔋✅ Battery replaced on {}: {}% > {}% at {}", device_name, prev_val, battery, now);
+                    }
+                    if prev_str != battery_str {
+                        dt_info!("🔋 Battery: {}: {}% > {}%", device_name, prev_val, battery);
+                    }
+                }
             }
             self.update_device_state(device_name, "battery", &battery_str)?;
         }
+
 
         // ⚡ POWER
         if let Some(power) = data["power"].as_f64() {
@@ -1932,14 +2242,7 @@ impl ZigduckState {
 
         // 🔥 SMOKE
         if let Some(smoke) = data["smoke"].as_bool() {
-            let smoke_str = smoke.to_string();
-            let prev = self.get_state(device_name, "smoke");
-            if prev.as_deref() != Some(&smoke_str) && prev.is_some() {
-                let prev_label = if prev.as_deref() == Some("true") { "DETECTED" } else { "clear" };
-                let cur_label  = if smoke { "DETECTED" } else { "clear" };
-                dt_info!("🔥🔥🔥 Smoke: {}: {} -> {}", device_name, prev_label, cur_label);
-            }
-            self.update_device_state(device_name, "smoke", &smoke_str)?;
+            self.update_device_state(device_name, "smoke", &smoke.to_string())?;
         }
 
         // 💧 HUMIDITY
@@ -2538,8 +2841,15 @@ impl ZigduckState {
             // 🦆 says ⮞ ❤️‍🔥 FIRE / SMOKE DETECTOR
             if let Some(smoke) = data["smoke"].as_bool() {
                 if smoke {
-                    self.execute_automations("smoke", "smoke_detected", device_name, &room).await?;
                     dt_info!("❤️‍🔥❤️‍🔥 SMOKE! in {} {}", device_name, room);
+                    let state_clone = self.clone();
+                    let dev = device_name.to_string();
+                    let r = room.to_string();
+                    tokio::spawn(async move {
+                        if let Err(e) = state_clone.execute_automations("smoke", "smoke_detected", &dev, &r).await {
+                            dt_warning!("smoke automation failed: {}", e);
+                        }
+                    });
                 }
             }
 
@@ -2550,7 +2860,14 @@ impl ZigduckState {
 
                     dt_info!("🕵️ Motion in {} {}", device_name, room);
 
-                    self.execute_automations("motion", "motion_detected", device_name, &room).await?;
+                    let state_clone = self.clone();
+                    let dev = device_name.to_string();
+                    let r = room.to_string();
+                    tokio::spawn(async move {
+                        if let Err(e) = state_clone.execute_automations("motion", "motion_detected", &dev, &r).await {
+                            dt_warning!("motion_detected automation failed: {}", e);
+                        }
+                    });
                     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
                     self.update_device_state("apartment", "last_motion", &timestamp.to_string())?;
 
@@ -2566,8 +2883,14 @@ impl ZigduckState {
                     } else { dt_info!("❌ Daytime - no lights activated by motion."); }
                 } else {
                     dt_debug!("🛑 No more motion in {} {}", device_name, room);
-                    self.execute_automations("motion", "motion_not_detected", device_name, &room).await?;
-
+                    let state_clone = self.clone();
+                    let dev = device_name.to_string();
+                    let r = room.to_string();
+                    tokio::spawn(async move {
+                        if let Err(e) = state_clone.execute_automations("motion", "motion_not_detected", &dev, &r).await {
+                            dt_warning!("motion_not_detected automation failed: {}", e);
+                        }
+                    });
                     if self.is_motion_triggered(&room) {
                         // 🦆 says ⮞ if transition is enabled, fade out over duration instead of waiting
                         if self.config.dark_time.transition {
@@ -2604,16 +2927,42 @@ impl ZigduckState {
             // 🦆 says ⮞ 💧 WATER SENSORS
             if data["water_leak"].as_bool() == Some(true) || data["waterleak"].as_bool() == Some(true) {
                 dt_info!("💧 WATER LEAK DETECTED in {} on {}", room, device_name);
-                self.execute_automations("water_leak", "leak_detected", device_name, &room).await?;
+                let state_clone = self.clone();
+                let dev = device_name.to_string();
+                let r = room.to_string();
+                tokio::spawn(async move {
+                    if let Err(e) = state_clone.execute_automations("water_leak", "leak_detected", &dev, &r).await {
+                        dt_warning!("water_leak automation failed: {}", e);
+                    }
+                });
             }
 
             // 🦆 says ⮞ 🚪 DOOR / WINDOW SENSOR
             if let Some(contact) = data["contact"].as_bool() {
-                let trigger = if contact { "door_closed" } else { "door_opened" };
-                dt_info!("🚪 {} {} in {}", device_name, trigger, room);
-                if let Err(e) = self.execute_automations("contact", trigger, device_name, &room).await {
-                    dt_warning!("contact automation failed: {}", e);
+                if let Some(greeting) = &self.automations.greeting {
+                    if device_name == greeting.door {
+                        let ts = SystemTime::now()
+                            .duration_since(UNIX_EPOCH).unwrap().as_secs();
+                        if contact {
+                            let _ = self.update_device_state("apartment", "last_door_close", &ts.to_string());
+                            dt_debug!("🚪 door '{}' CLOSED at {} (presence tracker)", greeting.door, ts);
+                        } else {
+                            let _ = self.update_device_state("apartment", "last_door_open", &ts.to_string());
+                            dt_debug!("🚪 door '{}' OPENED at {} (presence tracker)", greeting.door, ts);
+                        }
+                    }
                 }
+
+                let trigger = if contact { "door_closed" } else { "door_opened" };
+                let _ = std::fs::write(&self.state_file, serde_json::to_string(&*self.device_states.read().unwrap()).unwrap());
+                dt_info!("🚪 {} {} in {}", device_name, trigger, room);
+                let state_clone = self.clone();
+                let device_name_owned = device_name.to_string();
+                let room_owned = room.to_string();
+                let trigger_owned = trigger.to_string();
+                tokio::spawn(async move {
+                    if let Err(e) = state_clone.execute_automations("contact", &trigger_owned, &device_name_owned, &room_owned).await { dt_warning!("contact automation failed: {}", e); }
+                });
             }
 
 
@@ -2774,6 +3123,7 @@ impl ZigduckState {
         self.start_periodic_checks().await;
         self.start_state_refreshers().await;
         self.start_tv_state_trackers().await;
+        self.start_presence_probes().await;
         let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
         mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
         mqttoptions.set_keep_alive(Duration::from_secs(5));

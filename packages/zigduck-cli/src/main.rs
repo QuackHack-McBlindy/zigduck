@@ -403,6 +403,8 @@ enum BackendType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DeviceConfig {
     friendly_name: String,
+    #[serde(default)]
+    aliases: Vec<String>,
     room: String,
     #[serde(rename = "type")]
     device_type: String,
@@ -972,24 +974,44 @@ fn sync_hue_to_mqtt(&mut self, device: &DeviceConfig, hue_id: u16) -> Result<()>
 	    Ok(())
 	}
 
-fn find_device(&self, query: &str) -> Result<DeviceConfig> {
- let query_lower = query.to_lowercase();
+    fn find_device(&self, query: &str) -> Result<DeviceConfig> {
+        let query_lower = query.to_lowercase();
 
- for device in self.devices.values() {
-     if device.friendly_name.to_lowercase() == query_lower {
-         return Ok(device.clone());
-     }
- }
+        for device in self.devices.values() {
+            if device.friendly_name.to_lowercase() == query_lower {
+                return Ok(device.clone());
+            }
+        }
 
- for device in self.devices.values() {
-     if device.friendly_name.to_lowercase().contains(&query_lower) {
-         return Ok(device.clone());
-     }
- }
+        for device in self.devices.values() {
+            for alias in &device.aliases {
+                if alias.to_lowercase() == query_lower {
+                    return Ok(device.clone());
+                }
+            }
+        }
 
- anyhow::bail!("Device not found: {}", query)
-}
+        for device in self.devices.values() {
+            let fn_lower = device.friendly_name.to_lowercase();
+            if fn_lower.contains(&query_lower) || query_lower.contains(&fn_lower) {
+                return Ok(device.clone());
+            }
+        }
 
+        for device in self.devices.values() {
+            for alias in &device.aliases {
+                let a_lower = alias.to_lowercase();
+                if a_lower.contains(&query_lower) || query_lower.contains(&a_lower) {
+                    return Ok(device.clone());
+                }
+            }
+        }
+        anyhow::bail!("Device not found: {}", query)
+    }
+
+    fn resolve_device_name(&self, query: &str) -> Option<String> {
+        self.find_device(query).ok().map(|d| d.friendly_name)
+    }
 
 	fn is_hue_device(&self, device: &DeviceConfig) -> bool {
 	    device.hue_id.is_some() && (device.device_type == "light" || device.device_type == "hue_light")
@@ -1898,6 +1920,10 @@ fn fetch_and_print_device_battery(
 
     let data: HashMap<String, serde_json::Value> =
         serde_json::from_str(&json_str).context("Invalid state JSON")?;
+
+    let canonical = controller
+        .resolve_device_name(device_name)
+        .unwrap_or_else(|| device_name.to_string());
 
     let props = data
         .get(device_name)
