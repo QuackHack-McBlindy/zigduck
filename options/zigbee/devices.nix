@@ -15,6 +15,12 @@ in {
           description = "A human-readable device name.";
           example = "Kitchen Dimmer";
         };
+        aliases = mkOption {
+          type = types.nullOr (types.listOf types.str);
+          default = null;
+          description = "Optional list of alternative names for voice/CLI matching (e.g. ['ytterdörr' 'entrédörr']).";
+          example = [ "door" "the door" ];
+        };
         room = mkOption {
           type = types.strMatching (lib.concatStringsSep "|" (lib.attrNames config.house.rooms));
           description = "The room this device belongs to.";
@@ -54,10 +60,11 @@ in {
           type = types.nullOr types.int;
           default = null;
           description = "The light_id for the device (Hue integration).";
+          example = "";
         };
       };
     });
     default = {};
     description = "Zigbee device definitions keyed by device ID.";
-
+    example = "";
   };}

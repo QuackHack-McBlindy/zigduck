@@ -16,6 +16,12 @@
         '';
         example = "mdi:food-fork-drink";
       };
+      aliases = mkOption {
+        type        = types.nullOr (types.listOf types.str);
+        default     = null;
+        description = "Alternative names for this room.";
+        example     = [ "sovrum" "sovrummet" "bedroom" ];
+      };
       entertainment = mkOption {
         type = types.bool;
         default = false;
@@ -42,15 +48,15 @@
             Each value consumes a different subset of the other
             options; irrelevant fields are ignored.
 
-              shell    → `command`
-              mqtt     → `topic`, `message`
-              scene    → `scene`
-              wait     → `duration`
-              snapshot → `snapshot_name`, `scope`, `room`, `devices`
-              restore  → `snapshot_name`
+              shell    > `command`
+              mqtt     > `topic`, `message`
+              scene    > `scene`
+              wait     > `duration`
+              snapshot > `snapshot_name`, `scope`, `room`, `devices`
+              restore  > `snapshot_name`
 
-            Defaults to `shell`, the most common action type. A
-            plain string may be supplied in place of a full
+            Defaults to `shell`, the most common action type.
+            A plain string may be supplied in place of a full
             attribute set as shorthand for
             `{ type = "shell"; command = <string>; }`.
           '';
@@ -119,9 +125,9 @@
           description = ''
             What to capture in the snapshot (only for `type = "snapshot"`):
 
-              global  → every device known to the daemon
-              room    → devices in a single room (requires `room`)
-              devices → an explicit list (requires `devices`)
+              global  > every device known to the daemon
+              room    > devices in a single room (requires `room`)
+              devices > an explicit list (requires `devices`)
 
             Defaults to `global` when omitted.
           '';

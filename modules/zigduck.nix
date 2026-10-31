@@ -54,6 +54,7 @@ let
 
             # CLI
             friendly_name = dev.friendly_name;
+            aliases = if dev.aliases == null then [] else dev.aliases;
             hue_id = dev.hue_id or null;
             supports_color = dev.supports_color or null;
             supports_temperature = dev.supports_temperature or null;
@@ -140,9 +141,18 @@ let
     };
     no_motion = {
       enabled = house.zigbee.no.motion.trigger.all.lights.off.enable;
-      after = house.zigbee.no.motion.trigger.all.lights.off.after;
+      after   = house.zigbee.no.motion.trigger.all.lights.off.after;
       exclude = house.zigbee.no.motion.trigger.all.lights.off.exclude;
     };
+    presence = {
+      enabled             = house.presence.enable;
+      probes              = house.presence.probes;
+      probe_interval_secs = house.presence.probeInterval;
+      probe_timeout_secs  = house.presence.probeTimeout;
+      home_actions        = house.presence.homeActions;
+      away_actions        = house.presence.awayActions;
+    };
+    simple_actions.prefix = house.zigbee.automations.string.prefix;
   };
 
   zigduckConfigFile = jsonFormat.generate "config.json" mainConfig;
