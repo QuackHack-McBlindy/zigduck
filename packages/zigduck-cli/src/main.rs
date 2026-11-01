@@ -428,6 +428,8 @@ fn default_endpoint() -> u8 {
 struct SceneConfig {
     #[serde(default)]
     friendly_name: Option<String>,
+    #[serde(default)]
+    aliases: Vec<String>,
     devices: HashMap<String, serde_json::Value>,
 }
 
@@ -1256,9 +1258,20 @@ fn control_device_with_json(
 	        )?;
 	        std::thread::sleep(Duration::from_millis(50));
 	    }
-
 	    Ok(())
 	}
+
+fn resolve_scene_name(&self, input: &str) -> Option<String> {
+    if self.scenes.contains_key(input) {
+        return Some(input.to_string());
+    }
+    let needle = input.to_lowercase();
+    self.scenes.iter()
+        .find(|(_, scene)| {
+            scene.aliases.iter().any(|a| a.to_lowercase() == needle)
+        })
+        .map(|(name, _)| name.clone())
+}
 
 fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option<&str>) -> Result<()> {
     let scene_to_activate = if random {
@@ -1269,7 +1282,8 @@ fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option
         let mut rng = rand::thread_rng();
         scene_names.choose(&mut rng).unwrap().clone()
     } else {
-        scene_name.to_string()
+        self.resolve_scene_name(scene_name)
+            .unwrap_or_else(|| scene_name.to_string())
     };
 
     println!("{} Activating scene: {}", "🎨".purple(), scene_to_activate.bold());

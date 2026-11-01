@@ -1,4 +1,4 @@
-{ 
+{
   config,
   lib,
   ...
@@ -23,8 +23,8 @@
   roomExists = roomName:
     builtins.hasAttr roomName (config.house.rooms or { });
 
-  isMqttEnabled = config.house.zigbee.mosquitto != null && 
-                  (config.house.zigbee.mosquitto.username != null || 
+  isMqttEnabled = config.house.zigbee.mosquitto != null &&
+                  (config.house.zigbee.mosquitto.username != null ||
                    config.house.zigbee.mosquitto.passwordFile != null);
 
   isValidHexColor = color:
@@ -46,24 +46,26 @@
     in mapAttrsToList (_: device: device.friendly_name) motionSensors;
 
   validateScene = sceneName: sceneDevices:
-    let availableNames = getAllFriendlyNames;
+    let
+      availableNames = getAllFriendlyNames;
+      devices = lib.removeAttrs sceneDevices [ "_aliases" ];
     in flatten (mapAttrsToList (deviceName: settings:
       [
         {
           assertion = deviceExistsByFriendlyName deviceName;
           message = "🦆 duck say ⮞ fuck ❌ Scene '${sceneName}' references non-existent device '${deviceName}'. Available: ${concatStringsSep ", " (take 10 availableNames)}${if length availableNames > 10 then "..." else ""}";
         }
-        
+
         {
           assertion = settings ? state -> isValidState settings.state;
           message = "🦆 duck say ⮞ fuck ❌ Scene '${sceneName}' device '${deviceName}' has invalid state '${settings.state}' (must be ON or OFF)";
         }
-        
+
         {
           assertion = settings ? brightness -> isValidBrightness settings.brightness;
           message = "🦆 duck say ⮞ fuck ❌ Scene '${sceneName}' device '${deviceName}' has invalid brightness ${toString settings.brightness} (must be 0-254)";
         }
-        
+
         {
           assertion = settings ? color -> (
             (settings.color ? hex && isValidHexColor settings.color.hex) ||
@@ -73,9 +75,43 @@
           );
           message = "🦆 duck say ⮞ fuck ❌ Scene '${sceneName}' device '${deviceName}' has invalid color format (must have hex, xy, hue/sat, or ct)";
         }
-        
       ]
-    ) sceneDevices);
+    ) devices);
+
+  sceneAliasValidations =
+    let
+      scenes = config.house.zigbee.scenes or { };
+      sceneNames = attrNames scenes;
+
+      # every (alias → scene) pair, lowercased for case-insensitive collision check
+      aliasEntries = flatten (mapAttrsToList (name: scene:
+        map (alias: { inherit name alias; lower = lib.toLower alias; })
+            (scene._aliases or [ ])
+      ) scenes);
+
+      seenLower = builtins.foldl' (acc: e:
+        if builtins.hasAttr e.lower acc
+        then acc
+        else acc // { ${e.lower} = e.name; }
+      ) { } aliasEntries;
+
+      duplicateAliases = lib.filter (e:
+        seenLower.${e.lower} != e.name || builtins.length
+          (lib.filter (x: x.lower == e.lower) aliasEntries) > 1
+      ) aliasEntries;
+
+      aliasesShadowSceneNames = lib.filter (e:
+        builtins.elem e.alias sceneNames
+      ) aliasEntries;
+    in
+    lib.optional (duplicateAliases != [ ]) {
+      assertion = false;
+      message = "🦆 duck say ⮞ fuck ❌ Scene aliases are not unique: ${concatStringsSep ", " (map (e: "'${e.alias}' (used by '${e.name}')") duplicateAliases)}";
+    }
+    ++ lib.optional (aliasesShadowSceneNames != [ ]) {
+      assertion = false;
+      message = "🦆 duck say ⮞ fuck ❌ Scene alias shadows a canonical scene name: ${concatStringsSep ", " (map (e: "'${e.alias}' in scene '${e.name}'") aliasesShadowSceneNames)}";
+    };
 
   validateDevice = deviceId: device:
     [
@@ -88,7 +124,7 @@
         assertion = isValidState "ON";
         message = "🦆 duck say ⮞ fuck ❌ Device '${device.friendly_name}' state validation failed";
       }
-      
+
     ];
 
   validateMotionSensors = automationName: sensors:
@@ -108,6 +144,75 @@
   deviceValidations = flatten (
     mapAttrsToList validateDevice (config.house.zigbee.devices or { })
   );
+
+  deviceAliasValidations =
+    let
+      devices = config.house.zigbee.devices or { };
+
+      entries = mapAttrsToList (deviceId: dev: {
+        inherit deviceId;
+        friendly      = dev.friendly_name;
+        friendlyLower = lib.toLower dev.friendly_name;
+        aliases       = dev.aliases or [ ];
+      }) devices;
+
+      aliasTuples = flatten (map (e:
+        map (alias: {
+          inherit (e) deviceId friendlyLower;
+          inherit alias;
+          aliasLower = lib.toLower alias;
+        }) e.aliases
+      ) entries);
+
+      groupedByLower   = lib.groupBy (t: t.aliasLower) aliasTuples;
+      duplicateAliases = lib.filterAttrs (_: list: length list > 1) groupedByLower;
+
+      duplicateAliasMessages = mapAttrsToList (aliasLower: list:
+        let
+          devs  = unique (map (t: t.deviceId) list);
+          where =
+            if length devs == 1
+            then "multiple times in device '${builtins.head devs}'"
+            else "across devices: ${concatStringsSep ", " devs}";
+        in "'${aliasLower}' ${where}"
+      ) duplicateAliases;
+
+      aliasesShadowingFriendly = lib.filter (t:
+        t.aliasLower != t.friendlyLower
+        && builtins.any (e: e.friendlyLower == t.aliasLower) entries
+      ) aliasTuples;
+
+      shadowMessages = map (t:
+        let
+          owner = lib.findFirst
+            (e: e.friendlyLower == t.aliasLower) null entries;
+        in
+          "alias '${t.alias}' on '${t.deviceId}' shadows friendly_name of '${owner.deviceId}' ('${owner.friendly}')"
+      ) aliasesShadowingFriendly;
+
+      badAliases = lib.filter (t:
+        t.alias == ""
+        || lib.strings.trim t.alias != t.alias
+      ) aliasTuples;
+
+      badAliasMessages = map (t:
+        if t.alias == ""
+        then "empty alias on device '${t.deviceId}'"
+        else "alias '${t.alias}' on device '${t.deviceId}' has leading/trailing whitespace"
+      ) badAliases;
+    in
+      optional (duplicateAliasMessages != [ ]) {
+        assertion = false;
+        message = "🦆 duck say ⮞ fuck ❌ Device alias collisions: ${concatStringsSep "; " duplicateAliasMessages}";
+      }
+      ++ optional (shadowMessages != [ ]) {
+        assertion = false;
+        message = "🦆 duck say ⮞ fuck ❌ Device alias shadows another device's friendly_name: ${concatStringsSep "; " shadowMessages}";
+      }
+      ++ optional (badAliasMessages != [ ]) {
+        assertion = false;
+        message = "🦆 duck say ⮞ fuck ❌ Invalid device aliases: ${concatStringsSep "; " badAliasMessages}";
+      };
 
   motionSensorValidations = flatten (
     mapAttrsToList (name: automation:
@@ -141,13 +246,13 @@
         (config.house.zigbee.mosquitto.username != null) == (config.house.zigbee.mosquitto.passwordFile != null);
       message = "🦆 duck say ⮞ fuck ❌ MQTT authentication requires both username and passwordFile to be set together";
     }
-    
+
     {
       assertion = config.house.zigbee.mosquitto != null && config.house.zigbee.mosquitto.ssl.enable ->
         (config.house.zigbee.mosquitto.ssl.clientCertFile != null) == (config.house.zigbee.mosquitto.ssl.clientKeyFile != null);
       message = "🦆 duck say ⮞ fuck ❌ MQTT SSL client authentication requires both clientCertFile and clientKeyFile";
     }
-    
+
   ];
 
   syncBoxTvValidation = {
@@ -228,6 +333,7 @@ in {
   config.assertions =
     sceneValidations
     ++ deviceValidations
+    ++ deviceAliasValidations
     ++ duplicateFriendlyNameValidation
     ++ motionSensorValidations
     ++ mqttValidations

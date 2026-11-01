@@ -35,6 +35,7 @@ in {
       type = lib.types.ints.positive;
       default = 180;
       description = "Seconds between probe checks.";
+      example = 120;
     };
 
     probeTimeout = lib.mkOption {

@@ -251,9 +251,19 @@ impl HueClient {
     }
 }
 
+
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+struct Scene {
+    #[serde(default, rename = "_aliases")]
+    aliases: Vec<String>,
+    #[serde(flatten)]
+    devices: HashMap<String, serde_json::Value>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SceneConfig {
-    scenes: HashMap<String, HashMap<String, serde_json::Value>>,
+    scenes: HashMap<String, Scene>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -467,10 +477,7 @@ struct MotionTracker {
 
 async fn check_tv_power(ip: &str) -> Option<bool> {
     let serial = format!("{}:5555", ip);
-    let _ = tokio::time::timeout(
-        Duration::from_secs(3),
-        TokioCommand::new("adb").args(["connect", &serial]).output(),
-    ).await;
+    let _ = tokio::time::timeout(Duration::from_secs(3), TokioCommand::new("adb").args(["connect", &serial]).output()).await;
 
     let output = match tokio::time::timeout(
         Duration::from_secs(5),
@@ -540,9 +547,7 @@ async fn probe_reachable(addr: &str, timeout_secs: u64) -> bool {
             tokio::net::TcpStream::connect(addr),
         ).await {
             Ok(Ok(_)) => { dt_debug!("probe {}: tcp ok", addr); return true; }
-            Ok(Err(e)) if e.kind() == std::io::ErrorKind::ConnectionRefused => {
-                dt_debug!("probe {}: tcp refused (host up)", addr); return true;
-            }
+            Ok(Err(e)) if e.kind() == std::io::ErrorKind::ConnectionRefused => { dt_debug!("probe {}: tcp refused (host up)", addr); return true; }
             Ok(Err(e)) => dt_debug!("probe {}: tcp {}", addr, e),
             Err(_)     => dt_debug!("probe {}: tcp timeout", addr),
         }
@@ -658,30 +663,13 @@ impl ZigduckState {
         let subst = |s: &str| s.replace("{value}", value);
 
         match action {
-            AutomationAction::Simple(cmd) => {
-                self.run_control_shell(cmd, device_name, key, value, ip).await?;
-            }
+            AutomationAction::Simple(cmd) => { self.run_control_shell(cmd, device_name, key, value, ip).await?; }
             AutomationAction::Structured(a) => match a.action_type.as_str() {
-                "shell" => {
-                    if let Some(cmd) = &a.command {
-                        self.run_control_shell(cmd, device_name, key, value, ip).await?;
-                    }
-                }
+                "shell" => { if let Some(cmd) = &a.command { self.run_control_shell(cmd, device_name, key, value, ip).await?; } }
                 "mqtt" => {
-                    if let (Some(t), Some(m)) = (&a.topic, &a.message) {
-                        self.mqtt_publish(&subst(t), &subst(m)).await?;
-                    }
-                }
-                "scene" => {
-                    if let Some(s) = &a.scene {
-                        self.activate_scene(s).await?;
-                    }
-                }
-                "wait" => {
-                    if let Some(d) = a.duration {
-                        tokio::time::sleep(Duration::from_secs(d)).await;
-                    }
-                }
+                    if let (Some(t), Some(m)) = (&a.topic, &a.message) { self.mqtt_publish(&subst(t), &subst(m)).await?; } }
+                "scene" => { if let Some(s) = &a.scene { self.activate_scene(s).await?; } }
+                "wait" => { if let Some(d) = a.duration { tokio::time::sleep(Duration::from_secs(d)).await; } }
                 "snapshot" => {
                     let name = a.snapshot_name.clone().unwrap_or_else(|| "default".into());
                     let scope = a.scope.clone().unwrap_or_else(|| "global".into());
@@ -721,11 +709,7 @@ impl ZigduckState {
             .await?;
 
         if !output.status.success() {
-            dt_warning!(
-                "Control shell failed ({}.{}): {}",
-                device_name, key,
-                String::from_utf8_lossy(&output.stderr).trim()
-            );
+            dt_warning!("Control shell failed ({}.{}): {}", device_name, key, String::from_utf8_lossy(&output.stderr).trim());
         }
         Ok(())
     }
@@ -906,7 +890,7 @@ impl ZigduckState {
 
         if let Some(room) = room_filter {
             let mut any_device_on = false;
-            for (device_name, settings) in scene {
+            for (device_name, settings) in &scene.devices {
                 if let Some(device) = self.devices.get(device_name) {
                     if device.room == room {
                         let is_off = match (settings.get("state"), settings.get("on")) {
@@ -931,7 +915,7 @@ impl ZigduckState {
             }
         }
 
-        for (device_name, settings) in scene {
+        for (device_name, settings) in &scene.devices {
             let device = self.devices.get(device_name)
                 .ok_or_else(|| format!("Device '{}' not found in scene", device_name))?;
 
@@ -981,11 +965,19 @@ impl ZigduckState {
                 // 🦆 says ⮞ check conditions
                 if self.check_conditions(&automation.conditions).await {
                     dt_debug!("Triggering MQTT automation: {}", automation.description);
-                    for action in &automation.actions {
-                        if let Err(e) = self.execute_automation_action_mqtt(action, "mqtt_triggered", "global", topic, payload).await {
-                            dt_debug!("Error executing MQTT automation action: {}", e);
+                    let actions = automation.actions.clone();
+                    let state = self.clone();
+                    let topic = topic.to_string();
+                    let payload = payload.to_string();
+                    tokio::spawn(async move {
+                        for action in &actions {
+                            if let Err(e) = state
+                                .execute_automation_action_mqtt(action, "mqtt_triggered", "global", &topic, &payload).await
+                            {
+                                dt_error!("Error executing MQTT automation action: {}", e);
+                            }
                         }
-                    }
+                    });
                 }
             }
         }
@@ -994,13 +986,13 @@ impl ZigduckState {
 
     async fn start_tv_state_trackers(&self) {
         if self.config.tv.is_empty() {
-            dt_info!("📺 No TVs configured; state tracking disabled");
+            dt_debug!("📺 No TVs configured; state tracking disabled");
             return;
         }
 
         match TokioCommand::new("adb").arg("version").output().await {
             Ok(o) if o.status.success() => {
-                dt_info!("📺 adb available: {}", String::from_utf8_lossy(&o.stdout).lines().next().unwrap_or("<no output>"));
+                dt_debug!("📺 adb: {}", String::from_utf8_lossy(&o.stdout).lines().next().unwrap_or("<no output>"));
             }
             Ok(o) => dt_warning!("📺 adb exited {}: {}", o.status, String::from_utf8_lossy(&o.stderr).trim()),
             Err(e) => {
@@ -1010,7 +1002,7 @@ impl ZigduckState {
         }
         for (name, tv) in &self.config.tv {
             if !tv.enable {
-                dt_info!("📺 '{}' is disabled; skipping tracker", name);
+                dt_debug!("📺 '{}' is disabled; skipping tracker", name);
                 continue;
             }
             let name = name.clone();
@@ -1033,11 +1025,11 @@ impl ZigduckState {
                     };
                     let prev = state.get_state(&name, "state");
                     if prev.as_deref() != Some(state_str) {
-                        dt_info!("📺 '{}' state {} -> {} (probe={:?})", name, prev.as_deref().unwrap_or("<none>"), state_str, probe);
-                    } else { dt_debug!("📺 '{}' unchanged: {} (probe={:?})", name, state_str, probe); }
+                        dt_info!("📺 '{}' {} > {} ", name, prev.as_deref().unwrap_or("<none>"), state_str);
+                    } else { dt_debug!("📺 '{}' unchanged: {}", name, state_str); }
 
                     if let Err(e) = state.update_device_state(&name, "state", state_str) {
-                        dt_warning!("📺 '{}' failed to write state: {}", name, e);
+                        dt_error!("📺 '{}' failed to write state: {}", name, e);
                     }
                 }
             });
@@ -1070,7 +1062,7 @@ impl ZigduckState {
             let state = self.clone();
             let url = format!("http://{}{}", ip, endpoint);
 
-            dt_info!("State refresher for {} every {}s {}", name, refresh, url);
+            dt_debug!("State refresher for {} every {}s {}", name, refresh, url);
 
             tokio::spawn(async move {
                 let client = reqwest::Client::new();
@@ -1119,8 +1111,8 @@ impl ZigduckState {
                                 Err(e) => { dt_warning!("Parse error for {}: {}", url, e) }
                             }
                         }
-                        Ok(resp) => { dt_warning!("Refresh {} returned HTTP {}", name, resp.status()) }
-                        Err(e) => dt_warning!("Refresh {} failed: {}", name, e),
+                        Ok(resp) => { dt_debug!("Refresh {} returned HTTP {}", name, resp.status()) }
+                        Err(e) => dt_debug!("Refresh {} failed: {}", name, e),
                     }
                 }
             });
@@ -1515,7 +1507,7 @@ impl ZigduckState {
         // 🦆 says ⮞ build room scene map
         let mut room_scenes: HashMap<String, Vec<String>> = HashMap::new();
         for (scene_name, scene_devices) in &scene_config.scenes {
-            for device_name in scene_devices.keys() {
+            for device_name in scene_devices.devices.keys() {
                 if let Some(device) = devices.get(device_name) {
                     let room = device.room.clone();
                     room_scenes.entry(room).or_default().push(scene_name.clone());
@@ -1631,7 +1623,21 @@ impl ZigduckState {
 
     // 🦆 says ⮞ sset scene
     async fn activate_scene(&self, scene_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.activate_scene_filtered(scene_name, None).await
+        let canonical = self.resolve_scene_name(scene_name)
+            .ok_or_else(|| format!("Scene '{}' not found (known: {})", scene_name, self.scene_config.scenes.keys().cloned().collect::<Vec<_>>().join(", ")))?;
+        if canonical != scene_name { dt_info!("🎨 scene alias '{}' > '{}'", scene_name, canonical); }
+        self.activate_scene_filtered(&canonical, None).await
+    }
+
+    fn resolve_scene_name(&self, input: &str) -> Option<String> {
+        if self.scene_config.scenes.contains_key(input) {
+            return Some(input.to_string());
+        }
+        let needle = input.to_lowercase();
+        self.scene_config.scenes.iter()
+            .find(|(_, scene)| {
+                scene.aliases.iter().any(|a| a.to_lowercase() == needle)
+            }).map(|(name, _)| name.clone())
     }
 
 
@@ -1675,21 +1681,33 @@ impl ZigduckState {
         Ok(())
     }
 
-    async fn run_simple_action(&self, cmd: &str, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
+
+    async fn run_simple_action(
+        &self,
+        cmd: &str,
+        device_name: &str,
+        room: &str,
+        extra_env: &[(String, String)],
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let prefix = self.config.simple_actions.prefix.trim();
-        if prefix.is_empty() { return self.run_shell_raw(cmd, device_name, room).await; }
+        if prefix.is_empty() {
+            return self.run_shell_raw(cmd, device_name, room, extra_env).await;
+        }
         let mut parts = prefix.split_whitespace();
         let program = parts.next().unwrap_or("yo");
         let prefix_args: Vec<&str> = parts.collect();
 
         dt_debug!("simple action via '{}': {:?}", prefix, cmd);
-        let output = TokioCommand::new(program)
+        let mut cmd_builder = TokioCommand::new(program);
+        cmd_builder
             .args(&prefix_args)
             .arg(cmd)
             .env("AUTOMATION_DEVICE", device_name)
-            .env("AUTOMATION_ROOM", room)
-            .output()
-            .await?;
+            .env("AUTOMATION_ROOM", room);
+        for (k, v) in extra_env {
+            cmd_builder.env(k, v);
+        }
+        let output = cmd_builder.output().await?;
 
         let code = output.status.code();
         if output.status.success() {
@@ -1700,14 +1718,24 @@ impl ZigduckState {
         Ok(())
     }
 
-    async fn run_shell_raw(&self, cmd: &str, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let output = TokioCommand::new("sh")
+
+    async fn run_shell_raw(
+        &self,
+        cmd: &str,
+        device_name: &str,
+        room: &str,
+        extra_env: &[(String, String)],
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd_builder = TokioCommand::new("sh");
+        cmd_builder
             .arg("-c")
             .arg(cmd)
             .env("AUTOMATION_DEVICE", device_name)
-            .env("AUTOMATION_ROOM", room)
-            .output()
-            .await?;
+            .env("AUTOMATION_ROOM", room);
+        for (k, v) in extra_env {
+            cmd_builder.env(k, v);
+        }
+        let output = cmd_builder.output().await?;
 
         if !output.status.success() {
             dt_warning!("shell FAILED (exit={:?}) cmd={:?} stderr={:?}", output.status.code(), cmd, String::from_utf8_lossy(&output.stderr).trim());
@@ -1715,15 +1743,12 @@ impl ZigduckState {
         Ok(())
     }
 
+
     async fn execute_automation_action(&self, action: &AutomationAction, device_name: &str, room: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing automation action for {} in {}", device_name, room);
 
-        // 🦆 says ⮞ set MQTT environment variables for shell actions
-        std::env::set_var("AUTOMATION_DEVICE", device_name);
-        std::env::set_var("AUTOMATION_ROOM", room);
-
         match action {
-            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room).await?; }
+            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room, &[]).await?; }
             AutomationAction::Structured(action_config) => {
                 match action_config.action_type.as_str() {
                     "mqtt" => {
@@ -1742,7 +1767,7 @@ impl ZigduckState {
                                 .await?;
 
                             if !output.status.success() {
-                                dt_debug!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
+                                dt_error!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
                             }
                         }
                     }
@@ -1775,27 +1800,27 @@ impl ZigduckState {
         Ok(())
     }
 
+
     async fn execute_automation_action_mqtt(&self, action: &AutomationAction, device_name: &str, room: &str, topic: &str, payload: &str) -> Result<(), Box<dyn std::error::Error>> {
         dt_debug!("Executing MQTT automation action for {} in {}", device_name, room);
 
-        std::env::set_var("AUTOMATION_DEVICE", device_name);
-        std::env::set_var("AUTOMATION_ROOM", room);
-        std::env::set_var("MQTT_TOPIC", topic);
-        std::env::set_var("MQTT_PAYLOAD", payload);
-        std::env::set_var("MQTT_DEVICE", device_name);
-        std::env::set_var("MQTT_ROOM", room);
-
+        let mut extra_env: Vec<(String, String)> = vec![
+            ("MQTT_TOPIC".into(), topic.into()),
+            ("MQTT_PAYLOAD".into(), payload.into()),
+            ("MQTT_DEVICE".into(), device_name.into()),
+            ("MQTT_ROOM".into(), room.into()),
+        ];
         if let Ok(data) = serde_json::from_str::<serde_json::Value>(payload) {
             if let Some(action_val) = data.get("action").and_then(|v| v.as_str()) {
-                std::env::set_var("MQTT_ACTION", action_val);
+                extra_env.push(("MQTT_ACTION".into(), action_val.into()));
             }
             if let Some(state_val) = data.get("state").and_then(|v| v.as_str()) {
-                std::env::set_var("MQTT_STATE", state_val);
+                extra_env.push(("MQTT_STATE".into(), state_val.into()));
             }
         }
 
         match action {
-            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room).await?; }
+            AutomationAction::Simple(cmd) => { self.run_simple_action(cmd, device_name, room, &extra_env).await?; }
             AutomationAction::Structured(action_config) => {
                 match action_config.action_type.as_str() {
                     "mqtt" => {
@@ -1805,13 +1830,16 @@ impl ZigduckState {
                     }
                     "shell" => {
                         if let Some(cmd) = &action_config.command {
-                            let output = TokioCommand::new("sh")
+                            let mut cmd_builder = TokioCommand::new("sh");
+                            cmd_builder
                                 .arg("-c")
                                 .arg(cmd)
                                 .env("AUTOMATION_DEVICE", device_name)
-                                .env("AUTOMATION_ROOM", room)
-                                .output()
-                                .await?;
+                                .env("AUTOMATION_ROOM", room);
+                            for (k, v) in &extra_env {
+                                cmd_builder.env(k, v);
+                            }
+                            let output = cmd_builder.output().await?;
                             if !output.status.success() {
                                 dt_warning!("Shell command failed: {}", String::from_utf8_lossy(&output.stderr));
                             }
@@ -3126,7 +3154,7 @@ impl ZigduckState {
         self.start_presence_probes().await;
         let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
         mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
-        mqttoptions.set_keep_alive(Duration::from_secs(5));
+        mqttoptions.set_keep_alive(Duration::from_secs(60));
         // 🦆 says ⮞ max packet size if larger payloads
         mqttoptions.set_max_packet_size(1024 * 1024, 1024 * 1024); // 🦆 says ⮞ 1MB
 
@@ -3157,7 +3185,7 @@ impl ZigduckState {
                     // 🦆 says ⮞ recreate connection
                     let mut mqttoptions = MqttOptions::new("zigduck", &self.mqtt_broker, 1883);
                     mqttoptions.set_credentials(&self.mqtt_user, &self.mqtt_password);
-                    mqttoptions.set_keep_alive(Duration::from_secs(5));
+                    mqttoptions.set_keep_alive(Duration::from_secs(60));
                     mqttoptions.set_max_packet_size(1024 * 1024, 1024 * 1024); // 1MB
 
                     let (new_client, new_connection) = Client::new(mqttoptions, 10);
