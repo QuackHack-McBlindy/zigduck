@@ -20,9 +20,10 @@ let
   });
 
   sceneConfigCli = pkgs.writeText "scene-config-cli.json" (builtins.toJSON (
-    lib.mapAttrs (sceneName: sceneDevices: {
+    lib.mapAttrs (sceneName: scene: {
       friendly_name = sceneName;
-      devices = sceneDevices;
+      aliases = scene._aliases or [];
+      devices = removeAttrs scene [ "_aliases" ];
     }) scenes
   ));
 

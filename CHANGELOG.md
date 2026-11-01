@@ -9,9 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New option: `house.zigbee.scenes.<name>._aliases`
+- Added aliases assertions for devices and scenes. 
+
 ### Changed
 
+- Replaces process-global `std::env::set_var` for automation/MQTT env vars with per-command `extra_env` passed into shell execution helpers.
+- Raises MQTT keep-alive from 5s to 60s and adjusted several log levels, (less verbose).
+- Adjusted the dashboard module to handle the new aliases for devices and scenes.
+
 ### Fixed
+
+- Fixed cross-contamination of automation env vars.
 
 ### Removed
 

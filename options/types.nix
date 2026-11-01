@@ -164,7 +164,6 @@
         type = types.str;
         description = ''
           Human-readable description of what this handler does.
-          Shown in generated documentation.
         '';
         example = "Turn off the kitchen fan on hold-release";
       };

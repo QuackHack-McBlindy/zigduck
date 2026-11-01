@@ -16,8 +16,8 @@ in {
           example = "Kitchen Dimmer";
         };
         aliases = mkOption {
-          type = types.nullOr (types.listOf types.str);
-          default = null;
+          type = types.listOf types.str;
+          default = [ ];
           description = "Optional list of alternative names for voice/CLI matching (e.g. ['ytterdörr' 'entrédörr']).";
           example = [ "door" "the door" ];
         };

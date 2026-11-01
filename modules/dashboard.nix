@@ -169,7 +169,8 @@ let
 
   sceneGradientCss = lib.concatStrings (lib.mapAttrsToList (name: scene:
     let
-      deviceStates = lib.mapAttrsToList (_: device: device.state) scene;
+      sceneDevices = lib.removeAttrs scene [ "_aliases" ];
+      deviceStates = lib.mapAttrsToList (_: device: device.state) sceneDevices;
       onCount = lib.length (lib.filter (state: state == "ON") deviceStates);
       offCount = lib.length (lib.filter (state: state == "OFF") deviceStates);
 
@@ -177,7 +178,7 @@ let
         if device.state == "ON" && device ? color && device.color ? hex then
           [ device.color.hex ]
         else []
-      ) (lib.attrValues scene));
+      ) (lib.attrValues sceneDevices));
 
       colorsLength = builtins.length colors;
 
@@ -202,11 +203,13 @@ let
 
   sceneGridHtml = lib.concatStrings (lib.mapAttrsToList (name: scene:
     let
+      sceneDevices = lib.removeAttrs scene [ "_aliases" ];
+
       colors = lib.concatMap (device:
         if device.state == "ON" && device ? color.hex then [device.color.hex] else []
-      ) (lib.attrValues scene);
+      ) (lib.attrValues sceneDevices);
 
-      deviceStates = lib.mapAttrsToList (_: device: device.state) scene;
+      deviceStates = lib.mapAttrsToList (_: device: device.state) sceneDevices;
       onCount = lib.length (lib.filter (state: state == "ON") deviceStates);
       offCount = lib.length (lib.filter (state: state == "OFF") deviceStates);
       colorsAttr = if colors != [] then "data-colors='${builtins.toJSON colors}'" else "";
