@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.10] - 2026-11-01
+
+### Added
+
 - New option: `house.zigbee.scenes.<name>._aliases`
 - Added aliases assertions for devices and scenes. 
 
@@ -23,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed cross-contamination of automation env vars.
 
 ### Removed
-
 
 ## [0.2.9] - 2026-10-31
 
