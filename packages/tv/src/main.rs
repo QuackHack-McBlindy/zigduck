@@ -195,9 +195,11 @@ fn looks_disconnected(stderr: &str) -> bool {
     let s = stderr.to_lowercase();
     s.contains("device offline")
         || s.contains("no devices")
-        || s.contains("device not found")
+        || s.contains("no emulators")
+        || s.contains("not found")
         || s.contains("error: device")
         || s.contains("connection refused")
+        || s.contains("cannot connect")
         || s.contains("unable to connect")
 }
 
@@ -224,7 +226,7 @@ fn adb(ip: &str, cmd: &[&str]) -> std::process::Output {
 
     eprintln!("ADB offline for {}, reconnecting...", ip);
     let _ = Command::new("adb").args(["connect", ip]).output();
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    std::thread::sleep(std::time::Duration::from_millis(1500));
 
     let second = run();
     if !second.status.success() {
