@@ -985,6 +985,10 @@ impl ZigduckState {
     }
 
     async fn start_tv_state_trackers(&self) {
+        static ADB_LAST_KILL: std::sync::OnceLock<std::sync::Mutex<Option<SystemTime>>> =
+            std::sync::OnceLock::new();
+        ADB_LAST_KILL.get_or_init(|| std::sync::Mutex::new(None));
+
         if self.config.tv.is_empty() {
             dt_debug!("📺 No TVs configured; state tracking disabled");
             return;
@@ -1015,13 +1019,45 @@ impl ZigduckState {
             tokio::spawn(async move {
                 let mut interval = tokio::time::interval(Duration::from_secs(interval_secs));
                 interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                interval.tick().await;
                 loop {
                     interval.tick().await;
-                    let probe = check_tv_power(&ip).await;
+                    let serial = format!("{}:5555", ip);
+                    let mut probe = check_tv_power(&ip).await;
+
+                    if probe.is_none() {
+                        dt_warning!("📺 '{}' state unknown — disconnecting {} and retrying", name, serial);
+                        let _ = TokioCommand::new("adb").args(["disconnect", &serial]).output().await;
+                        tokio::time::sleep(Duration::from_millis(500)).await;
+                        probe = check_tv_power(&ip).await;
+                    }
+
+                    if probe.is_none() {
+                        let do_kill = {
+                            let guard = ADB_LAST_KILL.get().unwrap();
+                            let mut last = guard.lock().unwrap();
+                            let cool_ok = last
+                                .map(|t| t.elapsed().map(|e| e.as_secs() > 60).unwrap_or(true))
+                                .unwrap_or(true);
+                            if cool_ok { *last = Some(SystemTime::now()); }
+                            cool_ok
+                        };
+
+                        if do_kill {
+                            dt_warning!("📺 '{}' still unknown — global reset", name);
+                            let _ = TokioCommand::new("adb").arg("kill-server").output().await;
+                            tokio::time::sleep(Duration::from_secs(2)).await;
+                            probe = check_tv_power(&ip).await;
+                        } else { dt_debug!("📺 '{}' still unknown — kill-server attempted recently, deferring", name); }
+                    }
+
                     let state_str = match probe {
-                        Some(true) => "ON",
+                        Some(true)  => "ON",
                         Some(false) => "OFF",
-                        None => "OFF",
+                        None => {
+                            dt_warning!("📺 '{}' state unknown after adb reset — keeping last known state", name);
+                            continue;
+                        }
                     };
                     let prev = state.get_state(&name, "state");
                     if prev.as_deref() != Some(state_str) {
@@ -1029,7 +1065,7 @@ impl ZigduckState {
                     } else { dt_debug!("📺 '{}' unchanged: {}", name, state_str); }
 
                     if let Err(e) = state.update_device_state(&name, "state", state_str) {
-                        dt_error!("📺 '{}' failed to write state: {}", name, e);
+                        dt_warning!("📺 '{}' failed to write state: {}", name, e);
                     }
                 }
             });

@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+
 ### Changed
 
+- Changed the delay in the adb connect retry logic from 500ms to 1500ms in the `tv` binary. 
+- `zigduck` now uses `adb kill-server` if it cannot connect to a TV.
+
 ### Fixed
+
+- Fixed the `looks_disconnected` in the `tv` binary.
+- `zigduck` no longer report `OFF` state when state is unknown.
 
 ### Removed
 
