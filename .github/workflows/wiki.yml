@@ -1,6 +1,4 @@
 # .github/workflows/wiki.yml
-# Builds the Starlight wiki in wiki/ and publishes it to GitHub Pages.
-# The option reference is regenerated from hooks/*.json on every build.
 
 name: Wiki
 

@@ -27,6 +27,13 @@ in {
       description = "Directory for runtime state files";
     };
 
+    user = mkOption {
+      type = types.str;
+      default = "zigduck";
+      example = "zigduck";
+      description = "User that the zigduck service runs on.";
+    };
+
     debug = mkOption {
       type = types.bool;
       default = false;

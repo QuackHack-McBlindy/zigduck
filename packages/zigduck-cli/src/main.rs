@@ -321,7 +321,10 @@ struct Cli {
     #[arg(long, requires = "topic", help = "Publish a raw MQTT message")]
     publish: bool,
 
-    #[arg(long, help = "MQTT topic (used with --publish)")]
+    #[arg(long, help = "Subscribe to MQTT messages and print them live (use with --device, --room, or --topic; defaults to <base_topic>/#)")]
+    subscribe: bool,
+
+    #[arg(long, help = "MQTT topic (used with --publish or --subscribe)")]
     topic: Option<String>,
 
     #[arg(long, help = "Send raw JSON to a device")]
@@ -1265,12 +1268,35 @@ fn resolve_scene_name(&self, input: &str) -> Option<String> {
     if self.scenes.contains_key(input) {
         return Some(input.to_string());
     }
+
     let needle = input.to_lowercase();
-    self.scenes.iter()
-        .find(|(_, scene)| {
-            scene.aliases.iter().any(|a| a.to_lowercase() == needle)
-        })
-        .map(|(name, _)| name.clone())
+    for name in self.scenes.keys() { if name.to_lowercase() == needle { return Some(name.clone()); } }
+
+    for (name, scene) in &self.scenes {
+        if let Some(f) = &scene.friendly_name {
+            if f.to_lowercase() == needle { return Some(name.clone()); }
+        }
+    }
+
+    for (name, scene) in &self.scenes {
+        if scene.aliases.iter().any(|a| a.to_lowercase() == needle) { return Some(name.clone()); }
+    }
+
+    for (name, scene) in &self.scenes {
+        let n = name.to_lowercase();
+        if n.contains(&needle) || needle.contains(&n) {
+            return Some(name.clone());
+        }
+        if let Some(f) = &scene.friendly_name {
+            let fl = f.to_lowercase();
+            if fl.contains(&needle) || needle.contains(&fl) { return Some(name.clone()); }
+        }
+        for alias in &scene.aliases {
+            let a = alias.to_lowercase();
+            if a.contains(&needle) || needle.contains(&a) { return Some(name.clone()); }
+        }
+    }
+    None
 }
 
 fn activate_scene(&mut self, scene_name: &str, random: bool, room_filter: Option<&str>) -> Result<()> {
@@ -1857,17 +1883,13 @@ fn fetch_and_print_room_temps(
     } else if let Some(base_url) = api_url {
         let client = reqwest::blocking::Client::new();
         let url = format!("{}/state", base_url.trim_end_matches('/'));
-        if verbose {
-            println!("Fetching state from API: {}", url);
-        }
+        if verbose { println!("Fetching state from API: {}", url); }
         let resp = client
             .get(&url)
             .header("Authorization", format!("Bearer {}", api_password))
             .send()
             .context("Failed to reach API")?;
-        if !resp.status().is_success() {
-            anyhow::bail!("API returned {}", resp.status());
-        }
+        if !resp.status().is_success() { anyhow::bail!("API returned {}", resp.status()); }
         resp.text()?
     } else { anyhow::bail!("No state source available (set --api-url or --state-file)"); };
 
@@ -1882,12 +1904,8 @@ fn fetch_and_print_room_temps(
         .map(|(name, _)| name)
         .collect();
 
-    if room_devices.is_empty() {
-        println!("No devices configured in room '{}'", room);
-        return Ok(());
-    }
-
-    println!("Temperature in {}:", room.bold());
+    if room_devices.is_empty() { anyhow::bail!("No devices configured in room '{}'", room); }
+    if verbose { println!("Temperature in {}:", room.bold()); }
     let mut found = false;
     for device_name in room_devices {
         if let Some(props) = data.get(device_name) {
@@ -1896,14 +1914,19 @@ fn fetch_and_print_room_temps(
                     .as_f64()
                     .or_else(|| temp_val.as_str().and_then(|s| s.parse().ok()));
                 if let Some(t) = temp {
-                    println!("  {}: {:.2}°C", device_name.bold(), t);
+                    if verbose {
+                        println!("  {}: {:.2}°C", device_name.bold(), t);
+                    } else { println!("{:.2}", t); }
                     found = true;
                 }
             }
         }
     }
-    if !found { println!("  No temperature data available."); }
-
+    if !found {
+        if verbose {
+            println!("  No temperature data available.");
+        } else { anyhow::bail!("No temperature data available in room '{}'", room); }
+    }
     Ok(())
 }
 
@@ -1940,8 +1963,8 @@ fn fetch_and_print_device_battery(
         .unwrap_or_else(|| device_name.to_string());
 
     let props = data
-        .get(device_name)
-        .with_context(|| format!("Device '{}' not found in state", device_name))?;
+        .get(&canonical)
+        .with_context(|| format!("Device '{}' not found in state", canonical))?;
 
     if let Some(battery_val) = props.get("battery") {
         let battery = battery_val
@@ -1949,12 +1972,15 @@ fn fetch_and_print_device_battery(
             .or_else(|| battery_val.as_str().and_then(|s| s.parse().ok()));
 
         if let Some(b) = battery {
-            println!("{}: {:.0}%", device_name.bold(), b);
+            if verbose {
+                println!("{}: {:.0}%", canonical.bold(), b);
+            } else { println!("{:.0}", b); }
             return Ok(());
         }
     }
-
-    println!("{} {}: No battery data available", "🪫".yellow(), device_name.bold());
+    if verbose {
+        println!("{} {}: No battery data available", "🪫".yellow(), canonical.bold());
+    } else { anyhow::bail!("No battery data available for '{}'", canonical); }
     Ok(())
 }
 
@@ -2063,6 +2089,49 @@ fn fetch_and_print_status_table(
     }
 
     println!("{table}");
+    Ok(())
+}
+
+
+fn mqtt_subscribe(
+    broker: &str,
+    user: &str,
+    password: &str,
+    topics: &[String],
+    verbose: bool,
+) -> Result<()> {
+    let mut mqttoptions = MqttOptions::new("zigduck-cli-sub", broker, 1883);
+    mqttoptions.set_credentials(user, password);
+    mqttoptions.set_keep_alive(Duration::from_secs(5));
+
+    let (mut client, mut connection) = Client::new(mqttoptions, 10);
+
+    for topic in topics {
+        client
+            .subscribe(topic, QoS::AtMostOnce)
+            .map_err(|e| anyhow::anyhow!("Failed to subscribe to '{}': {}", topic, e))?;
+        println!("{} Subscribed: {}", "📡".cyan(), topic.blue());
+    }
+    println!("{} Listening for messages... (Ctrl+C to stop)", "👀".yellow());
+
+    for notification in connection.iter() {
+        match notification {
+            Ok(rumqttc::Event::Incoming(rumqttc::Packet::Publish(p))) => {
+                let payload = String::from_utf8_lossy(&p.payload);
+                if verbose {
+                    println!("{} {}", p.topic.blue().bold(), payload.yellow());
+                } else { println!("{}", payload); }
+            }
+            Ok(rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_))) => {
+                if verbose { println!("{} MQTT connected", "✅".green()); }
+            }
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("{} MQTT error: {}", "❌".red(), e);
+                break;
+            }
+        }
+    }
     Ok(())
 }
 
@@ -2255,13 +2324,56 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-
-
     let base_topic = if let Some(cfg) = &config {
         cfg.mosquitto.as_ref()
             .map(|m| m.base_topic.clone())
             .unwrap_or_else(|| "zigbee2mqtt".to_string())
     } else { "zigbee2mqtt".to_string() };
+
+    if cli.subscribe {
+        let devices = match cli.devices_config.as_ref() {
+            Some(_) => ZigduckController::load_devices(cli.devices_config.clone())
+                .unwrap_or_default(),
+            None => HashMap::new(),
+        };
+
+        let mut topics: Vec<String> = Vec::new();
+
+        if let Some(device_query) = cli.device.as_deref() {
+            let resolved = devices
+                .values()
+                .find(|d| {
+                    d.friendly_name.eq_ignore_ascii_case(device_query)
+                        || d.aliases.iter().any(|a| a.eq_ignore_ascii_case(device_query))
+                })
+                .map(|d| d.friendly_name.clone())
+                .unwrap_or_else(|| device_query.to_string());
+
+            if !devices.values().any(|d| d.friendly_name == resolved) && cli.verbose > 0 {
+                println!("{} '{}' not in devices.json — subscribing raw", " ".yellow(), resolved);
+            }
+            topics.push(format!("{}/{}", base_topic, resolved));
+        }
+
+        if let Some(room) = cli.room.as_deref() {
+            let mut count = 0;
+            for d in devices.values() {
+                if d.room.eq_ignore_ascii_case(room) {
+                    topics.push(format!("{}/{}", base_topic, d.friendly_name));
+                    count += 1;
+                }
+            }
+            if count == 0 { eprintln!("{} No devices in room '{}'", "⚠️".yellow(), room); }
+        }
+
+        if let Some(topic) = cli.topic.as_deref() { topics.push(topic.to_string()); }
+
+        if topics.is_empty() {
+            topics.push(format!("{}/#", base_topic));
+            println!("{} No filter given — subscribing to all of {}/#", "ℹ️".cyan(), base_topic);
+        }
+        return mqtt_subscribe(&cli.broker, &cli.user, &password, &topics, cli.verbose > 0);
+    }
 
     let mut controller = ZigduckController::new(
         cli.broker, cli.user, password,

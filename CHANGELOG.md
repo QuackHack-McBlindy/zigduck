@@ -9,9 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New option: `house.zigbee.devies.<name>.enable`, allowing users to temporarly disable Zigbee devices without requiring re-pairing when enabling them back on. Mainly an Zigbee2MQTT feature but zigduck will remove device from `state.json` and no longer track.
+- New option: `house.presence.delay`.
+- New option: `housse.tv.privateKeyFile` and `housse.tv.publicKey`, used as ADB RSA keypair, so that the zigduck service user can use ADB declaratively.
+- `zigduck-cli` can now `--subscribe`.
+
+
 ### Changed
 
+- Normalized temperature and battery state output using `zigduck-cli` (fetch_and_print_room_temps, fetch_and_print_device_battery).
+
 ### Fixed
+
+- Debounced presence detection using `house.presence.delay` (default 30) so a single missed probe doesn't flip the house to `away`.
+- Fixed bugs sometimes leading to zigduck reporting stale device data.
 
 ### Removed
 

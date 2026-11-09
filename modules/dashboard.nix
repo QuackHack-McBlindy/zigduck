@@ -20,7 +20,8 @@ let
     scenes  = builtins.readFile ./../static/css/scenes.css;
   };
 
-  tvConfig = builtins.trace "TV config: ${builtins.toJSON house.tv}" house.tv;
+  tvConfig = builtins.trace "TV config: ${builtins.toJSON (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ])}"
+      (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ]);
 
   zigbeeDevices = house.zigbee.devices;
 
@@ -1990,7 +1991,7 @@ let
   });
 
   dashboardConfigFiles = let
-    enabledTVs = lib.filterAttrs (_: tv: tv.enable) house.tv;
+    enabledTVs = lib.filterAttrs (_: tv: tv.enable) (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ]);
 
     defaultTVName = let
       defaults = lib.filterAttrs (_: tv: tv.isDefault) enabledTVs;
@@ -2110,7 +2111,7 @@ in {
   environment.etc."zigduck/tv.json".source =
     pkgs.writeTextFile {
       name = "tv.json";
-      text = builtins.toJSON house.tv;
+      text = builtins.toJSON (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ]);
     };
 
   environment.etc."zigduck/favicon-32x32.png".source = ./../static/icons/favicon-32x32.png;

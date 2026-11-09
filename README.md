@@ -11,11 +11,11 @@
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.10-black?style=flat)
+![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.11-black?style=flat)
 ![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
-![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.2-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
+![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
 ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
 
 <!-- VERSIONS_END -->

@@ -113,12 +113,15 @@ struct PresenceConfig {
     probe_interval_secs: u64,
     #[serde(default = "default_probe_timeout")]
     probe_timeout_secs: u64,
+    #[serde(default = "default_presence_delay")]      // ← new
+    delay: u64,
     #[serde(default)]
     home_actions: Vec<AutomationAction>,
     #[serde(default)]
     away_actions: Vec<AutomationAction>,
 }
 
+fn default_presence_delay() -> u64 { 30 }
 fn default_probe_interval() -> u64 { 60 }
 fn default_probe_timeout() -> u64 { 2 }
 
@@ -129,6 +132,7 @@ impl Default for PresenceConfig {
             probes: vec![],
             probe_interval_secs: default_probe_interval(),
             probe_timeout_secs: default_probe_timeout(),
+            delay: default_presence_delay(),
             home_actions: vec![],
             away_actions: vec![],
         }
@@ -218,6 +222,8 @@ struct Device {
     supports_temperature: Option<bool>,
     icon: Option<String>,
     battery_type: Option<String>,
+    #[serde(default = "default_true")]
+    enable: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -284,6 +290,75 @@ enum ScheduleConfig {
         days: Vec<String>,
     },
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum TvProbe {
+    On,
+    Off,
+    Unreachable,
+    Unauthorized,
+}
+
+async fn check_tv_power(ip: &str) -> TvProbe {
+    let serial = format!("{}:5555", ip);
+
+    let _ = tokio::time::timeout(
+        Duration::from_secs(2),
+        TokioCommand::new("adb").args(["connect", &serial]).output(),
+    ).await;
+
+    let output = match tokio::time::timeout(
+        Duration::from_secs(4),
+        TokioCommand::new("adb")
+            .args(["-s", &serial, "shell", "dumpsys", "power"])
+            .output(),
+    ).await {
+        Ok(Ok(o)) => o,
+        Ok(Err(e)) => {
+            dt_debug!("adb spawn failed for {}: {}", ip, e);
+            return TvProbe::Unreachable;
+        }
+        Err(_) => {
+            dt_debug!("adb dumpsys {} timed out", ip);
+            return TvProbe::Unreachable;
+        }
+    };
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if stderr.contains("unauthorized") || stderr.contains("device unauthorized") { return TvProbe::Unauthorized; }
+
+    if !output.status.success() {
+        dt_debug!("adb dumpsys {} exited {}: {}", ip, output.status, stderr.trim());
+        return TvProbe::Unreachable;
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let lower = stdout.to_lowercase();
+
+    if lower.contains("mwakefulness=awake")
+        || lower.contains("display power: state=on")
+        || lower.contains("mscreenstate=on")
+        || lower.contains("mhdmiplugged=true")
+    {
+        return TvProbe::On;
+    }
+
+    if lower.contains("mwakefulness=asleep")
+        || lower.contains("mwakefulness=dreaming")
+        || lower.contains("mwakefulness=dosing")
+        || lower.contains("display power: state=off")
+        || lower.contains("mscreenstate=off")
+        || lower.contains("mhdmiplugged=false")
+    {
+        return TvProbe::Off;
+    }
+
+    dt_warning!("tv dumpsys {} unknown format ({} bytes), first 400: {}",
+        ip, stdout.len(), stdout.chars().take(400).collect::<String>());
+    TvProbe::Unreachable
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TimeBasedAutomation {
@@ -473,9 +548,10 @@ struct StructuredAction {
 #[derive(Debug, Clone)]
 struct MotionTracker {
     last_motion: HashMap<String, SystemTime>,
+    last_occupancy: HashMap<String, bool>,
 }
 
-async fn check_tv_power(ip: &str) -> Option<bool> {
+async fn check_tv_power_unused(ip: &str) -> Option<bool> {
     let serial = format!("{}:5555", ip);
     let _ = tokio::time::timeout(Duration::from_secs(3), TokioCommand::new("adb").args(["connect", &serial]).output()).await;
 
@@ -984,11 +1060,8 @@ impl ZigduckState {
         Ok(())
     }
 
-    async fn start_tv_state_trackers(&self) {
-        static ADB_LAST_KILL: std::sync::OnceLock<std::sync::Mutex<Option<SystemTime>>> =
-            std::sync::OnceLock::new();
-        ADB_LAST_KILL.get_or_init(|| std::sync::Mutex::new(None));
 
+    async fn start_tv_state_trackers(&self) {
         if self.config.tv.is_empty() {
             dt_debug!("📺 No TVs configured; state tracking disabled");
             return;
@@ -1004,6 +1077,7 @@ impl ZigduckState {
                 return;
             }
         }
+
         for (name, tv) in &self.config.tv {
             if !tv.enable {
                 dt_debug!("📺 '{}' is disabled; skipping tracker", name);
@@ -1020,57 +1094,46 @@ impl ZigduckState {
                 let mut interval = tokio::time::interval(Duration::from_secs(interval_secs));
                 interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
                 interval.tick().await;
+
                 loop {
                     interval.tick().await;
-                    let serial = format!("{}:5555", ip);
-                    let mut probe = check_tv_power(&ip).await;
-
-                    if probe.is_none() {
-                        dt_warning!("📺 '{}' state unknown — disconnecting {} and retrying", name, serial);
-                        let _ = TokioCommand::new("adb").args(["disconnect", &serial]).output().await;
-                        tokio::time::sleep(Duration::from_millis(500)).await;
-                        probe = check_tv_power(&ip).await;
-                    }
-
-                    if probe.is_none() {
-                        let do_kill = {
-                            let guard = ADB_LAST_KILL.get().unwrap();
-                            let mut last = guard.lock().unwrap();
-                            let cool_ok = last
-                                .map(|t| t.elapsed().map(|e| e.as_secs() > 60).unwrap_or(true))
-                                .unwrap_or(true);
-                            if cool_ok { *last = Some(SystemTime::now()); }
-                            cool_ok
-                        };
-
-                        if do_kill {
-                            dt_warning!("📺 '{}' still unknown — global reset", name);
-                            let _ = TokioCommand::new("adb").arg("kill-server").output().await;
-                            tokio::time::sleep(Duration::from_secs(2)).await;
-                            probe = check_tv_power(&ip).await;
-                        } else { dt_debug!("📺 '{}' still unknown — kill-server attempted recently, deferring", name); }
-                    }
+                    let probe = check_tv_power(&ip).await;
 
                     let state_str = match probe {
-                        Some(true)  => "ON",
-                        Some(false) => "OFF",
-                        None => {
-                            dt_warning!("📺 '{}' state unknown after adb reset — keeping last known state", name);
+                        TvProbe::On  => "ON",
+                        TvProbe::Off => "OFF",
+                        TvProbe::Unauthorized => {
+                            let prev = state.get_state(&name, "state");
+                            if prev.as_deref() != Some("UNAUTHORIZED") {
+                                dt_warning!("📺 '{}' ADB unauthorized — accept 'Allow USB debugging' on the TV", name);
+                                let _ = state.update_device_state(&name, "state", "UNAUTHORIZED");
+                            } else { dt_debug!("📺 '{}' still unauthorized", name); }
                             continue;
                         }
+                        TvProbe::Unreachable => {
+                            if probe_reachable(&ip, 2).await {
+                                dt_debug!("📺 '{}' ping ok but adb unavailable — keeping last state", name);
+                                continue;
+                            }
+                            dt_debug!("📺 '{}' unreachable — TV off", name);
+                            "OFF"
+                        }
                     };
+
                     let prev = state.get_state(&name, "state");
                     if prev.as_deref() != Some(state_str) {
-                        dt_info!("📺 '{}' {} > {} ", name, prev.as_deref().unwrap_or("<none>"), state_str);
+                        dt_info!("📺 '{}' {} → {}", name,
+                            prev.as_deref().unwrap_or("<none>"), state_str);
                     } else { dt_debug!("📺 '{}' unchanged: {}", name, state_str); }
 
                     if let Err(e) = state.update_device_state(&name, "state", state_str) {
-                        dt_warning!("📺 '{}' failed to write state: {}", name, e);
+                        dt_warning!("📺 '{}' write failed: {}", name, e);
                     }
                 }
             });
         }
     }
+
 
     async fn start_state_refreshers(&self) {
         for (name, device) in &self.config.devices {
@@ -1582,6 +1645,7 @@ impl ZigduckState {
 
         let motion_tracker = Arc::new(RwLock::new(MotionTracker {
             last_motion: HashMap::new(),
+            last_occupancy: HashMap::new(),
         }));
 
         let dashboard_config_path = std::env::var("DASHBOARD_CONFIG_FILE")
@@ -1601,6 +1665,49 @@ impl ZigduckState {
             if let Ok(existing) = serde_json::from_str::<HashMap<String, HashMap<String, String>>>(&content) {
                 let mut states = device_states.write().unwrap();
                 *states = existing;
+            }
+        }
+
+        {
+            let disabled: Vec<String> = devices.iter()
+                .filter(|(_, d)| !d.enable)
+                .map(|(name, _)| name.clone())
+                .collect();
+            if !disabled.is_empty() {
+                let (removed, json) = {
+                    let mut states = device_states.write().unwrap();
+                    let mut removed = 0usize;
+                    for name in &disabled {
+                        if states.remove(name).is_some() {
+                            removed += 1;
+                        }
+                    }
+                    let json = if removed > 0 {
+                        serde_json::to_string(&*states).ok()
+                    } else { None };
+                    (removed, json)
+                };
+                if removed > 0 {
+                    dt_info!("Pruned persisted state for {} disabled device(s)", removed);
+                    if let Some(json) = json {
+                        let tmp = format!("{}.tmp", state_file);
+                        if std::fs::write(&tmp, &json).is_ok() {
+                            let _ = std::fs::rename(&tmp, &state_file);
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Ok(states) = device_states.read() {
+            if let Ok(mut t) = motion_tracker.write() {
+                for (dev, fields) in states.iter() {
+                    if let Some(s) = fields.get("occupancy") {
+                        if let Ok(b) = s.parse::<bool>() {
+                            t.last_occupancy.insert(dev.clone(), b);
+                        }
+                    }
+                }
             }
         }
 
@@ -2007,12 +2114,34 @@ impl ZigduckState {
 
     fn is_someone_home(&self) -> bool {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        if self.config.presence.enabled
-            && !self.config.presence.probes.is_empty()
-            && self.get_state("apartment", "probe_online").as_deref() == Some("true")
-        {
-            dt_debug!("is_someone_home: home (probe online)");
-            return true;
+
+        if self.config.presence.enabled && !self.config.presence.probes.is_empty() {
+            let online = self.get_state("apartment", "probe_online");
+            if online.as_deref() == Some("true") {
+                dt_debug!("is_someone_home: home (probe online)");
+                return true;
+            }
+
+            let delay_secs = self.config.presence.delay.saturating_mul(60);
+            let offline_since: u64 = self
+                .get_state("apartment", "probe_offline_since")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0);
+
+            if online.as_deref() == Some("false") && offline_since == 0 {
+                let _ = self.update_device_state("apartment", "probe_offline_since", &now.to_string());
+                dt_debug!("is_someone_home: home (probe offline, arming grace)");
+                return true;
+            }
+
+            if offline_since > 0 {
+                let elapsed = now.saturating_sub(offline_since);
+                if elapsed < delay_secs {
+                    dt_debug!("is_someone_home: home (probe grace {}s / {}s)", elapsed, delay_secs);
+                    return true;
+                }
+                dt_debug!("is_someone_home: probe grace expired ({}s >= {}s)", elapsed, delay_secs);
+            }
         }
 
         let last_motion: u64 = self.get_state("apartment", "last_motion")
@@ -2068,11 +2197,20 @@ impl ZigduckState {
 
                 let prev = state.get_state("apartment", "probe_online");
                 let new_str = if any_online { "true" } else { "false" };
-                if prev.as_deref() != Some(new_str) {
+                let transitioned = prev.as_deref() != Some(new_str);
+
+                if transitioned {
                     match winner {
-                        Some(w) => dt_info!("probe online (winner: {})", w),
-                        None => dt_info!("all probes offline ({})", probes.join(", ")),
+                        Some(w) => dt_debug!("probe online (winner: {})", w),
+                        None    => dt_debug!("all probes offline ({})", probes.join(", ")),
                     }
+                    let ts = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .map(|d| d.as_secs())
+                        .unwrap_or(0);
+                    if new_str == "false" {
+                        let _ = state.update_device_state("apartment", "probe_offline_since", &ts.to_string());
+                    } else { let _ = state.update_device_state("apartment", "probe_offline_since", "0"); }
                 }
                 let _ = state.update_device_state("apartment", "probe_online", new_str);
             }
@@ -2157,6 +2295,13 @@ impl ZigduckState {
         if device_name.ends_with("/set") || device_name.ends_with("/availability") {
             dt_debug!("Skipping state update for {} (set/availability topic)", device_name);
             return Ok(());
+        }
+
+        if let Some(dev) = self.devices.get(device_name) {
+            if !dev.enable {
+                dt_debug!("Device {} is disabled in zigbee.devices, skipping state update", device_name);
+                return Ok(());
+            }
         }
 
         if let Some(dev) = self.config.devices.get(device_name) {
@@ -2849,9 +2994,7 @@ impl ZigduckState {
                                     dt_debug!("Error executing dashboard card action: {}", e);
                                 }
                             }
-                        } else {
-                            dt_debug!("Card {} is disabled", card_name);
-                        }
+                        } else { dt_debug!("Card {} is disabled", card_name); }
                     } else { dt_debug!("No configuration found for card: {}", card_name); }
                 }
             }
@@ -2919,10 +3062,35 @@ impl ZigduckState {
 
             // 🦆 says ⮞ 🕵️ MOTION SENSORS
             if let Some(occupancy) = data["occupancy"].as_bool() {
-                if occupancy {
+                let prev_occ = self.motion_tracker.read().ok()
+                    .and_then(|t| t.last_occupancy.get(device_name).copied());
+                let fresh = match data["last_seen"].as_str() {
+                    Some(s) => chrono::DateTime::parse_from_rfc3339(s)
+                        .map(|dt| {
+                            let age = chrono::Utc::now()
+                                .signed_duration_since(dt.with_timezone(&chrono::Utc))
+                                .num_seconds();
+                            age < 120 && age > -120
+                        })
+                        .unwrap_or(true),
+                    None => true,
+                };
+                let edge = prev_occ != Some(occupancy);
+                if let Ok(mut t) = self.motion_tracker.write() {
+                    t.last_occupancy.insert(device_name.to_string(), occupancy);
+                }
+                let repeat = !edge && prev_occ.is_some();
+                let stale  = !fresh;
+                if repeat {
+                    dt_debug!("↺ repeat occupancy={} for {} — ignoring", occupancy, device_name);
+                } else if stale {
+                    dt_warning!("stale occupancy={} for {} (last_seen={:?}) — ignoring",
+                        occupancy, device_name, data["last_seen"]);
+                }
+                if occupancy && !repeat && !stale {
                     self.update_motion_tracker(device_name);
 
-                    dt_info!("🕵️ Motion in {} {}", device_name, room);
+                    dt_debug!("🕵️ Motion in {} {}", device_name, room);
 
                     let state_clone = self.clone();
                     let dev = device_name.to_string();
@@ -2944,8 +3112,8 @@ impl ZigduckState {
                         if !self.has_motion_automation_for_room(&room) {
                             self.room_lights_on(&room).await?;
                         }
-                    } else { dt_info!("❌ Daytime - no lights activated by motion."); }
-                } else {
+                    } else { dt_debug!("❌ Daytime - no lights activated by motion."); }
+                } else if !occupancy && edge {
                     dt_debug!("🛑 No more motion in {} {}", device_name, room);
                     let state_clone = self.clone();
                     let dev = device_name.to_string();
@@ -2981,7 +3149,11 @@ impl ZigduckState {
                                     let _ = state_clone.set_motion_triggered(&room_clone, false);
                                 }
                             });
+                            if let Some(old) = self.motion_timers.remove(&room) {
+                                old.abort();
+                            }
                             self.motion_timers.insert(room.clone(), timer_handle);
+
                         }
                     }
                 }
@@ -3205,6 +3377,10 @@ impl ZigduckState {
             match connection.eventloop.poll().await {
                 Ok(event) => {
                     if let Event::Incoming(Incoming::Publish(publish)) = event {
+                        if publish.retain {
+                            dt_debug!("dropping retained MQTT message on {}", publish.topic);
+                            continue;
+                        }
                         let topic = publish.topic;
                         let payload = String::from_utf8_lossy(&publish.payload);
 
@@ -3212,6 +3388,7 @@ impl ZigduckState {
                             dt_error!("Failed to process message: {}", e);
                         }
                     }
+
                 }
                 Err(e) => {
                     dt_warning!("Connection error: {}", e);

@@ -58,7 +58,6 @@ fn search_youtube(query: &str, api_key: &str) -> Result<(String, String), String
     } else { Err("No results found".to_string()) }
 }
 
-
 #[derive(Parser)]
 #[command(about = "Cast media to an Android TV device via ADB")]
 struct Args {
@@ -102,8 +101,6 @@ struct Args {
     config: PathBuf,
 }
 
-
-
 #[derive(Deserialize)]
 struct Config {
     device_ip: String,
@@ -117,6 +114,10 @@ struct Config {
     shuffle: bool,
     youtube_api_key_file: Option<String>,
     favourites_file: String,
+    #[serde(rename = "keyPath")]
+    key_path: Option<String>,
+    #[serde(rename = "pubKey")]
+    pub_key: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -142,6 +143,32 @@ struct TvConfig {
     channels: HashMap<String, ChannelConfig>,
 }
 
+
+fn load_key_material(val: &str) -> Result<String, String> {
+    if Path::new(val).is_file() {
+        return std::fs::read_to_string(val)
+            .map_err(|e| format!("Failed to read '{}': {}", val, e));
+    }
+    let t = val.trim_start();
+    let looks_like_key = t.starts_with("ssh-")
+        || t.starts_with("ecdsa-")
+        || t.starts_with("-----BEGIN")
+        || (t.len() > 64 && t.split_whitespace().next().map_or(false, |b| {
+            b.chars().all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=')
+        }));
+    if looks_like_key {
+        return Ok(val.to_string());
+    }
+    Err(format!("'{}' is not a file and doesn't look like key material", val))
+}
+
+fn apply_adb_env(cmd: &mut Command) {
+    if let Ok(home) = env::var("HOME").or_else(|_| env::var("USERPROFILE")) {
+        let adbkey = PathBuf::from(home).join(".android").join("adbkey");
+        cmd.env("ADB_VENDOR_KEYS", adbkey);
+    }
+}
+
 impl Config {
     fn webserver(&self) -> Option<String> {
         if let Some(url) = &self.webserver_url {
@@ -165,6 +192,52 @@ impl Config {
             .trim()
             .to_string();
         Some(key)
+    }
+
+    fn setup_adb_keys(&self) -> Result<(), String> {
+        if self.key_path.is_none() && self.pub_key.is_none() {
+            return Ok(());
+        }
+
+        let home = env::var("HOME")
+            .or_else(|_| env::var("USERPROFILE"))
+            .map_err(|_| "Neither HOME nor USERPROFILE is set".to_string())?;
+        let android_dir = PathBuf::from(home).join(".android");
+        std::fs::create_dir_all(&android_dir)
+            .map_err(|e| format!("Failed to create {}: {}", android_dir.display(), e))?;
+
+        if let Some(k) = &self.key_path {
+            let content = load_key_material(k)?;
+            let adbkey = android_dir.join("adbkey");
+            std::fs::write(&adbkey, content)
+                .map_err(|e| format!("Failed to write {}: {}", adbkey.display(), e))?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(
+                    &adbkey,
+                    std::fs::Permissions::from_mode(0o600),
+                );
+            }
+            println!("Installed private ADB key at {}", adbkey.display());
+        } else {
+            eprintln!("Warning: pubKey set but keyPath missing; adb needs a private key");
+        }
+
+        if let Some(p) = &self.pub_key {
+            let content = load_key_material(p)?;
+            let adbkey_pub = android_dir.join("adbkey.pub");
+            std::fs::write(&adbkey_pub, content)
+                .map_err(|e| format!("Failed to write {}: {}", adbkey_pub.display(), e))?;
+            println!("Installed public ADB key at {}", adbkey_pub.display());
+        }
+
+        let mut c = Command::new("adb");
+        c.arg("kill-server");
+        apply_adb_env(&mut c);
+        let _ = c.output();
+
+        Ok(())
     }
 }
 
@@ -207,10 +280,10 @@ fn adb(ip: &str, cmd: &[&str]) -> std::process::Output {
     let run = || {
         let mut args = vec!["-s", ip];
         args.extend(cmd);
-        Command::new("adb")
-            .args(&args)
-            .output()
-            .expect("adb not found or not executable")
+        let mut c = Command::new("adb");
+        c.args(&args);
+        apply_adb_env(&mut c);
+        c.output().expect("adb not found or not executable")
     };
 
     let first = run();
@@ -225,7 +298,10 @@ fn adb(ip: &str, cmd: &[&str]) -> std::process::Output {
     }
 
     eprintln!("ADB offline for {}, reconnecting...", ip);
-    let _ = Command::new("adb").args(["connect", ip]).output();
+    let mut c = Command::new("adb");
+    c.args(["connect", ip]);
+    apply_adb_env(&mut c);
+    let _ = c.output();
     std::thread::sleep(std::time::Duration::from_millis(1500));
 
     let second = run();
@@ -241,7 +317,10 @@ fn adb_keyevent(ip: &str, key: &str) {
 }
 
 fn wake_and_connect(ip: &str, wake_key: &str) {
-    let _ = Command::new("adb").args(["connect", ip]).output();
+    let mut c = Command::new("adb");
+    c.args(["connect", ip]);
+    apply_adb_env(&mut c);
+    let _ = c.output();
     adb_keyevent(ip, wake_key);
 }
 
@@ -297,8 +376,6 @@ fn generate_folder_playlist(
     println!("Playlist written to {}", playlist_path.display());
 }
 
-
-// fuzzy match a directory name (barely-fuzzy)
 fn fuzzy_match_dir(base: &Path, query: &str) -> Option<String> {
     if !base.is_dir() {
         return None;
@@ -330,8 +407,6 @@ fn fuzzy_match_dir(base: &Path, query: &str) -> Option<String> {
     } else { None }
 }
 
-// file‑based fuzzy match returning the top 3 (score, path) using a combined score
-// 80% Levenshtein + 20% trigram
 fn fuzzy_match_files(
     base: &Path,
     query: &str,
@@ -626,9 +701,6 @@ fn resolve_channel(
     None
 }
 
-
-
-// MAIN
 fn main() {
     let mut args = Args::parse();
 
@@ -639,6 +711,10 @@ fn main() {
     }
 
     let config = load_config(&args.config);
+    if let Err(e) = config.setup_adb_keys() {
+        eprintln!("Warning: ADB key setup failed: {}", e);
+    }
+
     let tv = resolve_tv(&args, &config);
     let device_ip = &tv.ip;
     let keymap = &tv.keymap;
@@ -673,7 +749,6 @@ fn main() {
 
     let typ = args.typ.to_lowercase();
 
-    // direct key events
     match typ.as_str() {
         "on" => {
             wake_and_connect(&device_ip, &keymap["power_on"]);
@@ -713,61 +788,17 @@ fn main() {
             adb_keyevent(&device_ip, &keymap["play_pause"]);
             return;
         }
-        "nav_up" => {
-            adb_keyevent(&device_ip, &keymap["nav_up"]);
-            println!("Navigating up.");
-            return;
-        }
-        "nav_down" => {
-            adb_keyevent(&device_ip, &keymap["nav_down"]);
-            println!("Navigating down.");
-            return;
-        }
-        "nav_left" => {
-            adb_keyevent(&device_ip, &keymap["nav_left"]);
-            println!("Navigating left.");
-            return;
-        }
-        "nav_right" => {
-            adb_keyevent(&device_ip, &keymap["nav_right"]);
-            println!("Navigating right.");
-            return;
-        }
-        "nav_select" => {
-            adb_keyevent(&device_ip, &keymap["nav_select"]);
-            println!("Selecting.");
-            return;
-        }
-        "nav_menu" => {
-            adb_keyevent(&device_ip, &keymap["nav_menu"]);
-            println!("Opening menu.");
-            return;
-        }
-        "nav_back" => {
-            adb_keyevent(&device_ip, &keymap["nav_back"]);
-            println!("Going back.");
-            return;
-        }
-        "channel_up" => {
-            adb_keyevent(&device_ip, &keymap["channel_up"]);
-            println!("Channel up.");
-            return;
-        }
-        "channel_down" => {
-            adb_keyevent(&device_ip, &keymap["channel_down"]);
-            println!("Channel down.");
-            return;
-        }
-        "nav_home" => {
-            adb_keyevent(&device_ip, &keymap["nav_home"]);
-            println!("Going to home screen.");
-            return;
-        }
-        "nav_recents" => {
-            adb_keyevent(&device_ip, &keymap["nav_recents"]);
-            println!("Opening recent apps.");
-            return;
-        }
+        "nav_up" => { adb_keyevent(&device_ip, &keymap["nav_up"]); println!("Navigating up."); return; }
+        "nav_down" => { adb_keyevent(&device_ip, &keymap["nav_down"]); println!("Navigating down."); return; }
+        "nav_left" => { adb_keyevent(&device_ip, &keymap["nav_left"]); println!("Navigating left."); return; }
+        "nav_right" => { adb_keyevent(&device_ip, &keymap["nav_right"]); println!("Navigating right."); return; }
+        "nav_select" => { adb_keyevent(&device_ip, &keymap["nav_select"]); println!("Selecting."); return; }
+        "nav_menu" => { adb_keyevent(&device_ip, &keymap["nav_menu"]); println!("Opening menu."); return; }
+        "nav_back" => { adb_keyevent(&device_ip, &keymap["nav_back"]); println!("Going back."); return; }
+        "channel_up" => { adb_keyevent(&device_ip, &keymap["channel_up"]); println!("Channel up."); return; }
+        "channel_down" => { adb_keyevent(&device_ip, &keymap["channel_down"]); println!("Channel down."); return; }
+        "nav_home" => { adb_keyevent(&device_ip, &keymap["nav_home"]); println!("Going to home screen."); return; }
+        "nav_recents" => { adb_keyevent(&device_ip, &keymap["nav_recents"]); println!("Opening recent apps."); return; }
         "play_playlist" => {
             let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
             let playlist_url = format!("{}/{}", url, playlist_rel);
@@ -786,9 +817,7 @@ fn main() {
             let current_track = get_current_track(&device_ip);
             match current_track {
                 Some(track) => {
-                    let existing = std::fs::read_to_string(favourites_path)
-                        .unwrap_or_default();
-
+                    let existing = std::fs::read_to_string(favourites_path).unwrap_or_default();
                     if existing.lines().any(|line| line == track) {
                         println!("Track already in favourites: {}", track);
                     } else {
@@ -797,10 +826,8 @@ fn main() {
                             .append(true)
                             .open(favourites_path)
                             .expect("Failed to open favourites file for appending");
-
                         use std::io::Write;
-                        writeln!(file, "{}", track)
-                            .expect("Failed to write to favourites file");
+                        writeln!(file, "{}", track).expect("Failed to write to favourites file");
                         println!("Added to favourites: {}", track);
                     }
                 }
@@ -818,10 +845,7 @@ fn main() {
         "youtube" => {
             let query = match &args.search {
                 Some(q) => q,
-                None => {
-                    eprintln!("Search query required for YouTube");
-                    return;
-                }
+                None => { eprintln!("Search query required for YouTube"); return; }
             };
             let api_key = youtube_api_key.as_ref().expect("YouTube API key is required for YouTube search. Set `config.house.media.youtubePasswordFile` in configuration.nix");
             match search_youtube(query, api_key) {
@@ -833,7 +857,6 @@ fn main() {
             }
             return;
         }
-
         _ => {}
     }
 
@@ -850,35 +873,22 @@ fn main() {
         return;
     }
 
-    // jukebox: all music shuffled
     if typ == "jukebox" {
         let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         let music_dir = config.directories.get("music").expect("music dir missing");
         let path = Path::new(music_dir);
-        generate_folder_playlist(
-            path,
-            path,
-            url,
-            true,
-            max_items,
-            Path::new(&config.playlist_file),
-        );
+        generate_folder_playlist(path, path, url, true, max_items, Path::new(&config.playlist_file));
         let playlist_url = format!("{}/{}", url, playlist_rel);
         play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
         return;
     }
 
-
-    // directory‑based types
     let dir_types = ["tv", "movie", "podcast", "music", "musicvideo", "audiobook"];
     if dir_types.contains(&typ.as_str()) {
         let dir_key = &typ;
         let base = match config.directories.get(dir_key) {
             Some(d) => PathBuf::from(d),
-            None => {
-                eprintln!("Unknown type '{}'", typ);
-                return;
-            }
+            None => { eprintln!("Unknown type '{}'", typ); return; }
         };
 
         let mut target_path = base.clone();
@@ -893,7 +903,6 @@ fn main() {
             }
         }
 
-        // handle season inside a TV show
         if let Some(season) = &args.season {
             let season_num: u32 = season.parse().unwrap_or(1);
             let season_candidates = [
@@ -905,10 +914,7 @@ fn main() {
             let mut season_dir = None;
             for cand in &season_candidates {
                 let p = target_path.join(cand);
-                if p.is_dir() {
-                    season_dir = Some(p);
-                    break;
-                }
+                if p.is_dir() { season_dir = Some(p); break; }
             }
             if let Some(dir) = season_dir {
                 target_path = dir;
@@ -919,20 +925,12 @@ fn main() {
         }
 
         let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
-        generate_folder_playlist(
-            &target_path,
-            &base,
-            url,
-            shuffle,
-            max_items,
-            Path::new(&config.playlist_file),
-        );
+        generate_folder_playlist(&target_path, &base, url, shuffle, max_items, Path::new(&config.playlist_file));
         let playlist_url = format!("{}/{}", url, playlist_rel);
         play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
         return;
     }
 
-    // file‑based types
     if typ == "song" || typ == "othervideo" {
         let (dir_key, exts): (&str, &[&str]) = if typ == "song" {
             ("music", &["mp3", "flac", "m4a", "wav"][..])
@@ -952,12 +950,7 @@ fn main() {
         }
         let files: Vec<PathBuf> = matches.into_iter().map(|(_, p)| p).collect();
         let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
-        make_playlist_from_files(
-            &files,
-            base_path,
-            url,
-            Path::new(&config.playlist_file),
-        );
+        make_playlist_from_files(&files, base_path, url, Path::new(&config.playlist_file));
         let playlist_url = format!("{}/{}", url, playlist_rel);
         play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
         return;

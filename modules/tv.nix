@@ -14,10 +14,12 @@ let
   format = pkgs.formats.yaml { };
   configFile = format.generate "zigbee2mqtt.yaml" house.zigbee.settings;
 
-  tvDefaultsJsonFile = let
-    rooms = lib.mapAttrs (_: tv: tv.ip) house.tv;
+  tvDevices = builtins.removeAttrs config.house.tv [ "privateKeyFile" "publicKey" ];
 
-    enabledTVs = lib.filterAttrs (_: tv: tv.enable) config.house.tv;
+  tvDefaultsJsonFile = let
+    rooms = lib.mapAttrs (_: tv: tv.ip) tvDevices;
+
+    enabledTVs = lib.filterAttrs (_: tv: tv.enable) tvDevices;
 
     tvEntries = lib.mapAttrs (name: tv: {
       ip         = tv.ip;
@@ -55,6 +57,7 @@ let
       device_ip = config.house.tv.${defaultTVName}.ip;
       inherit rooms directories;
       tvs = tvEntries;
+
       webserver_url = if house.https.media.url != null
                       then house.https.media.url
                       else null;
@@ -71,9 +74,16 @@ let
       mqtt_password_file   = if house.zigbee.mosquitto != null
                              then house.zigbee.mosquitto.passwordFile
                              else null;
+    }
+    // lib.optionalAttrs (config.house.tv.privateKeyFile != null) {
+      keyPath = config.house.tv.privateKeyFile;
+    }
+    // lib.optionalAttrs (config.house.tv.publicKey != null) {
+      pubKey = config.house.tv.publicKey;
     };
   in
     pkgs.writeText "tv-ctl-defaults.json" (builtins.toJSON tvDefaultsAttrSet);
+
 
 in {
   config = mkMerge [
@@ -81,10 +91,9 @@ in {
       environment.systemPackages = [
         zigduckPkgs.tv
         zigduckPkgs.tv-scraper
+        pkgs.android-tools
       ];
-
       environment.etc."zigduck/tv-defaults.json".source = tvDefaultsJsonFile;
-
     })
 
   ];}
