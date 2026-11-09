@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.12] - 2026-11-09
+
+### Added
+
 - New option: `house.zigbee.devies.<name>.enable`, allowing users to temporarly disable Zigbee devices without requiring re-pairing when enabling them back on. Mainly an Zigbee2MQTT feature but zigduck will remove device from `state.json` and no longer track.
 - New option: `house.presence.delay`.
 - New option: `housse.tv.privateKeyFile` and `housse.tv.publicKey`, used as ADB RSA keypair, so that the zigduck service user can use ADB declaratively.
@@ -25,7 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bugs sometimes leading to zigduck reporting stale device data.
 
 ### Removed
-
 
 ## [0.2.11] - 2026-11-03
 
