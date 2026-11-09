@@ -8,14 +8,20 @@ name: CI
 #  │
 #  │ push
 #  ▼
-# BUILD ────────────────► CI only
-#  │
+# ┌───────────────────────────────────────────┐
+# │ BUILD ───────────────► CI only            │
+# │   │                                       │
+# │   ▼                                       │
+# │ DOCS ────────────────► get-options.sh     │
+# │                        commit hooks/*.json│
+# │                        to dev [skip ci]   │
+# └───────────────────────────────────────────┘
 #  │
 #  │ PR
 #  ▼
 # main
 #  │
-#  │ merge dev → main
+#  │ merge dev ──► main
 #  ▼
 # BUILD
 #  │
@@ -32,7 +38,7 @@ name: CI
 #  │
 #  ├── CHANGELOG [Unreleased]
 #  │        │
-#  │        └── promote → [0.3.1]
+#  │        └── promote ─► [0.3.1]
 #  │
 #  ├── commit changelog
 #  │
@@ -41,7 +47,7 @@ name: CI
 #  ├── GitHub Release v0.3.1
 #  │
 #  ▼
-# sync dev ← main
+# SYNC dev <-- MAIN
 
 
 on:
@@ -78,6 +84,42 @@ jobs:
 
       - name: Build flake
         run: nix flake check --all-systems
+
+  docs:
+    name: Regenerate option reference
+    needs: build
+    if: >-
+      ${{
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/dev'
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          ref: dev
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3.22.2
+
+      - name: Regenerate hooks/options.json and hooks/service.json
+        run: bash hooks/get-options.sh
+
+      - name: Commit if the JSON changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- hooks/options.json hooks/service.json; then
+            echo "Option reference is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add hooks/options.json hooks/service.json
+          git commit -m "chore: regenerate option reference [skip ci]"
+          git push origin HEAD:dev
 
   release:
     name: Release

@@ -15,6 +15,12 @@ in {
           description = "A human-readable device name.";
           example = "Kitchen Dimmer";
         };
+        enable = mkOption {
+          type = types.bool;
+          default = true;
+          example = false;
+          description = "Whether this device should be enabled or not. Setting this to false does not require re-pairing the device.";
+        };
         aliases = mkOption {
           type = types.listOf types.str;
           default = [ ];

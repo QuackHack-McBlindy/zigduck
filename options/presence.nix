@@ -45,6 +45,13 @@ in {
       description = "Seconds before a probe attempt is considered a timeout (unreachable).";
     };
 
+    delay = lib.mkOption {
+      type = lib.types.int;
+      example = 60;
+      default = 30;
+      description = "Time in minutes without any successful probe response before presence is considered `away` and `awayActions` are fired.";
+    };
+
     homeActions = mkOption {
       type    = types.listOf Types.automationActionType;
       default = [ ];

@@ -27,8 +27,9 @@ let
     }) scenes
   ));
 
-  byRoom = lib.groupBy (id: zigbeeDevices.${id}.room) (lib.attrNames zigbeeDevices);
-  rooms = lib.mapAttrs (_: tv: tv.ip) house.tv;
+  enabledDeviceIds = lib.filter (id: zigbeeDevices.${id}.enable) (lib.attrNames zigbeeDevices);
+  byRoom = lib.groupBy (id: zigbeeDevices.${id}.room) enabledDeviceIds;
+  rooms = lib.mapAttrs (_: tv: tv.ip) (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ]);
 
   groupConfig = lib.mapAttrs' (room: ids: {
     name = room;
@@ -52,6 +53,7 @@ let
             type = dev.type;
             endpoint = dev.endpoint;
             ieee = ieee;
+            enable = dev.enable;
 
             # CLI
             friendly_name = dev.friendly_name;
@@ -67,8 +69,10 @@ let
     )
   );
 
-  deviceConfig = lib.mapAttrs (_: dev: { friendly_name = dev.friendly_name; })
-  (lib.filterAttrs (_: dev: dev.type != "hue_light") zigbeeDevices);
+  deviceConfig = lib.mapAttrs (_: dev:
+    { friendly_name = dev.friendly_name; }
+    // lib.optionalAttrs (!dev.enable) { disabled = true; }
+  ) (lib.filterAttrs (_: dev: dev.type != "hue_light") zigbeeDevices);
 
   automationsJSON = builtins.toJSON house.zigbee.automations;
   automationsFile = pkgs.writeText "automations.json" automationsJSON;
@@ -80,7 +84,7 @@ let
     devices = house.devices;
     tv = lib.mapAttrs (_: tv: {
       inherit (tv) enable ip;
-    }) house.tv;
+    }) (builtins.removeAttrs house.tv [ "privateKeyFile" "publicKey" ]);
 
     zigduck = {
       state_dir = cfg.stateDir;
@@ -150,6 +154,7 @@ let
       probes              = house.presence.probes;
       probe_interval_secs = house.presence.probeInterval;
       probe_timeout_secs  = house.presence.probeTimeout;
+      delay               = house.presence.delay;
       home_actions        = house.presence.homeActions;
       away_actions        = house.presence.awayActions;
     };
@@ -215,7 +220,7 @@ in {
               devices = lib.concatMap (id:
                 let dev = zigbeeDevices.${id};
                 in if dev.type == "light" then ["${id}/${toString dev.endpoint}"] else []
-              ) (lib.attrNames zigbeeDevices);
+              ) enabledDeviceIds;
             };
           };
         };
@@ -322,6 +327,7 @@ in {
         ];
       };
 
+
       systemd.services.zigduck = {
         description = "Zigduck Home Automation Service";
         after = [ "network.target" "mosquitto.service" ];
@@ -330,9 +336,9 @@ in {
 
         serviceConfig = {
           Type = "simple";
-          User = "zigduck";
-          Group = "zigduck";
-          StateDirectory = "zigduck";
+          User = cfg.user;
+          Group = cfg.user;
+          StateDirectory = cfg.user;
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
           ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck";
@@ -342,6 +348,7 @@ in {
 
           Environment = let
             env = {
+              HOME = cfg.stateDir;
               MQTT_BROKER = cfg.broker;
               MQTT_USER = house.zigbee.mosquitto.username;
               MQTT_PASSWORD_FILE = house.zigbee.mosquitto.passwordFile;
@@ -372,9 +379,9 @@ in {
 
         serviceConfig = {
           Type = "simple";
-          User = "zigduck";
-          Group = "zigduck";
-          StateDirectory = "zigduck";
+          User = cfg.user;
+          Group = cfg.user;
+          StateDirectory = cfg.user;
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
           ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck-dashboard ${cfg.dashboard.host} ${toString cfg.dashboard.port}";
@@ -426,9 +433,9 @@ in {
         home = house.zigbee.dataDir;
         createHome = true;
       };
-      users.users.zigduck = {
+      users.users.${cfg.user} = {
         isSystemUser = true;
-        group = "zigduck";
+        group = cfg.user;
         home = cfg.stateDir;
         createHome = true;
       };

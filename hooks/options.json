@@ -1,7 +1,7 @@
 {
   "house.dashboard": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -17,7 +17,7 @@
   },
   "house.dashboard.pages": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -34,7 +34,7 @@
   },
   "house.dashboard.pages.<name>.code": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -53,7 +53,7 @@
   },
   "house.dashboard.pages.<name>.css": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -72,7 +72,7 @@
   },
   "house.dashboard.pages.<name>.files": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -91,7 +91,7 @@
   },
   "house.dashboard.pages.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -110,7 +110,7 @@
   },
   "house.dashboard.pages.<name>.title": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -129,7 +129,7 @@
   },
   "house.dashboard.statusCards": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -146,7 +146,7 @@
   },
   "house.dashboard.statusCards.<name>.chart": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -165,7 +165,7 @@
   },
   "house.dashboard.statusCards.<name>.color": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -188,7 +188,7 @@
   },
   "house.dashboard.statusCards.<name>.defaultDetails": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -211,7 +211,7 @@
   },
   "house.dashboard.statusCards.<name>.defaultValue": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -234,7 +234,7 @@
   },
   "house.dashboard.statusCards.<name>.details": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -257,7 +257,7 @@
   },
   "house.dashboard.statusCards.<name>.detailsFormat": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -280,7 +280,7 @@
   },
   "house.dashboard.statusCards.<name>.detailsJsonField": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -303,7 +303,7 @@
   },
   "house.dashboard.statusCards.<name>.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -326,7 +326,7 @@
   },
   "house.dashboard.statusCards.<name>.filePath": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -349,7 +349,7 @@
   },
   "house.dashboard.statusCards.<name>.format": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -372,7 +372,7 @@
   },
   "house.dashboard.statusCards.<name>.group": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -395,7 +395,7 @@
   },
   "house.dashboard.statusCards.<name>.historyField": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -418,7 +418,7 @@
   },
   "house.dashboard.statusCards.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "description": "Font Awesome class rendered in the card header. Any free\nor pro icon class works. See https://fontawesome.com/search\n",
     "example": {
@@ -437,7 +437,7 @@
   },
   "house.dashboard.statusCards.<name>.jsonField": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -460,7 +460,7 @@
   },
   "house.dashboard.statusCards.<name>.on_click_action": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -483,7 +483,7 @@
   },
   "house.dashboard.statusCards.<name>.source": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -506,7 +506,7 @@
   },
   "house.dashboard.statusCards.<name>.theme": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -529,7 +529,7 @@
   },
   "house.dashboard.statusCards.<name>.title": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/dashboard.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/dashboard.nix"
     ],
     "description": "Text shown as the card's heading. Unicode and emoji are\nsupported (e.g. `𝑿𝑴𝑹`, `𝑩𝑻𝑪`).\n",
     "example": {
@@ -548,7 +548,7 @@
   },
   "house.devices": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -564,7 +564,7 @@
   },
   "house.devices.<name>.controls": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -582,7 +582,7 @@
   },
   "house.devices.<name>.controls.<name>.actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -606,7 +606,7 @@
   },
   "house.devices.<name>.controls.<name>.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -630,7 +630,7 @@
   },
   "house.devices.<name>.controls.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -654,7 +654,7 @@
   },
   "house.devices.<name>.controls.<name>.max": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -678,7 +678,7 @@
   },
   "house.devices.<name>.controls.<name>.min": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -702,7 +702,7 @@
   },
   "house.devices.<name>.controls.<name>.type": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "description": "Widget type rendered in the frontend.",
     "example": {
@@ -722,7 +722,7 @@
   },
   "house.devices.<name>.controls.<name>.values": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -746,7 +746,7 @@
   },
   "house.devices.<name>.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -768,7 +768,7 @@
   },
   "house.devices.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -790,7 +790,7 @@
   },
   "house.devices.<name>.ip": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "description": "Device IP address",
     "example": {
@@ -808,7 +808,7 @@
   },
   "house.devices.<name>.room": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "description": "Room where this device is located",
     "example": {
@@ -822,11 +822,11 @@
       "room"
     ],
     "readOnly": false,
-    "type": "one of \"bedroom\", \"hallway\", \"kitchen\", \"livingroom\", \"other\", \"tv-area\", \"wc\""
+    "type": "one of \"bedroom\", \"hallway\", \"kitchen\", \"livingroom\", \"wc\""
   },
   "house.devices.<name>.state": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -848,7 +848,7 @@
   },
   "house.devices.<name>.state.endpoint": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -871,7 +871,7 @@
   },
   "house.devices.<name>.state.refresh": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -894,7 +894,7 @@
   },
   "house.https": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -910,7 +910,7 @@
   },
   "house.https.dashboard": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -927,7 +927,7 @@
   },
   "house.https.dashboard.url": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -949,7 +949,7 @@
   },
   "house.https.dashboard.urlFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -971,7 +971,7 @@
   },
   "house.https.media": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -988,7 +988,7 @@
   },
   "house.https.media.url": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1010,7 +1010,7 @@
   },
   "house.https.media.urlFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/https.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/https.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1032,7 +1032,7 @@
   },
   "house.media": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1048,11 +1048,11 @@
   },
   "house.media.audiobooks": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Audiobooks\""
+      "text": "\"/Media/Audiobooks\""
     },
     "description": "Directory containing audiobook folders.\nEach audiobook should be in its own subdirectory.\n",
     "example": {
@@ -1069,11 +1069,11 @@
   },
   "house.media.favouritesFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/favourites.m3u\""
+      "text": "\"/Media/favourites.m3u\""
     },
     "description": "File path where the playlist for starred media will be written.\nThis is a Persistent playlist for the users favourite tracks.\nIt must be writable by the user executing the tv command.\nShould be inside a directory exposed by the web server.\n",
     "example": {
@@ -1090,11 +1090,11 @@
   },
   "house.media.movies": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Movies\""
+      "text": "\"/Media/Movies\""
     },
     "description": "Directory containing movie folders.\nEach movie should be in its own subdirectory, e.g.:\n  Movies/Some Movie (2020)/movie.mkv\n",
     "example": {
@@ -1111,11 +1111,11 @@
   },
   "house.media.music": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Music\""
+      "text": "\"/Media/Music\""
     },
     "description": "Directory containing music. Can be flat or hierarchical.\n\nFor artist/album search (typ = \"music\"), each artist or album\nshould be in its own subdirectory.\n\nFor song search (typ = \"song\"), files are searched recursively\nby filename with extensions: mp3, flac, m4a, wav.\n\nFor jukebox (typ = \"jukebox\"), all files under this directory\nare shuffled and played.\n",
     "example": {
@@ -1132,11 +1132,11 @@
   },
   "house.media.musicVideos": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Music_Videos\""
+      "text": "\"/Media/Music_Videos\""
     },
     "description": "Directory containing music video folders.\nEach music video should be in its own subdirectory.\n",
     "example": {
@@ -1153,11 +1153,11 @@
   },
   "house.media.otherVideos": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Other_Videos\""
+      "text": "\"/Media/Other_Videos\""
     },
     "description": "Directory containing miscellaneous video files.\nVideos are searched recursively by filename with extensions:\n  mp4, mkv, avi, mov\nNo folder structure requirement beyond being under this path.\n",
     "example": {
@@ -1174,11 +1174,11 @@
   },
   "house.media.playlistFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/playlist.m3u\""
+      "text": "\"/Media/playlist.m3u\""
     },
     "description": "File path where the generated playlist will be written.\nThis file is overwritten each time the TV controller creates a new playlist.\nIt must be writable by the user executing the tv command.\nShould be inside a directory exposed by the web server.\n",
     "example": {
@@ -1195,11 +1195,11 @@
   },
   "house.media.podcasts": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/Podcasts\""
+      "text": "\"/Media/Podcasts\""
     },
     "description": "Directory containing podcast folders.\nEach podcast should be in its own subdirectory.\nEpisodes are files inside those folders.\n",
     "example": {
@@ -1216,7 +1216,7 @@
   },
   "house.media.root": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1237,11 +1237,11 @@
   },
   "house.media.tv": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
-      "text": "\"/Pool/TV\""
+      "text": "\"/Media/TV\""
     },
     "description": "Directory containing TV show folders.\nEach show should be in its own subdirectory.\nInside each show folder, seasons are expected in folders like:\n  \"Season 1\", \"Season 01\", \"S01\", \"s01\"\nEpisode files go inside those season folders.\n",
     "example": {
@@ -1258,7 +1258,7 @@
   },
   "house.media.youtubePasswordFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/media.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/media.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1279,7 +1279,7 @@
   },
   "house.presence.awayActions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1298,9 +1298,30 @@
     "readOnly": false,
     "type": "list of (string or (submodule))"
   },
+  "house.presence.delay": {
+    "declarations": [
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "30"
+    },
+    "description": "Time in minutes without any successful probe response before presence is considered `away` and `awayActions` are fired.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "60"
+    },
+    "loc": [
+      "house",
+      "presence",
+      "delay"
+    ],
+    "readOnly": false,
+    "type": "signed integer"
+  },
   "house.presence.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1321,7 +1342,7 @@
   },
   "house.presence.homeActions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1342,7 +1363,7 @@
   },
   "house.presence.probeInterval": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1363,7 +1384,7 @@
   },
   "house.presence.probeTimeout": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1384,7 +1405,7 @@
   },
   "house.presence.probes": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/presence.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/presence.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1405,7 +1426,7 @@
   },
   "house.rooms": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/rooms.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/rooms.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1421,7 +1442,7 @@
   },
   "house.rooms.<name>.aliases": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/rooms.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/rooms.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1443,7 +1464,7 @@
   },
   "house.rooms.<name>.entertainment": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/rooms.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/rooms.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1465,7 +1486,7 @@
   },
   "house.rooms.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/rooms.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/rooms.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -1487,28 +1508,26 @@
   },
   "house.tv": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/tv.nix"
     ],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
     },
-    "description": "Attrset of TV devices, keyed by an arbitrary device name\n(e.g. `\"livingroom\"`). Each entry describes how to reach the TV\nover ADB, its room, its channel lineup, and how to map logical\nplayback/navigation actions to Android keycodes.\n",
+    "description": "Attrset of TV devices, keyed by an arbitrary device name\n(e.g. `\"livingroom\"`). Each entry describes how to reach the TV\nover ADB, its room, its channel lineup, and how to map logical\nplayback/navigation actions to Android keycodes.\n\nThe two reserved keys `privateKeyFile` and `publicKey` are\nglobal ADB key settings — not TV entries.\n",
     "example": {
       "_type": "literalExpression",
-      "text": "{\n  livingroom = {\n    apps = {\n      telenor = \"se.telenor.stream/.MainActivity\";\n      tv4 = \"se.tv4.tv4playtab/se.tv4.tv4play.ui.mobile.main.BottomNavigationActivity\";\n    };\n    channels = {\n      svt1 = {\n        cmd = \"\";\n        icon = /nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/icons/svt1.png;\n        id = 1;\n        name = \"SVT1\";\n        scrape_url = \"https://www.svtplay.se/kanaler/svt1\";\n        stream_url = \"\";\n      };\n      tv4 = {\n        cmd = \"am start -n se.tv4.tv4playtab/.MainActivity\";\n        name = \"TV4\";\n        scrape_url = \"https://www.tv4play.se/kanaler/tv4\";\n      };\n    };\n    enable = true;\n    ip = \"192.168.1.42\";\n    isDefault = true;\n    keymap = {\n      nav_back = \"KEYCODE_BACK\";\n      nav_down = \"KEYCODE_DPAD_DOWN\";\n      nav_home = \"KEYCODE_HOME\";\n      nav_left = \"KEYCODE_DPAD_LEFT\";\n      nav_menu = \"KEYCODE_MENU\";\n      nav_right = \"KEYCODE_DPAD_RIGHT\";\n      nav_select = \"KEYCODE_DPAD_CENTER\";\n      nav_up = \"KEYCODE_DPAD_UP\";\n      play_pause = \"KEYCODE_MEDIA_PLAY_PAUSE\";\n      power_off = \"KEYCODE_SLEEP\";\n      power_on = \"KEYCODE_WAKEUP\";\n      volume_down = \"KEYCODE_VOLUME_DOWN\";\n      volume_up = \"KEYCODE_VOLUME_UP\";\n    };\n    room = \"livingroom\";\n  };\n}"
+      "text": "{\n  livingroom = {\n    apps = {\n      telenor = \"se.telenor.stream/.MainActivity\";\n      tv4 = \"se.tv4.tv4playtab/se.tv4.tv4play.ui.mobile.main.BottomNavigationActivity\";\n    };\n    channels = {\n      svt1 = {\n        cmd = \"\";\n        icon = /nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/icons/svt1.png;\n        id = 1;\n        name = \"SVT1\";\n        scrape_url = \"https://www.svtplay.se/kanaler/svt1\";\n        stream_url = \"\";\n      };\n      tv4 = {\n        cmd = \"am start -n se.tv4.tv4playtab/.MainActivity\";\n        name = \"TV4\";\n        scrape_url = \"https://www.tv4play.se/kanaler/tv4\";\n      };\n    };\n    enable = true;\n    ip = \"192.168.1.42\";\n    isDefault = true;\n    keymap = {\n      nav_back = \"KEYCODE_BACK\";\n      nav_down = \"KEYCODE_DPAD_DOWN\";\n      nav_home = \"KEYCODE_HOME\";\n      nav_left = \"KEYCODE_DPAD_LEFT\";\n      nav_menu = \"KEYCODE_MENU\";\n      nav_right = \"KEYCODE_DPAD_RIGHT\";\n      nav_select = \"KEYCODE_DPAD_CENTER\";\n      nav_up = \"KEYCODE_DPAD_UP\";\n      play_pause = \"KEYCODE_MEDIA_PLAY_PAUSE\";\n      power_off = \"KEYCODE_SLEEP\";\n      power_on = \"KEYCODE_WAKEUP\";\n      volume_down = \"KEYCODE_VOLUME_DOWN\";\n      volume_up = \"KEYCODE_VOLUME_UP\";\n    };\n    room = \"livingroom\";\n  };\n  privateKeyFile = \"/run/secrets/adb\";\n  publicKey = \"/run/secrets/adb.pub\";\n}"
     },
     "loc": [
       "house",
       "tv"
     ],
     "readOnly": false,
-    "type": "attribute set of (submodule)"
+    "type": "open submodule of attribute set of (submodule)"
   },
   "house.tv.<name>.apps": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
@@ -1528,9 +1547,7 @@
     "type": "attribute set of string"
   },
   "house.tv.<name>.channels": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
@@ -1546,9 +1563,7 @@
     "type": "attribute set of (submodule)"
   },
   "house.tv.<name>.channels.<name>.cmd": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"\""
@@ -1566,9 +1581,7 @@
     "type": "string"
   },
   "house.tv.<name>.channels.<name>.icon": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1586,9 +1599,7 @@
     "type": "null or absolute path"
   },
   "house.tv.<name>.channels.<name>.id": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1606,9 +1617,7 @@
     "type": "null or signed integer"
   },
   "house.tv.<name>.channels.<name>.name": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "description": "Channel display name",
     "loc": [
       "house",
@@ -1622,14 +1631,12 @@
     "type": "string"
   },
   "house.tv.<name>.channels.<name>.scrape_url": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"\""
     },
-    "description": "URL used by tv-scraper to fetch TV guide data for this channel.\n",
+    "description": "URL used by tv-scraper to fetch TV guide data for this channel.",
     "loc": [
       "house",
       "tv",
@@ -1642,14 +1649,12 @@
     "type": "string"
   },
   "house.tv.<name>.channels.<name>.scraper": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
     },
-    "description": "Per-channel scraper overrides, layered on top of the\ndevice-level `scraper` and the scraper's built-in\ndefaults.\n",
+    "description": "Per-channel scraper overrides, layered on top of the device-level `scraper` and the scraper's built-in defaults.",
     "loc": [
       "house",
       "tv",
@@ -1662,9 +1667,7 @@
     "type": "submodule"
   },
   "house.tv.<name>.channels.<name>.scraper.default_duration_minutes": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1687,9 +1690,7 @@
     "type": "null or (positive integer, meaning >0)"
   },
   "house.tv.<name>.channels.<name>.scraper.desc_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1712,9 +1713,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.scraper.pm_heuristic_after_hour": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1737,9 +1736,7 @@
     "type": "null or integer between 0 and 23 (both inclusive)"
   },
   "house.tv.<name>.channels.<name>.scraper.row_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1762,9 +1759,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.scraper.time_attr": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1787,9 +1782,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.scraper.time_formats": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1812,9 +1805,7 @@
     "type": "null or (list of string)"
   },
   "house.tv.<name>.channels.<name>.scraper.time_strip_pattern": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1837,9 +1828,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.scraper.time_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1862,9 +1851,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.scraper.timezone_offset_hours": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1887,9 +1874,7 @@
     "type": "null or signed integer or floating point number"
   },
   "house.tv.<name>.channels.<name>.scraper.title_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -1912,9 +1897,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.channels.<name>.stream_url": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"\""
@@ -1932,9 +1915,7 @@
     "type": "string"
   },
   "house.tv.<name>.enable": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "true"
@@ -1950,9 +1931,7 @@
     "type": "boolean"
   },
   "house.tv.<name>.ip": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "description": "TV's static IP address",
     "loc": [
       "house",
@@ -1964,9 +1943,7 @@
     "type": "string"
   },
   "house.tv.<name>.isDefault": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "false"
@@ -1982,9 +1959,7 @@
     "type": "boolean"
   },
   "house.tv.<name>.keymap": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
@@ -2000,9 +1975,7 @@
     "type": "submodule"
   },
   "house.tv.<name>.keymap.channel_down": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_CHANNEL_DOWN\""
@@ -2019,9 +1992,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.channel_up": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_CHANNEL_UP\""
@@ -2038,9 +2009,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_back": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_BACK\""
@@ -2057,9 +2026,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_down": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_DPAD_DOWN\""
@@ -2076,9 +2043,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_home": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_HOME\""
@@ -2095,9 +2060,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_left": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_DPAD_LEFT\""
@@ -2114,9 +2077,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_menu": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_MENU\""
@@ -2133,9 +2094,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_recents": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_APP_SWITCH\""
@@ -2152,9 +2111,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_right": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_DPAD_RIGHT\""
@@ -2171,9 +2128,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_select": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_DPAD_CENTER\""
@@ -2190,9 +2145,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.nav_up": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_DPAD_UP\""
@@ -2209,9 +2162,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.next": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_MEDIA_NEXT\""
@@ -2228,9 +2179,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.play_pause": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_MEDIA_PLAY_PAUSE\""
@@ -2247,9 +2196,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.power_off": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_SLEEP\""
@@ -2266,9 +2213,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.power_on": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_WAKEUP\""
@@ -2285,9 +2230,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.previous": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_MEDIA_PREVIOUS\""
@@ -2304,9 +2247,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.volume_down": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_VOLUME_DOWN\""
@@ -2323,9 +2264,7 @@
     "type": "string"
   },
   "house.tv.<name>.keymap.volume_up": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "\"KEYCODE_VOLUME_UP\""
@@ -2342,9 +2281,7 @@
     "type": "string"
   },
   "house.tv.<name>.room": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "description": "Room where the TV is located",
     "loc": [
       "house",
@@ -2353,12 +2290,10 @@
       "room"
     ],
     "readOnly": false,
-    "type": "one of \"bedroom\", \"hallway\", \"kitchen\", \"livingroom\", \"other\", \"tv-area\", \"wc\""
+    "type": "one of \"bedroom\", \"hallway\", \"kitchen\", \"livingroom\", \"wc\""
   },
   "house.tv.<name>.scraper": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "{ }"
@@ -2378,9 +2313,7 @@
     "type": "submodule"
   },
   "house.tv.<name>.scraper.default_duration_minutes": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2401,9 +2334,7 @@
     "type": "null or (positive integer, meaning >0)"
   },
   "house.tv.<name>.scraper.desc_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2424,9 +2355,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.scraper.pm_heuristic_after_hour": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2447,9 +2376,7 @@
     "type": "null or integer between 0 and 23 (both inclusive)"
   },
   "house.tv.<name>.scraper.row_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2470,9 +2397,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.scraper.time_attr": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2493,9 +2418,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.scraper.time_formats": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2516,9 +2439,7 @@
     "type": "null or (list of string)"
   },
   "house.tv.<name>.scraper.time_strip_pattern": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2539,9 +2460,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.scraper.time_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2562,9 +2481,7 @@
     "type": "null or string"
   },
   "house.tv.<name>.scraper.timezone_offset_hours": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2585,9 +2502,7 @@
     "type": "null or signed integer or floating point number"
   },
   "house.tv.<name>.scraper.title_xpath": {
-    "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/tv.nix"
-    ],
+    "declarations": [],
     "default": {
       "_type": "literalExpression",
       "text": "null"
@@ -2607,9 +2522,51 @@
     "readOnly": false,
     "type": "null or string"
   },
+  "house.tv.privateKeyFile": {
+    "declarations": [
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/tv.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "null"
+    },
+    "description": "Path to the ADB private key (typically a sops-managed file).\nADB keys are per-host, not per-TV, so this is a single\nglobal setting shared by every TV. The file must be\nreadable by whichever user runs `tv`.\n",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/run/secrets/adb\""
+    },
+    "loc": [
+      "house",
+      "tv",
+      "privateKeyFile"
+    ],
+    "readOnly": false,
+    "type": "null or string"
+  },
+  "house.tv.publicKey": {
+    "declarations": [
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/tv.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "null"
+    },
+    "description": "Optional ADB public key, or a path to a file containing it.\nIf unset, `tv` derives `adbkey.pub` from the private key\nautomatically — which is usually what you want.\n",
+    "example": {
+      "_type": "literalExpression",
+      "text": "\"/run/secrets/adb.pub\""
+    },
+    "loc": [
+      "house",
+      "tv",
+      "publicKey"
+    ],
+    "readOnly": false,
+    "type": "null or string"
+  },
   "house.zigbee.automations": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2626,7 +2583,7 @@
   },
   "house.zigbee.automations.dimmer_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2648,7 +2605,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_hold_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2672,7 +2629,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_hold_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -2693,7 +2650,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_hold_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2718,7 +2675,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_hold_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2743,7 +2700,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_hold_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2768,7 +2725,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_press_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2792,7 +2749,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_press_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -2813,7 +2770,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_press_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2838,7 +2795,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_press_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2863,7 +2820,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.down_press_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2888,7 +2845,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_hold_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2912,7 +2869,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_hold_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -2933,7 +2890,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_hold_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2958,7 +2915,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_hold_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -2983,7 +2940,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_hold_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3008,7 +2965,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_press_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3032,7 +2989,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_press_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -3053,7 +3010,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_press_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3078,7 +3035,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_press_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3103,7 +3060,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.off_press_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3128,7 +3085,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_hold_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3152,7 +3109,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_hold_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -3173,7 +3130,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_hold_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3198,7 +3155,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_hold_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3223,7 +3180,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_hold_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3248,7 +3205,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_press_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3272,7 +3229,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_press_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -3293,7 +3250,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_press_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3318,7 +3275,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_press_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3343,7 +3300,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.on_press_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3368,7 +3325,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_hold_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3392,7 +3349,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_hold_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -3413,7 +3370,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_hold_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3438,7 +3395,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_hold_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3463,7 +3420,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_hold_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3488,7 +3445,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_press_release": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3512,7 +3469,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_press_release.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable description of what this handler does.\n",
     "example": {
@@ -3533,7 +3490,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_press_release.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3558,7 +3515,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_press_release.extra_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3583,7 +3540,7 @@
   },
   "house.zigbee.automations.dimmer_actions.<name>.up_press_release.override_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3608,7 +3565,7 @@
   },
   "house.zigbee.automations.global_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3630,7 +3587,7 @@
   },
   "house.zigbee.automations.greeting": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3652,7 +3609,7 @@
   },
   "house.zigbee.automations.greeting.actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3675,7 +3632,7 @@
   },
   "house.zigbee.automations.greeting.awayDuration": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3698,7 +3655,7 @@
   },
   "house.zigbee.automations.greeting.delay": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3721,7 +3678,7 @@
   },
   "house.zigbee.automations.greeting.door": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3744,7 +3701,7 @@
   },
   "house.zigbee.automations.greeting.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3767,7 +3724,7 @@
   },
   "house.zigbee.automations.greeting.message": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3790,7 +3747,7 @@
   },
   "house.zigbee.automations.mqtt_triggered": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3799,7 +3756,7 @@
     "description": "Automations driven by incoming MQTT messages. Each attribute\nname is the automation's identifier (free-form, shown in\nlogs). Runs `actions` when `topic` receives a matching\nmessage and every optional `conditions` entry passes.\n",
     "example": {
       "_type": "literalExpression",
-      "text": "{\n  button_single_press = {\n    actions = [\n      {\n        message = \"{\\\"state\\\":\\\"TOGGLE\\\"}\";\n        topic = \"zigbee2mqtt/living_room_lights/set\";\n        type = \"mqtt\";\n      }\n    ];\n    description = \"Toggle living room lights on single button press\";\n    enable = true;\n    message = \"single\";\n    topic = \"zigbee2mqtt/living_room_button/action\";\n  };\n  motion_alert = {\n    actions = [\n      \"echo 'Motion detected outside!' | wall\"\n      {\n        command = \"/nix/store/hf9wcn7jhcynf4ihndzbscbknx97in30-libnotify-0.8.8/bin/notify-send 'Security' 'Motion detected outside'\";\n        type = \"shell\";\n      }\n    ];\n    description = \"Send notification on outdoor motion\";\n    enable = true;\n    message = \"true\";\n    topic = \"zigbee2mqtt/outdoor_motion/occupancy\";\n  };\n}"
+      "text": "{\n  button_single_press = {\n    actions = [\n      {\n        message = \"{\\\"state\\\":\\\"TOGGLE\\\"}\";\n        topic = \"zigbee2mqtt/living_room_lights/set\";\n        type = \"mqtt\";\n      }\n    ];\n    description = \"Toggle living room lights on single button press\";\n    enable = true;\n    message = \"single\";\n    topic = \"zigbee2mqtt/living_room_button/action\";\n  };\n  motion_alert = {\n    actions = [\n      \"echo 'Motion detected outside!' | wall\"\n      {\n        command = \"/nix/store/jrbrr93d8zj7np9ss67p1kh9yjf3ppbc-libnotify-0.8.9/bin/notify-send 'Security' 'Motion detected outside'\";\n        type = \"shell\";\n      }\n    ];\n    description = \"Send notification on outdoor motion\";\n    enable = true;\n    message = \"true\";\n    topic = \"zigbee2mqtt/outdoor_motion/occupancy\";\n  };\n}"
     },
     "loc": [
       "house",
@@ -3812,7 +3769,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3836,7 +3793,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.conditions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3856,7 +3813,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.conditions.*.room": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3882,7 +3839,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.conditions.*.type": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Condition to evaluate before running `actions`:\n\n  dark_time    -> current time is within the dark\n                  window configured under\n                  `house.zigbee.motion.trigger.lights`\n  someone_home -> at least one presence tracker\n                  reports home\n  room_occupied-> the room named in `room` currently\n                  reports occupancy\n",
     "example": {
@@ -3904,7 +3861,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.conditions.*.value": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3930,7 +3887,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable summary shown in logs and generated\ndocumentation. Does not affect behaviour.\n",
     "example": {
@@ -3950,7 +3907,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3974,7 +3931,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.message": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -3998,7 +3955,7 @@
   },
   "house.zigbee.automations.mqtt_triggered.<name>.topic": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "MQTT topic the automation subscribes to. Must be fully\nqualified with the broker's `baseTopic` prefix\n(default: `zigbee2mqtt/`).\n",
     "example": {
@@ -4018,7 +3975,7 @@
   },
   "house.zigbee.automations.presence_based": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4040,7 +3997,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4064,7 +4021,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.conditions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4084,7 +4041,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.conditions.*.room": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4110,7 +4067,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.conditions.*.type": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Condition to evaluate before `actions` run:\n\n  dark_time    -> currently inside the dark window\n  room_occupied-> the room currently reports\n                  occupancy (useful to suppress\n                  auto-off if someone just returned)\n  lights_on    -> at least one light in scope is\n                  currently on (skips the work\n                  when everything is already off)\n",
     "example": {
@@ -4132,7 +4089,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.conditions.*.value": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4158,7 +4115,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable summary shown in logs and generated\ndocumentation. Does not affect behaviour.\n",
     "example": {
@@ -4178,7 +4135,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4202,7 +4159,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.motion_restored_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4226,7 +4183,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.motion_sensors": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4250,7 +4207,7 @@
   },
   "house.zigbee.automations.presence_based.<name>.no_motion_duration": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4274,7 +4231,7 @@
   },
   "house.zigbee.automations.room_actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4296,7 +4253,7 @@
   },
   "house.zigbee.automations.string": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4314,7 +4271,7 @@
   },
   "house.zigbee.automations.string.prefix": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4337,7 +4294,7 @@
   },
   "house.zigbee.automations.time_based": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4359,7 +4316,7 @@
   },
   "house.zigbee.automations.time_based.<name>.actions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4383,7 +4340,7 @@
   },
   "house.zigbee.automations.time_based.<name>.conditions": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4403,7 +4360,7 @@
   },
   "house.zigbee.automations.time_based.<name>.conditions.*.room": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4429,7 +4386,7 @@
   },
   "house.zigbee.automations.time_based.<name>.conditions.*.type": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Same condition vocabulary as `mqtt_triggered`:\n\n  dark_time    -> currently inside the dark window\n  someone_home -> at least one presence tracker home\n  room_occupied-> the room named in `room` reports\n                  occupancy\n",
     "example": {
@@ -4451,7 +4408,7 @@
   },
   "house.zigbee.automations.time_based.<name>.conditions.*.value": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4477,7 +4434,7 @@
   },
   "house.zigbee.automations.time_based.<name>.description": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "Human-readable summary shown in logs and generated\ndocumentation. Does not affect behaviour.\n",
     "example": {
@@ -4497,7 +4454,7 @@
   },
   "house.zigbee.automations.time_based.<name>.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4521,7 +4478,7 @@
   },
   "house.zigbee.automations.time_based.<name>.schedule": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/automations.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/automations.nix"
     ],
     "description": "When the automation fires. Either:\n\n  string-> a standard 5-field cron expression\n           (e.g. `\"0 22 * * *\"` = every day at 22:00)\n\n  attrset-> structured `{ start; end; days; }` for the\n            common \"within this window\" case\n",
     "example": {
@@ -4541,7 +4498,7 @@
   },
   "house.zigbee.coordinator": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/coordinator.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/coordinator.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4558,7 +4515,7 @@
   },
   "house.zigbee.coordinator.adapter": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/coordinator.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/coordinator.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4576,7 +4533,7 @@
   },
   "house.zigbee.coordinator.productId": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/coordinator.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/coordinator.nix"
     ],
     "description": "USB product ID of the Zigbee coordinator, in hexadecimal.\n\nYou can find this with `lsusb`. For example, if it reports\n`ID 10c3:ea61`, the product ID is `ea61`.\n\nTogether with `vendorId`, this identifies the coordinator USB\ndevice.\n",
     "loc": [
@@ -4590,7 +4547,7 @@
   },
   "house.zigbee.coordinator.symlink": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/coordinator.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/coordinator.nix"
     ],
     "description": "Name of the stable symlink to create under /dev.\n\nFor example, setting this to \"zigbee\" creates /dev/zigbee,\nwhich can then be used as the serial device for Zigbee2MQTT.\n\nUsing a symlink avoids depending on unstable device names such\nas /dev/ttyUSB0, which can change when USB devices are plugged\nin or removed.\n",
     "loc": [
@@ -4604,7 +4561,7 @@
   },
   "house.zigbee.coordinator.vendorId": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/coordinator.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/coordinator.nix"
     ],
     "description": "USB vendor ID of the Zigbee coordinator, in hexadecimal.\n\nYou can find this with `lsusb`. For example, if it reports\n`ID 10c3:ea61`, the vendor ID is `10c3`.\n\nThis is used together with `productId` to identify the correct\nUSB device, regardless of which /dev/ttyUSB* or /dev/ttyACM*\ndevice name Linux assigns to it.\n",
     "loc": [
@@ -4618,7 +4575,7 @@
   },
   "house.zigbee.dataDir": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/zigbee.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/zigbee.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4639,7 +4596,7 @@
   },
   "house.zigbee.devices": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4660,7 +4617,7 @@
   },
   "house.zigbee.devices.<name>.aliases": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4683,7 +4640,7 @@
   },
   "house.zigbee.devices.<name>.batteryType": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4700,9 +4657,32 @@
     "readOnly": false,
     "type": "null or string"
   },
+  "house.zigbee.devices.<name>.enable": {
+    "declarations": [
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
+    ],
+    "default": {
+      "_type": "literalExpression",
+      "text": "true"
+    },
+    "description": "Whether this device should be enabled or not. Setting this to false does not require re-pairing the device.",
+    "example": {
+      "_type": "literalExpression",
+      "text": "false"
+    },
+    "loc": [
+      "house",
+      "zigbee",
+      "devices",
+      "<name>",
+      "enable"
+    ],
+    "readOnly": false,
+    "type": "boolean"
+  },
   "house.zigbee.devices.<name>.endpoint": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "description": "The Zigbee endpoint to control this device.",
     "example": {
@@ -4721,7 +4701,7 @@
   },
   "house.zigbee.devices.<name>.friendly_name": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "description": "A human-readable device name.",
     "example": {
@@ -4740,7 +4720,7 @@
   },
   "house.zigbee.devices.<name>.hue_id": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4763,7 +4743,7 @@
   },
   "house.zigbee.devices.<name>.icon": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4782,7 +4762,7 @@
   },
   "house.zigbee.devices.<name>.room": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "description": "The room this device belongs to.",
     "example": {
@@ -4797,11 +4777,11 @@
       "room"
     ],
     "readOnly": false,
-    "type": "string matching the pattern bedroom|hallway|kitchen|livingroom|other|tv-area|wc"
+    "type": "string matching the pattern bedroom|hallway|kitchen|livingroom|wc"
   },
   "house.zigbee.devices.<name>.supports_color": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4820,7 +4800,7 @@
   },
   "house.zigbee.devices.<name>.supports_temperature": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4839,7 +4819,7 @@
   },
   "house.zigbee.devices.<name>.type": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/devices.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/devices.nix"
     ],
     "description": "The type of device.",
     "example": {
@@ -4858,7 +4838,7 @@
   },
   "house.zigbee.dimmer": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4875,7 +4855,7 @@
   },
   "house.zigbee.dimmer.actions.downHold": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4894,7 +4874,7 @@
   },
   "house.zigbee.dimmer.actions.downPress": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4913,7 +4893,7 @@
   },
   "house.zigbee.dimmer.actions.offHold": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4932,7 +4912,7 @@
   },
   "house.zigbee.dimmer.actions.offPress": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4951,7 +4931,7 @@
   },
   "house.zigbee.dimmer.actions.onHold": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4970,7 +4950,7 @@
   },
   "house.zigbee.dimmer.actions.onPress": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -4993,7 +4973,7 @@
   },
   "house.zigbee.dimmer.actions.upHold": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5012,7 +4992,7 @@
   },
   "house.zigbee.dimmer.actions.upPress": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5031,7 +5011,7 @@
   },
   "house.zigbee.dimmer.doubleClickTimeout": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5053,7 +5033,7 @@
   },
   "house.zigbee.dimmer.message": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/dimmer.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/dimmer.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5075,7 +5055,7 @@
   },
   "house.zigbee.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/zigbee.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/zigbee.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5096,7 +5076,7 @@
   },
   "house.zigbee.hueSyncBox": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5113,7 +5093,7 @@
   },
   "house.zigbee.hueSyncBox.bridge.ip": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "description": "IP address of the Philips Hue Bridge",
     "loc": [
@@ -5128,7 +5108,7 @@
   },
   "house.zigbee.hueSyncBox.bridge.passwordFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "description": "Path to a file containing the Hue Bridge API key (username).\nTo get a key, press the physical button on your Hue Bridge, then run:\n  curl -X POST http://<bridge-ip>/api -d '{\"devicetype\":\"house#nixos\"}'\nThe response will contain a `username` field – save that string in this file.\n",
     "loc": [
@@ -5143,7 +5123,7 @@
   },
   "house.zigbee.hueSyncBox.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5165,7 +5145,7 @@
   },
   "house.zigbee.hueSyncBox.syncBox.ip": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "description": "IP address of the Philips Hue Sync Box",
     "loc": [
@@ -5180,7 +5160,7 @@
   },
   "house.zigbee.hueSyncBox.syncBox.passwordFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "description": "Path to a file containing the Hue Sync Box API token.\nTo get a token, run the following command:\n  curl -k -sS -X POST \"https://<SYNC_BOX_IP>/api/v1/registrations\" -H \"Content-Type: application/json\" -d '{\"appName\": \"zigduck\", \"instanceName\": \"zigduck\"}'\nThen press and hold the physical button on the Sync Box until the LED turns green, then send the command again.\nThe resposne will contain the API token.\n",
     "loc": [
@@ -5195,13 +5175,13 @@
   },
   "house.zigbee.hueSyncBox.syncBox.tv": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/hue-sync-box.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/hue-sync-box.nix"
     ],
     "default": {
       "_type": "literalExpression",
       "text": "\"\""
     },
-    "description": "What TV should syncBox syncronize the lights to. Available TVs: shield",
+    "description": "What TV should syncBox syncronize the lights to. Available TVs: privateKeyFile, publicKey",
     "example": {
       "_type": "literalExpression",
       "text": "\"shield\""
@@ -5218,7 +5198,7 @@
   },
   "house.zigbee.mosquitto": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "description": "This option has no description.",
     "loc": [
@@ -5231,7 +5211,7 @@
   },
   "house.zigbee.mosquitto.baseTopic": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5253,7 +5233,7 @@
   },
   "house.zigbee.mosquitto.host": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5275,7 +5255,7 @@
   },
   "house.zigbee.mosquitto.passwordFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5297,7 +5277,7 @@
   },
   "house.zigbee.mosquitto.ssl.caCertFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5316,7 +5296,7 @@
   },
   "house.zigbee.mosquitto.ssl.clientCertFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5335,7 +5315,7 @@
   },
   "house.zigbee.mosquitto.ssl.clientKeyFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5354,7 +5334,7 @@
   },
   "house.zigbee.mosquitto.ssl.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5377,7 +5357,7 @@
   },
   "house.zigbee.mosquitto.username": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5399,7 +5379,7 @@
   },
   "house.zigbee.mosquitto.whitelist": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/mosquitto.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/mosquitto.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5421,7 +5401,7 @@
   },
   "house.zigbee.motion": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5438,7 +5418,7 @@
   },
   "house.zigbee.motion.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5460,7 +5440,7 @@
   },
   "house.zigbee.motion.trigger": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5478,7 +5458,7 @@
   },
   "house.zigbee.motion.trigger.lights": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5497,7 +5477,7 @@
   },
   "house.zigbee.motion.trigger.lights.after": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5517,7 +5497,7 @@
   },
   "house.zigbee.motion.trigger.lights.before": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5537,7 +5517,7 @@
   },
   "house.zigbee.motion.trigger.lights.duration": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5557,7 +5537,7 @@
   },
   "house.zigbee.motion.trigger.lights.transition": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5577,7 +5557,7 @@
   },
   "house.zigbee.motion.when.dark.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5601,7 +5581,7 @@
   },
   "house.zigbee.networkKeyFile": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/zigbee.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/zigbee.nix"
     ],
     "description": "Path to a file containing the Zigbee network key used by\nZigbee2MQTT (`network_key`).\n\nThe network key identifies and secures the Zigbee network. Keep\nthis key stable: changing or losing it will require Zigbee devices\nto be paired with the network again.\n\nThe file should contain the key in the following format:\n```\n- 86\n- 208\n...\n```\n",
     "example": {
@@ -5618,7 +5598,7 @@
   },
   "house.zigbee.no.motion": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5636,7 +5616,7 @@
   },
   "house.zigbee.no.motion.trigger.all": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5656,7 +5636,7 @@
   },
   "house.zigbee.no.motion.trigger.all.lights.off": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5678,7 +5658,7 @@
   },
   "house.zigbee.no.motion.trigger.all.lights.off.after": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5701,7 +5681,7 @@
   },
   "house.zigbee.no.motion.trigger.all.lights.off.enable": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5728,7 +5708,7 @@
   },
   "house.zigbee.no.motion.trigger.all.lights.off.exclude": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/no-motion.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/no-motion.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5751,7 +5731,7 @@
   },
   "house.zigbee.scenes": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/scenes.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/scenes.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5772,7 +5752,7 @@
   },
   "house.zigbee.scenes.<name>._aliases": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/scenes.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/scenes.nix"
     ],
     "default": {
       "_type": "literalExpression",
@@ -5795,7 +5775,7 @@
   },
   "house.zigbee.settings": {
     "declarations": [
-      "/nix/store/0ss0yxphm5hb1n3877f9ly6746ni2wil-source/options/zigbee/zigbee.nix"
+      "/nix/store/0sxsi468my1yzks397fsz65hdcm5qdki-source/options/zigbee/zigbee.nix"
     ],
     "default": {
       "_type": "literalExpression",
