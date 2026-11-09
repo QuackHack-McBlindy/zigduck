@@ -118,7 +118,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add hooks/options.json hooks/service.json
-          git commit -m "chore: regenerate option reference"
+          git commit -m "chore: regenerate option reference [skip ci]"
           git push origin HEAD:dev
 
   release:
