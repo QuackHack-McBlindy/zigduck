@@ -15,7 +15,6 @@ in {
         "(skapa|ställ|sätt|starta) [en] (time|timer|timern) [på] {hours} (timme|timmar) {minutes} (minut|minuter) {seconds} (sekund|sekunder)"
         "(skapa|ställ|sätt|starta) [en] (time|timer|timern) [på] {minutes} (minut|minuter) [och] {seconds} (sekund|sekunder)"
         "(skapa|ställ|sätt|starta) [en] (time|timer|timern) [på] {minutes} (minut|minuter)"
-        "(skapa|ställ|sätt|starta) [en] (time|timer|timern) [på] {seconds} sekunder"
 
         "hur {list} är det kvar på (time|timer|timern)"
         "tid {list} på (time|timer|timern)"

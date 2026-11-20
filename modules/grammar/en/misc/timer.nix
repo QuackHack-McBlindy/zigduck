@@ -15,7 +15,6 @@ in {
         "(set|start|create) [a] timer [for] {hours} (hour|hours) {minutes} (minute|minutes) {seconds} (second|seconds)"
         "(set|start|create) [a] timer [for] {minutes} (minute|minutes) [and] {seconds} (second|seconds)"
         "(set|start|create) [a] timer [for] {minutes} (minute|minutes)"
-        "(set|start|create) [a] timer [for] {seconds} (second|seconds)"
 
         "how (much|long) {list} left on [the] timer"
         "time {list} on [the] timer"

@@ -70,7 +70,7 @@
 
           house.zigbee.scenes = {
             dark = {
-              _aliases = "mörkt";
+              _aliases = lib.mkForce [ "mörktt" ];
               "Test Device4" = { state = "OFF"; };
             };
           };
