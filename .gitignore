@@ -1,0 +1,9 @@
+*.bak
+dump/
+**/dump/
+
+.env
+**/.env
+target/
+**/target/
+target/

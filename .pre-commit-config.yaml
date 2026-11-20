@@ -12,8 +12,6 @@ repos:
         exclude: '^(docs/|dist/|vendor/|.*\.snap$)'
       - id: check-yaml
         args: [--allow-multiple-documents]
-      #- id: check-added-large-files
-      #  args: [--maxkb=500]
       - id: check-merge-conflict
 
   - repo: local
@@ -26,11 +24,11 @@ repos:
         files: ^(flake\.nix|flake\.lock)$
         always_run: true
 
-  - repo: local
-    hooks:
-      - id: update-readme
-        name: Update README.md
-        entry: bash hooks/update-readme.sh
-        language: system
-        pass_filenames: false
-        always_run: true
+#  - repo: local
+#    hooks:
+#      - id: update-readme
+#        name: Update README.md
+#        entry: bash hooks/update-readme.sh
+#        language: system
+#        pass_filenames: false
+#        always_run: false

@@ -4,15 +4,20 @@
 
 <br>
 
-<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/logo.png">
+<a href="https://quackhack-mcblindy.github.io/zigduck">
   <img src="images/logo.png" alt="Logo" width="330">
+</a>
+<a href="https://quackhack-mcblindy.github.io/zigduck">
+  <img src="images/automations.png" alt="automations" width="580">
 </a>
 
 <!-- VERSIONS_START -->
 
 ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
 ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.11-black?style=flat)
-![CI](https://github.com/quackhack-mcblindy/zigduck/actions/workflows/ci.yml/badge.svg)
+
+![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
+![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
 
 ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
 ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
@@ -25,57 +30,226 @@
 <a href="https://quackhack-mcblindy.github.io/zigduck/">🦆 Zigduck Wiki</a>.
 <br>
 
+
 # **A Flake For Your House**
 
+A declarative, reproducible smart-home operating system (NixOS) for people who want their home automation to be as maintainable as their infrastructure.
+Zigduck home automation system brings reproducibility, version control, and natural-language control to your deployable smart home.<br>
 
-**zigduck** is the flake that brings version control to your smart home.<br>
-A **NixOS**-based Zigbee full-stack home automation system that's reproducible and deployable.<br>
-Nix for configuration, Rust for responsive async runtime.<br>
-Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json and adb.<br>
+Nix for configuration, Rust for **blazing fast** responsive async runtime.<br>
+Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json, adb and yo.<br>
 
 **Define once, deploy forever.**
 
 **zigduck** uses smart defaults, after defining your rooms & devices --<br>
 most users don’t need to write any automations at all.<br>
 Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
+
+A built-in natural-language automation engine supporting hundreds of millions of possible phrases, with full device, TV and EPG control, timers, alarms, notifications, text-to-speech, and advanced logic (if not, if, while, until, when, chain, state) — all ready to use out of the box, with no grammar definitions or scripts to configure. <br>
+Much much faster than any LLM and at a much lower power consumption - plus no hallucinations!<br>
+Users can even write their automations at runtime.
+
 **EVERYTHING** is configurable via NixOS options.<br>
 
-Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
+
+Use the <a href="images/screenshot02.png">GNOME Shell extension</a> *(seperate flake)* for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
 
 
 
-```markdown
-            Nix
-             │
-             ▼
-          zigduck
-             │
-      ┌──────┴──────┐
-      ▼             ▼
-    MQTT         REST API
-      │             │
-      ▼             ▼
- zigbee2mqtt    adb/media
-      │             │
-      └──────┬──────┘
-             ▼
-          Devices
-```
 
 <br>
+
 
 ![Zigduck GNOME Shell extension](Screenshots/zigduck-widget.gif)
 
 <br>
 
+## **Detailed project tree view**
+
+<details><summary><strong>
+❄️ View project tree (with info)
+</strong></summary>
+
+
+```markdown
+zigduck/
+├── flake.nix         
+├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md              # guidelines / templates for contributions
+│
+├── .github/  
+│   └── workflows/  
+│       ├── ci.nix               # release ci / tests
+│       └── wiki.nix             # docs workflow 
+│
+├── modules/            # NixOS modules — what services run
+│   ├── zigduck.nix              # Main daemon
+│   ├── dashboard.nix            # Web dashboard / API
+│   ├── tv.nix                   # TV control
+│   ├── cards.nix                # Dashboard cards
+│   │
+│   ├── grammar/        # Natural-language grammar
+│   │   ├── lib.nix              #   Grammar library
+│   │   ├── en/         #   English
+│   │   │   └── words.nix        #     english common words / numbers
+│   │   │
+│   │   └── sv/         #   Swedish
+│   │       ├── words.nix        #      swedish common words / numbers
+│   │       └── automate.nix     #     grammar for automate script.
+│   │
+│   └── scripts/        # Natural-language automations
+│       ├── lib.nix              #   Script helpers
+│       │
+│       ├── core/       #   Core scripts
+│       │   ├── automate.nix     #     `automate` commands
+│       │   ├── chain.nix        #     `chain` commands
+│       │   ├── if.nix           #     `if` commands
+│       │   ├── loop.nix         #     `loop` commands
+│       │   ├── while.nix        #     `while` commands
+│       │   ├── wait.nix         #     `wait` commands
+│       │   └── until.nix        #     `until` commands
+│       │
+│       ├── media/      #   zigduck-tv & zigduck-epg
+│       │
+│       ├── misc/                #   Misc voice control commands
+│       │   ├── alarms.nix       #   full zigduck cli controller 
+│       │   └── timer.nix        #   State queries
+│       │
+│       └── zigbee/     #   zigduck-cli
+│           ├── house.nix        #   full zigduck cli controller 
+│           ├── state.nix        #   State queries
+│           ├── countdown.nix    #   shutdown counter
+│           └── compare.nix      #   compare metrics queries
+│
+├── options/            # NixOS options — how it's configured
+│   ├── devices.nix
+│   ├── rooms.nix
+│   ├── presence.nix
+│   ├── dashboard.nix
+│   ├── tv.nix
+│   ├── https.nix
+│   └── zigbee/         # Coordinator, automations, scenes, dimmer, …
+│
+├── packages/           # Buildable artifacts
+│   │
+│   ├── zigduck/        # 🦆 Daemon (Rust) — library + 2 binaries
+│   │   └── src/
+│   │       ├── lib.rs                   # Crate root — re-exports all modules
+│   │       ├── main.rs                  # bin: zigduck (the daemon, 44 lines)
+│   │       ├── zigduck-api.rs           # bin: zigduck-api (HTTP server)
+│   │       │
+│   │       ├── state.rs                 # ZigduckState — shared application state
+│   │       ├── scheduler.rs             # Periodic task tickers
+│   │       ├── net.rs                   # Network reachability probes
+│   │       │
+│   │       ├── domain/ # Pure data types (no logic)
+│   │       │   ├── mod.rs
+│   │       │   ├── automation.rs        # AutomationAction, Condition, schedules
+│   │       │   ├── dashboard.rs         # DashboardConfig, DashboardCardConfig
+│   │       │   ├── device.rs            # Device
+│   │       │   └── scene.rs             # Scene, SceneConfig
+│   │       │
+│   │       ├── config/ # Config file parsing (serde)
+│   │       │   ├── mod.rs               # HouseConfig (root)
+│   │       │   ├── dark_time.rs         # DarkTimeConfig
+│   │       │   ├── dimmer.rs            # DimmerConfig, DimmerActions
+│   │       │   ├── house_device.rs      # HouseDevice, HouseControl
+│   │       │   ├── hue.rs               # HueConfig
+│   │       │   ├── mqtt.rs              # MosquittoConfig
+│   │       │   ├── no_motion.rs         # NoMotionConfig
+│   │       │   ├── presence.rs          # PresenceConfig
+│   │       │   ├── simple_actions.rs    # SimpleActionsConfig
+│   │       │   └── tv.rs                # TvConfig
+│   │       │
+│   │       ├── automations/ # Automation engine
+│   │       │   ├── mod.rs               # away_duration helper
+│   │       │   ├── action.rs            # execute_automation_action*, run_simple_action
+│   │       │   ├── condition.rs         # check_conditions, is_dark_time, time/presence
+│   │       │   ├── presence.rs          # execute_presence_action, presence shell
+│   │       │   └── trigger.rs           # execute_automations, MQTT triggers
+│   │       │
+│   │       ├── mqtt/        # MQTT transport
+│   │       │   ├── mod.rs               # mqtt_publish
+│   │       │   ├── listener.rs          # start_listening (event loop, reconnect)
+│   │       │   └── router.rs            # process_message dispatcher, perf stats
+│   │       │
+│   │       ├── devices/     # Device state & control
+│   │       │   ├── mod.rs
+│   │       │   ├── command.rs           # handle_device_command (Hue/Z2M routing)
+│   │       │   ├── house.rs             # handle_house_device_set, control actions
+│   │       │   └── state.rs             # update_device_state*, get_state, refreshers
+│   │       │
+│   │       ├── presence/    # Presence detection
+│   │       │   └── mod.rs               # start_presence_probes, check_presence_transition
+│   │       │
+│   │       ├── motion/      # Motion tracking
+│   │       │   └── mod.rs               # MotionTracker, has_recent_motion_in_room
+│   │       │
+│   │       ├── lights/      # Light groups & control
+│   │       │   └── mod.rs               # room_lights_on/off, control_all_lights
+│   │       │
+│   │       ├── scenes/      # Scene activation
+│   │       │   └── mod.rs               # activate_scene, resolve_scene_name
+│   │       │
+│   │       ├── snapshots/   # State snapshots
+│   │       │   └── mod.rs               # create_snapshot, restore_snapshot
+│   │       │
+│   │       ├── dimmer/      # Dimmer switch handling
+│   │       │   └── mod.rs               # handle_room_dimmer_action, check_double_click
+│   │       │
+│   │       ├── hue/         # Hue Bridge client
+│   │       │   └── mod.rs               # HueClient, convert_to_hue_payload
+│   │       │
+│   │       └── tv/          # TV state tracking (ADB)
+│   │           ├── mod.rs               # TvProbe, check_tv_power
+│   │           └── tracker.rs           # start_tv_state_trackers
+│   │
+│   ├── zigduck-cli/         # 🦆 Command-line controller
+│   ├── zigduck-tv/          # 🦆 TV control (ADB)
+│   ├── zigduck-epg/         # 🦆 EPG scraper (Python)
+│   └── zigduck.nix          # Package aggregator
+│
+├── static/                  # Web dashboard assets
+├── wiki/                    # Documentation site
+├── hooks/                   # CI hooks
+└── devShells/               # Development shells / grammar testing
+``` 
+
+</details>
+
+<br>
+
 ## **Installation**
+
+
+### **Two installation paths**
+
+**🖥️ Automated USB installer** *(dedicated host)*
+ - Pick me if you never heard about NixOS and don't want to hear about NixOS.
+ - Insert USB, boot, wait for shutdown. Eject USB, boot & you are done.
+
+
+**❄️ Nix flake module** *(recommended)*
+ - For users already running NixOS with flakes
+ - Full control — every option exposed as a NixOS module
+ - Coexists with your other services on the same host
+ - Ideal for power users and custom configurations
+
+
+### **Two configuration paths (initial device/room/scenes config)**
+
+
+ - Generate your Nix device config using JS from GitHub Pages. Phone/bbrowser friendly.
+ - Write it yourself. (fun)
+ 
 
 <details><summary><strong>
 ❄️ Using flakes
 </strong></summary>
 
 
-#### **1: Add zigduck & yo as inputs in your flake.nix**
+#### **1: Add zigduck as inputs in your flake.nix**
 
 ```nix
   inputs = {
@@ -111,10 +285,6 @@ Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a han
       enable = true;
       cli.enable = true;
 
-      # enable to install the package and get a gnome widget in top bar
-      # enable extension with `gnome-extensions enable zigduck@quackhack-mcblindy.com`
-      gnomeExtension.enable = true;
-      
       # for security reasons, it's highly recommended to serve the dashboard over a reverse proxy (Nginx, Caddy, Traefik, etc).
       dashboard = {
         enable = true;
@@ -132,461 +302,116 @@ Includes a <a href="images/screenshot02.png">GNOME Shell extension</a> for a han
 
 <br>
 
-## **Configuration**
+## **Configuration / Setup / Quick Start**
 
-See all options in the <a href="https://quackhack-mcblindy.github.io/zigduck/reference/options/">🦆 Zigduck Wiki</a>.
+
+📖 **Full documentation:** [quackhack-mcblindy.github.io/zigduck](https://quackhack-mcblindy.github.io/zigduck)
+
 <br>
 
+
+
+## **Example Usage**
+
+Just at a glance, please see the [documentation](https://quackhack-mcblindy.github.io/zigduck) for more information.
+
+
 <details><summary><strong>
-🛜 Zigbee configuration
+Example usage (automations written in Swedish) 
 </strong></summary>
 
-
-**Example configuration:**
+<br>
 
 ```nix
+{
+  config,
+  lib,
+  pkgs,
+  ...
+} : {
   house = {
-    zigbee = {
-      # points to the zigbee network encryption key. zigbee devices join a network using this key.
-      # if you lose/change it, all devices must be re-paired.
-      # without this network key there is no reproducibility!
-      networkKeyFile = config.sops.secrets.z2m_network_key.path;
+    languages = [ "en" ];
 
-      # define coordinator stick
+    zigbee = {
+      # 🦆says⮞ coordinator configuration
       coordinator = {
-        vendorId =  "10c3"; # USB identifiers
-        productId = "ea61";
-        symlink = "zigbee"; # symlinks usb port as "/dev/zigbee"
+        vendorId  =  "10c4";
+        productId = "ea60";
+        symlink   = "zigbee"; # 🦆 says ⮞ diz symlinkz da serial port to /dev/zigbee
       };
 
-      mosquitto = {
-        host = "192.168.1.110";
-        username = "duckmqtt";
-        passwordFile = config.sops.secrets.mosquitto.path;
-      };
+      # 🦆 ⮞ clickin' fast cyclez scnes in da dimmers room!
+      dimmer.doubleClickTimeout = 500;
 
-
-      # [optional] Philips Hue hdmi sync box
-      hueSyncBox = {
-        enable = true;
-        syncBox = {
-          ip = "192.168.1.34";
-          passwordFile = config.sops.secrets.hueBridgeAPI.path;
-          tv = "shield";
-        };
-        # Philips Hue bridge required for sync box
-        # hue devices are still fully integrated
-        bridge = {
-          ip = "192.168.1.33";
-          # to fetch api token:
-          # curl -X POST http://192.168.1.33/api -d '{"devicetype":"house#nixos"}'
-          passwordFile = config.sops.secrets.hueBridgeAPI.path;
-        };
-      };
-    };
-```
-
-<br>
-</details>
-
-<details><summary><strong>
-🛁 Rooms
-</strong></summary>
-
-**Example configuration:**
-
-```nix
-  house = {
-    rooms = {
-      bedroom.icon    = "mdi:bed";
-      hallway.icon    = "mdi:door";
-      kitchen.icon    = "mdi:food-fork-drink";
-      livingroom.icon = "mdi:sofa";
-      wc.icon         = "mdi:toilet";
-      tv-area = {
-        icon          = "mdi:television";
-        # optional Philips Hue Play HDMI Sync Box integration
-        entertainment = true;
-      };  
-    };
-```
-
-</details>
-
-<details><summary><strong>
-💡 Lights /  Devices
-</strong></summary>
-
-<br>
-
-zigduck always uses smart defaults.<br>
-Define a dimmer, or motion sensor and those devices would default to control it's defined room, unless overridden.<br>
-
-**Example configuration:**
-
-```nix
-  house = {
-    zigbee = {
-      devices = {
-        "0x0016830103ba7e95" = { # 64bit IEEE address (this is the unique device ID)
-          friendly_name = "Dimmer Switch Kitchen"; # simple human readable friendly name
-          room = "kitchen"; # bind to group
-          type = "dimmer"; # device type (light, hue_light, dimmer, motion, sensor, blinds, ...)
-          endpoint = 1; # zigbee endpoint
-          icon = "mdi:toggle-switch"; # icon used on dashboard/widget
-          batteryType = "CR2450"; # optional - displayed inside widget
-        };
-        "0x0017880402750848a" = {
-          friendly_name = "Spotlight 1";
-          room = "kitchen";
-          type = "light";
-          icon = "mdi:spotlight";
-          supports_temperature = true;
-          endpoint = 11;
-        };
-        "00178801095f06300b" = {
-          friendly_name = "TV Play Strip";
-          room = "tv-area";
-          type = "hue_light";
-          icon = "mdi:light-strip";
-          endpoint = 1;
-          supports_color = true;
-          hue_id = 38;
-        };
-        "0x54ef4410003e58e2" = {
-          friendly_name = "Roller Shade";
-          room = "livingroom";
-          type = "blind";
-          icon = "mdi:blinds";
-          endpoint = 1;
-        };
-        "0x00178801021311c4" = {
-          friendly_name = "Motion Sensor Hall";
-          room = "hallway";
-          type = "motion";
-          icon = "mdi:motion-sensor";
-          endpoint = 1;
-          batteryType = "AAA";
-        };
-        "0x00158d00053ec9b1" = {
-          friendly_name = "Door Sensor Hall";
-          room = "hallway";
-          type = "sensor";
-          icon = "mdi:door";
-          endpoint = 1;
-        };
-      };
-    };
-```
-
-<br>
-
-Users may also define additional *(non-zigbee)* devices.<br>
-These devices are read-only but may still be useful.<br>
-
-**Example configuration:**
-
-```nix
-  house = {
-    devices = {
-      "ESP32-S3" = {
-        enable = true;
-        room   = "other";
-        icon   = "mdi:watch";
-        ip     = "192.168.1.111";
-
-        state.endpoint = "/api/sensors";
-        state.refresh  = 60;
-             
-        # create action controls for automations / frontend control
-        controls = { # publish your devices payload @ "zigduck/watch" to show in frontend 
-          brightness  = { # if you interact with the "brightness" slider it will publish @ "zigduck/watch/set"
-            type        = "slider"; # which then will run the corresponding actions user defined.
-            icon        = "mdi:brightness-6";
-            min         = 0;
-            max         = 100;
-            description = "Controls the display backlight brightness level";
-            actions     = [ { type = "shell"; command = "curl http://$IP/api/settings/display/brightness/$VALUE"; } ];
-          };
-        };
-      };  
-    };
-  };  
-```
-
-<br>
-User can now for example publish JSON health data to `zigduck/desktop` and it can be viewed by zigduck.
-<br>
-
-
-</details>
-
-
-
-
-<details><summary><strong>
-🎚 Dimmers /  Motion (optional)
-</strong></summary>
-
-<br>
-
-**Example configuraiton:**
-
-```nix
-    house.zigbee = {
-      dimmer = {
-        message = "action";
-
-        # double clicking automatically cycles defined scenes in the dimmers room.
-        doubleClickTimeout = 500; # ms
-
-        # optional as these defaults match most dimmers
-        #actions = {
-        #  onPress = "on_press_release";
-        #  onHold = "on_hold_release";
-        #  upPress = "op_press_release";
-        #  upHold = "up_hold_release";
-        #  downPress = "down_press_release";
-        #  downHold = "down_hold_release";
-        #  offPress = "off_press_release";
-        #  offHold = "off_hold_release";
-        #};
-      };
-
+      # 🦆 says ⮞ when motion triggers lights on
       motion = {
-        when.dark.enable = true; # enabled by default
+        when.dark.enable = true;
         trigger.lights = {
-          # time window in which motion trigger lights on
-          after = 14;
-          before = 9;
-          duration = 900;     # turn off lights again after x seconds of no motion
-          transition = false; # enable to fade off the lights
+          after        = 14;
+          before       = 9;
+          duration     = 700;
+          transition   = true;
         };
       };
 
-      no.motion = {
-        trigger.all.lights.off = {
-          enable = true; # disabled by default
-          after = 60; # minutes
-          exclude = [ "Spotlight 1" "Spotlight 2" ]; # exclude list of devices by friendly name. (wont turn off)
+      # 🦆 says ⮞ when no motion triggers ALL lights off
+      no.motion.trigger = {
+        all.lights.off  = {
+          enable  = true;
+          after   = 90;  # 🦆 says ⮞ min
+          exclude = [ ]; # 🦆 says ⮞ list of strings, devices to exclude (friendly name/alias, leaves their states as-is)
         };
       };
-```
 
-<br>
-
-### Default dimmer actions
-
-| Action | Behavior |
-| --- | --- |
-| **On — press** | Turn on all room lights |
-| **On — multiple presses** | Cycle through room scenes |
-| **On — hold** | Turn on all lights |
-| **Up — press** | Increase room brightness |
-| **Down — press** | Decrease room brightness |
-| **Off — press** | Turn off room lights |
-| **Off — hold** | Turn off all lights |
-
-To customize these actions, configure the automation type `house.zigbee.automations.dimmer_actions`.
-
-<br>
-
-</details>
-
-<details><summary><strong>
-🎨 Scenes (optional)
-</strong></summary>
-
-
-**Example configuraiton:**
-
-```nix
-  house.zigbee = {
-    scenes = {
-      "Scene name" = {
-        # device friendly_name
-        "Spotlight 1" = {
-          state = "ON";
-          brightness = 200;
-          color = { hex = "#00FF00"; };
-        };
-        "Spotlight 2" = {
-          state = "OFF";
-          transition = 100;
-        };
-        # ... more lights
-```
-
-<br>
-
-</details>
-
-
-<details><summary><strong>
-🤖 Automations (optional)
-</strong></summary>
-
-**Example configuraiton:**
-
-```nix
-  house = {
-    zigbee = {
-      # there are 6 different automation types
-      automations = {
-        # + a greeting automation
-        greeting = {
+      automations = { 
+        string.prefix = "yo do";
+        # 🦆 says ⮞ there are 6 different automation types
+        # 🦆 ⮞ + a greeting automation
+        greeting  = {
           enable       = true;
-          awayDuration = 7200;                  # only trigger if nobody home for x seconds
-          door         = "Door Sensor Hallway"; # when this door opens
-          delay        = 10;                    # wait x seconds before action is performed
-          actions = [
-            {
-              type = "shell";
-              command = ''
-                tts command here for example
-              '';
-            }
-          ];
+          awayDuration = 7200;
+          door         = "Door Sensor Hall";
+          delay        = 10; # 🦆 ⮞ welcome back home idiot
+          actions = [ "säg välkommen hem idiot" ];
         };
 
-        # 1. time based automations
-        time_based = {
-          morning_wakeup = {
-            enable = true;
-            description = "set morning wakeup alarm";
-            schedule = {
-              start = "01:00";
-              days = ["mon" "tue" "wed" "thu" "fri"];
-            };
-            actions = [ "zigduck-cli alarm add --hours 11 --minutes 00" ];
-          };
-        };
-
-        # 2. MQTT triggered automations
-        mqtt_triggered = {
-          alarm_wakeup = {
-            enable = true;
-            description = "Time to wake up!";
-            topic = "zigbee2mqtt/alarm/triggered";
-            actions = [
-              # there are 7 different automation action types
-              # 1. shell
-              { type = "shell"; command = "tv --typ youtube --search 'nisse snus'"; }
-              # 3. snapshot
-              { type = "snapshot"; snapshot_name = "before_alarm"; }
-              # 4. scene
-              { type = "scene"; scene = "max"; }
-              # 5. mqtt
-              { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 3/set"; message = ''{"state":"OFF"}''; }
-              { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 4/set"; message = ''{"state":"OFF"}''; }
-              # 6. wait
-              { type = "wait"; duration = 10; }
-              { type = "scene"; scene = "dark-fast"; }
-              { type = "wait"; duration = 2; }
-              { type = "shell"; command = "curl http://192.168.1.13/api/settings/speaker/play/ding"; }
-              # 7. simple string (shell shortcut)
-              # (if using `yo`) this can be used for simple automations using natural language
-              "yo do 'turn on all lights'"
-              { type = "wait"; duration = 2; }
-              { type = "shell"; command = "curl http://192.168.1.15/api/settings/speaker/play/ding"; }
-              { type = "wait"; duration = 10; }
-              { type = "mqtt"; topic = "zigbee2mqtt/Roller Shade/set"; message = ''{"state":"ON"}''; }
-              # 8. restore (snapshot)
-              { type = "restore"; snapshot_name = "before_alarm"; }
-            ];
-          };
-
-          timer_finish = {
-            enable = true;
-            description = "a timer is ringing";
-            topic = "zigbee2mqtt/timer/finished";
-            actions = [
-              { type = "scene"; scene = "max"; }
-              { type = "shell"; command = "curl http://192.168.1.15/api/settings/speaker/play/ding"; }
-              { type = "wait"; duration = 7; }
-              { type = "scene"; scene = "dark-fast"; }
-              { type = "wait"; duration = 2; }
-              { type = "scene"; scene = "max"; }
-            ];
-          };
-        };
-
-        # 3. room action automations
+        # 🦆 says ⮞ 2. room action automations
         room_actions = {
-          hallway = {
-            # simple string can be used as "shell" automation action
-            door_opened = [ "curl http://192.168.1.15/api/settings/speaker/play/ding" ];
-            door_closed = [];
-          };
-
           kitchen = {
             motion_not_detected = [
-              {
-                type = "shell";
-                command = ''
-                  power=$(jq -r '."Fläkt".power' /var/lib/zigduck/state.json)
-                  # if kitchen fan is consuming energy turn it off after 2 minutes
-                  if (( power > 20 )); then
-                    zigduck-cli --publish --topic "zigduck/Fläkt/set" --payload '{"countdown": 120}'
-                  fi
-                '';
-              }
-              # slowly turn off kitchen lights
-              { type = "scene"; scene = "kitchenFadeOff"; }
+              # 🦆 ⮞ if fan is on and consuming power, start countdown to turn fan off. and slowly fade off lights.
+              "om fläkten drar mer än tjugo watt så stäng fläkten om etthundraåttio sekunder sedan släck köket långsamt"
             ];
 
             motion_detected = [
-              # instant lights
+              # 🦆 ⮞ "big" 20ms win - worth it here
               { type = "scene"; scene = "kitchenInstant"; }
-              {
-                type = "shell";
-                command = ''
-                  # cancel any pending countdown
-                  zigduck-cli --publish --topic "zigduck/Fläkt/set" --payload '{"countdown": 0}'
-                  # if fan is off - start it
-                  STATE=$(jq -r '."Fläkt".state' /var/lib/zigduck/state.json)
-                  if [ "$STATE" = "OFF" ]; then
-                    zigduck-cli --device "Fläkt" --state on
-                  fi
-                '';
-              }
+              # 🦆 ⮞ 1: start lights.
+              # 🦆 ⮞ 2: cancel the off-countdown on fan.
+              # 🦆 ⮞ 3: if my team is playin' NOW activate scene & if tv is off start the game on TV and TTS dat the game is on now
+              "stäng fläkten om noll sekunder samt om fläkten är av så sätt på fläkten"
+              "om björklöven spelar just nu så aktivera scenen löven och om tvn är av så släng igång lajv björklöven för fan plus säg nu börjar match klant"
             ];
           };
         };
 
-
-        # 4. global actions automations
-        global_actions = {
-          leak_detected = [ "notify '🚨 WATER LEAK DETECTED!'" ];
-          smoke_detected = [ "notify '🔥 SMOKE DETECTED!'" ];
-        };
-
-        # 5. dimmer actions automations (default configured per room)
-        dimmer_actions = {
-          bedroom = {
-            off_hold_release = {
-              enable = true;
-              description = "Turn off all configured light devices + turn off kitchen fan";
-              extra_actions = [];
-              override_actions = [
-                {
-                  type = "scene";
-                  scene = "dark";
-                }
-                {
-                  type = "mqtt";
-                  topic = "zigbee2mqtt/Fläkt/set";
-                  message = ''{"state":"OFF"}'';
-                }
-              ];
+        time_based = {
+          tv_scraping   = {
+            enable      = true;
+            description = "Scrape TV-guide";
+            # 🦆 says ⮞ 03:30 AM everyday
+            schedule    = {
+              start     = "03:30";
+              days      = ["mon" "tue" "wed" "thu" "fri" "sat" "sun"];
             };
+            # 🦆 says ⮞ scrape & save so frontend can read it (from zigduck user)
+            actions  = [ "skrapa webben efter tv guiden och spara i ${zigduck.stateDir}" ];
           };
-        };
-
-        # 6. presence based automations
-        presence_based = {};
+        };  
       };
+    };  
 
+  };}
 ```
 
 <br>
@@ -594,202 +419,88 @@ To customize these actions, configure the automation type `house.zigbee.automati
 </details>
 
 
+<br>
+
+
 <details><summary><strong>
-📺 Media (optional)
+Example usage (automations written in Nix) 
 </strong></summary>
 
-**Zigduck** can control your TV's using `adb` via the included package `tv`.<br>
-Everything is handled declaratively even the EPG scraping options.<br>
-Scraping also uses smart defaults but overrides can be applied globally or on a per-channel basis.<br>
-
-The `tv-scraper` binary can output an EPG in three different formats, XML, JSON and HTML.<br>
-The zigduck GNOME Shell extension expects the JSON file to be located at `~/.local/share/zigduck/epg.json` to be able to view the TV-Guide from the widget.  
-
-**Example configuraiton:**
+<br>
 
 ```nix
+{
+  config,
+  lib,
+  pkgs,
+  ...
+} : {
   house = {
-    # Android TV requires a `https` domain (TLS) to be able to play external .m3u files
+    zigbee = {
+      networkKeyFile = config.sops.secrets.z2m_network_key.path;
 
-    https.media.url = "https://my-media-domain.org";
-
-    # or if you want to keep your url outside of Git
-    # example file contents: ```https://my-media-domain.org```
-    # https.media.urlFile = config.sops.secrets.webserver.path;
-
-    # root directory for the media library.
-    # the URL above should point to this directory as a file server.
-    # no external port needs to be exposed on router as long as the TLS certificate remains valid.
-    media.root = "/Pool";
-
-    # YouTube API token
-    media.youtubePasswordFile = config.sops.secrets.youtubeAPI.path;
-
-    # media type directories
-    media = {
-      movies = "/Pool/Movies";
-      tv = "/Pool/TV";
-      music = "/Pool/Music";
-      musicVideos = "/Pool/Music_Videos";
-      otherVideos = "/Pool/Other_Videos";
-      podcasts = "/Pool/Podcasts";
-    };
-
-
-    # tv devices
-    tv = {
-      "my-tv" = {
-        ip = "192.168.1.123";
-        room = "bedroom";
-        # applications (activity name)
-        apps = {
-          telenor = "se.telenor.stream/.MainActivity";
-          tv4 = "se.tv4.tv4playtab/se.tv4.tv4play.ui.mobile.main.BottomNavigationActivity";
-        };
-        
-        channels = {
-          "1" = {
-            name = "SVT1";
-            id = 1;
-            # or use a direct stream url
-            # stream_url = "https://url.com/";
-            # command to start a application based channel
-            cmd = "open_telenor && wait 5 && start_channel_1";
-            
-            # url used by tv-scraper to fetch TV guide data for this channel
-            scrape_url = "https://tv-tabla.se/tabla/svt1/";
-            
-            # per-channel scraper overrides
-            scraper = {
-              row_xpath   = ''//table[@id="channel-schedule"]//tr'';
-              time_xpath  = ".//time";
-              time_attr   = "datetime";
-              title_xpath = ''..//a[contains(@class, "program-title")]'';
-              desc_xpath  = ".//p";
-              time_formats = [ "%H:%M" "%H.%M" ];
-              time_strip_pattern = "[^\\d:\\.]";
-              default_duration_minutes = 30;
-              pm_heuristic_after_hour = 12;
-            };
+      automations = {
+        mqtt_triggered = {
+          flash_lights = {
+            enable = true;
+            description = "Flash lights";
+            topic = "zigduck/effects/flash";
+            actions = [
+              { type = "snapshot"; snapshot_name = "before_timer"; }
+              { type = "scene"; scene = "max"; }
+              { type = "wait"; duration = 2; }
+              { type = "scene"; scene = "dark-fast"; }
+              { type = "wait"; duration = 2; }
+              { type = "scene"; scene = "max"; }
+              { type = "wait"; duration = 2; }
+              { type = "scene"; scene = "dark-fast"; }
+              { type = "wait"; duration = 2; }
+              { type = "scene"; scene = "max"; }
+              { type = "wait"; duration = 2; }
+              { type = "restore"; snapshot_name = "before_timer"; }
+            ];
           };
-          # ...
-        };
-      };
-      "my-other-tv" = {
-        ip = "192.168.1.124";
-        room = "livingroom";
-        isDefault = true;
-      };
-    };
-  };
-```
-
-<br>
 
 
+          alarm_wakeup = {
+            enable = true;
+            description = "Time to wake up!";
+            topic = "zigduck/alarm/triggered";
+            actions = [
+              { type = "mqtt"; topic = "zigduck/effects/flash"; message = " "; }
+              # 🦆 says ⮞ TTS time to wake up
+              { type = "shell"; command = "yo say 'wakieee wakiee dags att vaknaaaaaaa'"; }
+              # 🦆 says ⮞ fuck up bed (neck up + feet up)
+              { type = "mqtt"; topic = "zigduck/Robot Arm 3/set"; message = ''{"state":"OFF"}''; }
+              { type = "mqtt"; topic = "zigduck/Robot Arm 4/set"; message = ''{"state":"OFF"}''; }
+              { type = "wait"; duration = 10; }
+              # 🦆 says ⮞ FLASH!
+              { type = "mqtt"; topic = "zigduck/effects/flash"; message = " "; }
+              # 🦆 ⮞ play sound on bedroom esp32 assistant
+              { type = "shell"; command = "curl http://192.168.1.13/api/settings/speaker/play/ding"; }
 
-</details>
-
-
-<details><summary><strong>
-🌐 Dashboard (optional)
-</strong></summary>
-
-<br>
-
-<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3316.png">
-  <img src="images/IMG_3316.png" alt="Rooms" width="148">
-</a>
-
-<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3314.png">
-  <img src="images/IMG_3314.png" alt="Device" width="148">
-</a>
-
-<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3315.png">
-  <img src="images/IMG_3315.png" alt="Device" width="148">
-</a>
-
-<a href="https://github.com/QuackHack-McBlindy/zigduck/blob/main/images/IMG_3313.png">
-  <img src="images/IMG_3313.png" alt="Scenes" width="148">
-</a> <br> <br>
-
-
-
-**Example optional configuraiton:**
-
-
-```
-  house = {
-    zigbee.automations = {
-      # first let's create a file that the status card below can read
-      mqtt_triggered = {
-        temperature_update = {
-          enable = true;
-          description = "Update living room temperature on the dashboard";
-          topic = "zigbee2mqtt/Living Room Sensor";
-          actions = [
-            {
-              type = "shell";
-              command = ''
-                # read the MQTT payload, extract the "temperature" field,
-                # and write it to /var/lib/zigduck/temperature.json with a history array.
-                VALUE=$(echo "$MQTT_PAYLOAD" | jq '.temperature')
-                FILE="/var/lib/zigduck/temperature.json"
-                mkdir -p "$(dirname "$FILE")"
-
-                if [ ! -s "$FILE" ]; then
-                  jq -n --argjson v "$VALUE" '{ temperature: $v, history: [$v] }' > "$FILE"
-                else
-                  jq --argjson v "$VALUE" '
-                    .temperature = $v |
-                    .history += [$v] |
-                    .history = (.history[-200:])
-                  ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+              { type = "wait"; duration = 2; }
+              # 🦆 says ⮞ ping watch with a ding
+              { type = "shell"; command = "curl http://192.168.1.15/api/settings/speaker/play/ding"; }
+              # 🦆 says ⮞ gib me a sec pls...
+              { type = "wait"; duration = 10; }
+              # 🦆 says ⮞ roll up da blindz let da sun come in
+              { type = "mqtt"; topic = "zigduck/Roller Shade/set"; message = ''{"state":"ON"}''; }
+              # 🦆 says ⮞ check if im up yet....
+              { type = "shell"; command = ''
+                motion=$(jq -r '."Motion Sensor Sovrum".occupancy' /var/lib/zigduck/state.json)
+                # 🦆 says ⮞  if my lazy ass is still in bed, try calling the TV remote!
+                if [[ "$motion" == "false" ]]; then
+                  tv --typ call
                 fi
-              '';
-            }
-          ];
+              ''; }
+            ];
+          };
         };
-      };
+      };  
     };
 
-    # now we can create a customized card that reads and displays the temperature (with history chart)
-    dashboard = {
-      statusCards = {
-        temperature = {
-          enable = true;
-          title = "TEMPERATURE C";
-          group = "sensors";
-          icon = "fas fa-thermometer-half";
-          color = "#e74c3c";
-          theme = "glass";
-          filePath = "/var/lib/zigduck/temperature.json";
-          jsonField = "temperature";
-          format = "{value} °C";
-          detailsFormat = "Temperature in Hallway";
-          chart = true;
-          historyField = "history";
-          # perform a automation action when clicking the dashboard card
-          on_click_action = [
-            {
-              type = "shell";
-              command = "example shell command.'";
-            }
-          ];
-        };
-      };
-
-      # if user wants to have extra dashboard tabs
-      pages = {
-        "3" = {
-          icon = "fas fa-television";
-          title = "remote";
-          # symlink optional extra files/directories to webserver
-          files = { tv = "/var/lib/zigduck/tv"; };
-          css = # css code
-          code = # html code
-        };
-    };
+  };}
 ```
 
 <br>
@@ -797,297 +508,27 @@ The zigduck GNOME Shell extension expects the JSON file to be located at `~/.loc
 </details>
 
 
-
-<details><summary><strong>
-🎙️ Voice (optional)
-</strong></summary>
-
-The companion flake [yo](https://github.com/QuackHack-McBlindy/yo) is handling everything voice/natural language related, please see it's repo for installation instructions.
-
-Once setup, copy the `./modules/voice` directory into your NixOS configuration to be able to control your devices/rooms/media/timers/alarms etc.
-
-> **Note:** for `ESP32-S3` based `yo` clients - see the [yo-esp](https://github.com/QuackHack-McBlindy/yo-esp) library.
-
-
-To write additional custom voice commands, please see [yo](https://github.com/QuackHack-McBlindy/yo) for instructions.
-
-<br>
-</details>
-
-
-## **Usage**
-
-<details><summary><strong>
-Commandline
-</strong></summary>
-
 <br>
 
-### **Zigduck-CLI**
 
-<br>
+## **Supported Languages**
 
-> The **zigduck-cli** tool provides complete control over your smart home from the command line.
-> Below is its full help output – use `--help` at any time to see the same information.
+For language grammar contributions , see [CONTRIBUTING.md](CONTRIBUTING.md) <br>
 
-
-```
-Usage: zigduck-cli [OPTIONS] [COMMAND]
-
-Commands:
-  timer     
-  alarm     
-  snapshot  
-  help      Print this message or the help of the given subcommand(s)
-
-Options:
-  -b, --broker <BROKER>
-          MQTT broker host [env: MQTT_BROKER=] [default: 127.0.0.1]
-  -u, --user <USER>
-          MQTT username [env: MQTT_USER=] [default: mqtt]
-      --password-file <PASSWORD_FILE>
-          MQTT password file [env: MQTT_PASSWORD_FILE=]
-      --password <PASSWORD>
-          MQTT password [env: MQTT_PASSWORD=]
-  -v, --verbose...
-          Verbosity level
-      --devices-config <DEVICES_CONFIG>
-          Path to devices configuration [env: DEVICES_CONFIG=]
-      --scenes-config <SCENES_CONFIG>
-          Path to scenes configuration [env: SCENES_CONFIG=]
-      --hue-bridge-ip <HUE_BRIDGE_IP>
-          Hue Bridge IP [env: HUE_BRIDGE_IP=]
-      --hue-api-key <HUE_API_KEY>
-          Hue Bridge API key [env: HUE_API_KEY=]
-      --hue-key-file <HUE_KEY_FILE>
-          Hue Bridge API key file [env: HUE_KEY_FILE=]
-      --device <DEVICE>
-          Device name (friendly name)
-      --room <ROOM>
-          Room name
-      --scene <SCENE>
-          Scene name
-      --list [<LIST>]
-          List devices, rooms, scenes, lights, or sensors [possible values: devices, rooms, scenes, lights, sensors]
-      --status
-          Show a formatted device status table including state, battery, temperature
-      --state-json
-          Dump full state.json (all devices) as JSON
-      --get-temp [<GET_TEMP>]
-          Get temperature readings from devices in a room (requires --room)
-      --get-bat [<GET_BAT>]
-          Get battery level for a device (requires --device)
-      --notify <NOTIFY>
-          Send a notification to the API (message text)
-      --tag <TAG>
-          Optional tag; a new notification with the same tag replaces the old one
-      --get-notify
-          Get all notifications as JSON
-      --clear-notify
-          Clear all notifications
-      --cards
-          Get all cards (with resolved value, details, history) as JSON
-      --state-file <STATE_FILE>
-          Path to local state.json (overrides API fetch) [env: ZIGDUCK_STATE_FILE=]
-      --pair [<PAIR>]
-          Pairing duration in seconds (default: 120)
-      --all-lights [<ALL_LIGHTS>]
-          Control all lights (optional true/false)
-      --blinds <BLINDS>
-          Control all blinds globally (up or down)
-      --cheap-mode <CHEAP_MODE>
-          Room name for cheap mode
-      --publish
-          Publish a raw MQTT message
-      --topic <TOPIC>
-          MQTT topic (used with --publish)
-      --json-cmd
-          Send raw JSON to a device
-      --state <STATE>
-          Device state: on/off/toggle/max/dark
-      --brightness <BRIGHTNESS>
-          Brightness percentage (1-100)
-      --color <COLOR>
-          Color name or hex code
-      --temperature <TEMPERATURE>
-          Color temperature (153-500)
-      --transition <TRANSITION>
-          Transition time in seconds
-      --payload <PAYLOAD>
-          Raw JSON payload (used with --json-cmd or --publish)
-      --backend <BACKEND>
-          Backend type (auto/zigbee/hue) [default: auto] [possible values: auto, zigbee, hue]
-      --json-output
-          Output list as JSON
-      --watch
-          Watch for new devices during pairing
-      --random
-          Pick a random scene
-      --scene-room <SCENE_ROOM>
-          Restrict scene to a specific room
-      --delay <DELAY>
-          Delay in seconds for cheap mode [default: 300]
-      --api-url <API_URL>
-          zigduck API URL [env: API_URL=]
-      --api-password-file <API_PASSWORD_FILE>
-          File containing API password [env: API_PASSWORD_FILE=]
-      --api-password <API_PASSWORD>
-          API password directly [env: API_PASSWORD=]
-  -h, --help
-          Print help (see more with '--help')
-```
-
-<br>
-
-*Example usage:*
-
-```
-zigduck-cli --scene myScene
-zigduck-cli --scene myScene --room kitchen
-zigduck-cli --blinds up
-zigduck-cli --device myLight --state on --brightness 90 --color red --transition 5
-zigduck-cli timer set --minutes 15 --seconds 30
-zigduck-cli alarm add --hours 07 --minutes 0
-zigduck-cli --publish --topic "zigduck/Fläkt/set" --payload '{"countdown": 0}'
-zigduck-cli snapshot create my_test
-zigduck-cli snapshot restore my_test
-```
+<!-- LANGUAGES_START -->
+| Language | Progress | Patterns |
+|----------|:---------|---------:|
+| 🇸🇪 Swedish | `████████████████████░` 100% | 6374 |
+| 🇬🇧 English | `████████░░░░░░░░░░░░` 42% | 2721 |
+| 🇩🇪 German | — | 0 |
+| 🇪🇸 Spanish | — | 0 |
+| 🇫🇷 French | ❌ eval error | — |
+| **Total** | | **9095** *(+1 failed)* |
+<!-- LANGUAGES_END -->
 
 <br>
 
 
-
-### **Android TV controller**
-
-<br>
-
-> The **tv** CLI tool provides a simple way of communicating with your TV over `ADB`.
-> It uses fuzzy search to find media and creates a playlist and tell the TV to play it.
-> Below is its full help output – use `--help` at any time to see the same information.
-
-<br>
-
-> **Note:** Please see the **media** configuration step before usage.
-
-
-```
-Cast media to an Android TV device via ADB
-
-Usage: tv [OPTIONS] --typ <TYP>
-
-Options:
-  -t, --typ <TYP>              [possible values: on, off, up, down, next, prev, previous, pause, play, call, youtube, tv, movie, podcast, music, musicvideo, audiobook, jukebox, song, othervideo, livetv, play_playlist, nav_up, nav_down, nav_left, nav_right, nav_select, nav_menu, nav_back, channel_up, channel_down, nav_home, nav_recents]
-  -s, --search <SEARCH>
-      --season <SEASON>
-      --room <ROOM>
-      --ip <IP>
-      --no-shuffle
-      --shuffle
-      --max-items <MAX_ITEMS>
-      --config <CONFIG>        [default: /etc/zigduck/tv-defaults.json]
-  -h, --help                   Print help
-
-```
-
-*Example usage:*
-
-```
-tv --typ on
-tv --typ music --search "iron maiden" --ip 192.168.1.123
-tv --typ tv --search "big bang theory"
-tv --typ song --search "the duck song" --room bedroom
-tv --typ youtube --search "play a youtube video"
-```
-
-
-<br>
-
-</details>
-
-
-<details><summary><strong>
-API
-</strong></summary>
-
-
-**Endpoints:**
-
-
-| Endpoint | Method | Description | Parameters |
-|----------|--------|-------------|------------|
-| `/` | GET | Service info and list of all endpoints | None |
-| `/browse`<br>`/browsev2`<br>`/api/browse`<br>`/api/browsev2` | GET | Browse media directory (legacy `ls` or improved `find`). `browsev2` returns full path. | `path` (relative to media root) |
-| **Timers** | | | |
-| `POST` | `/notify`<br>`/api/notify` | Add/update a notification. Message from `?message=...` or raw POST body. Optional `tag`; same tag replaces the old notification. |
-| `GET` | `/get-notify`<br>`/api/get-notify` | Get all notifications as JSON. |
-| `POST` | `/clear-notify`<br>`/api/clear-notify` | Clear all notifications. |
-| `/timers` | GET | List all timers | None |
-| `/timers/set` | POST | Create a new timer | `hours`, `minutes`, `seconds` (at least one >0), `topic`, `payload`, optional `name` |
-| `/timers/pause` | POST | Pause a running timer | `id` (timer ID) |
-| `/timers/resume` | POST | Resume a paused timer | `id` |
-| `/timers/cancel` | POST | Cancel (delete) a timer | `id` |
-| **Alarms** | | | |
-| `/alarms`<br>`/api/alarms` | GET | List all alarms | None |
-| `/alarms/add`<br>`/api/alarms/add` | POST | Add a new alarm | `hours` (0-23), `minutes` (0-59), `name`, optional `days` (comma-separated 0=Sun..6=Sat) |
-| `/alarms/remove`<br>`/api/alarms/remove` | POST | Remove an alarm | `id` |
-| `/alarms/toggle`<br>`/api/alarms/toggle` | POST | Toggle alarm on/off | `id` |
-| **Media (ADB)** | | | |
-| `/media/power/on`<br>`/api/media/power/on` | POST | Wake up media device | `device` (IP, default `192.168.1.224`) |
-| `/media/power/off`<br>`/api/media/power/off` | POST | Sleep media device | `device` |
-| `/media/next` | POST | Next track | `device` |
-| `/media/previous` | POST | Previous track | `device` |
-| `/media/play`<br>`/media/pause` | POST | Toggle play/pause | `device` |
-| `/media/volume/up` | POST | Volume up | `device` |
-| `/media/volume/down` | POST | Volume down | `device` |
-| `/media/playlist` | POST | Launch playlist on device (ADB intent) | `device`, optional `url` (defaults to webserver `/playlist.m3u`) |
-| **Playlist (m3u file)** | | | |
-| `/playlist/list` | GET | List current m3u playlist | None |
-| `/playlist/add` | POST | Add entry to playlist | `entry` (path) |
-| `/playlist/remove` | POST | Remove entry by index (0-based) | `index` |
-| `/playlist/shuffle` | POST | Shuffle playlist | None |
-| `/playlist/clear` | POST | Clear entire playlist | None |
-| **State** | | | |
-| `/state`<br>`/api/state` | GET | Full state of all Zigbee devices | None |
-| `/state/{device}`<br>`/api/state/{device}` | GET | State of a specific device | `{device}` (friendly name) |
-| `/state/room/{room}`<br>`/api/state/room/{room}` | GET | State of all devices in a room | `{room}` |
-| **Devices & Scenes** | | | |
-| `/device/list`<br>`/api/device/list` | GET | List all devices (from `devices.json`) | None |
-| `/device/{device}/{command}/{value}...` | POST | Control a device (multiple commands can be chained) | `{device}` name, then pairs like `state/on`, `brightness/200`, `color/%23FF5733`, `temperature/300` |
-| `/device/rooms`<br>`/api/device/rooms` | GET | List devices grouped by room | None |
-| `/device/types`<br>`/api/device/types` | GET | List devices grouped by type | None |
-| `/scene/{scene}`<br>`/api/scene/{scene}` | POST | Activate a scene | `{scene}` (scene name) |
-
-
-<br>
-
-</details>
-
-<br>
-
-
-<details><summary><strong>
-Inspiration?
-</strong></summary>
-
-<br>
-
-for a full real configuration example, view:
-*[my house](https://github.com/QuackHack-McBlindy/dotfiles/blob/main/modules/myHouse.nix)*
-
-<br>
-
-</details>
-
-<br>
-
-
-## **More Protocols**
-
-
-> If you’d like `zigduck` to support devices using other protocols, such as `Matter`, `Z-Wave`, or similar, please consider submitting a helpful PR with a suggested persistent device configuration. Please include enough information to provide a clear implementation strategy and keep `zigduck` fully reproducible. Thanks!
-
-
-<br>
 
 ## **License**
 

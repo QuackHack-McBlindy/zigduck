@@ -8,6 +8,7 @@
     ./tv.nix
     ./service.nix
     ./devices.nix
+    ./languages.nix
     ./zigbee
 
   ];}

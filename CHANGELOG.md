@@ -9,12 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `state_changed` automations for monitoring device property changes, with optional `from` and `to` value matching.
+- Added `device` as a supported automation action type, enabling direct device operations such as `set`, `toggle`, `on`, `off`, `open`, `close`, and `read`.
+- Added `deviceStateChangedType` to define device state-change automation configuration.
+- Added `yo` as flake input. 
+- Added new option: `house.languages` - choose your grammar (list of strings).
+- Added directories: `modules/grammar/` and `modules/scripts/`.
+- Added some core scripts used for natural language automation engine commands.
+- Added English and Swedish grannar for `core` anb`zigbee` scripts.
+- Added flake check for grammar fuzzy conflict detection.
+
 ### Changed
+
+- Massive structural refactoring, `zigduck` modularized, and other Rust binaries cleaned-up and renamed:
+  `zigduck-dashboard` -> `zigduck-apu`.
+  `tv`                -> `zigduck-tv`.
+  `tv-scraper`        -> `zigduck-epg`.
+  `zigduck-cli`       == `zigduck-cli`.
+
 
 ### Fixed
 
+- Fixed a transient `false` from `is_someone_home` firing the away action.
+- Fixed door/motion rule being applied in a branch that doesn't always run.
+ 
 ### Removed
 
+- GNOME Shell extension removed from this flake. Use https://github.com/QuackHack-McBlindy/zigduck-gnome-shell-extension
 
 ## [0.2.12] - 2026-11-09
 

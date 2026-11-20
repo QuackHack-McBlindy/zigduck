@@ -8,20 +8,14 @@ name: CI
 #  │
 #  │ push
 #  ▼
-# ┌───────────────────────────────────────────┐
-# │ BUILD ───────────────► CI only            │
-# │   │                                       │
-# │   ▼                                       │
-# │ DOCS ────────────────► get-options.sh     │
-# │                        commit hooks/*.json│
-# │                        to dev [skip ci]   │
-# └───────────────────────────────────────────┘
+# BUILD ────────────────► CI only
+#  │
 #  │
 #  │ PR
 #  ▼
 # main
 #  │
-#  │ merge dev ──► main
+#  │ merge dev --> main
 #  ▼
 # BUILD
 #  │
@@ -38,7 +32,7 @@ name: CI
 #  │
 #  ├── CHANGELOG [Unreleased]
 #  │        │
-#  │        └── promote ─► [0.3.1]
+#  │        └── promote --> [0.3.1]
 #  │
 #  ├── commit changelog
 #  │
@@ -47,7 +41,7 @@ name: CI
 #  ├── GitHub Release v0.3.1
 #  │
 #  ▼
-# SYNC dev <-- MAIN
+# sync dev <-- MAIN
 
 
 on:
@@ -85,41 +79,11 @@ jobs:
       - name: Build flake
         run: nix flake check --all-systems
 
-  docs:
-    name: Regenerate option reference
-    needs: build
-    if: >-
-      ${{
-        github.event_name == 'push' &&
-        github.ref == 'refs/heads/dev'
-      }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-        with:
-          ref: dev
-
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@v3.22.2
-
-      - name: Regenerate hooks/options.json and hooks/service.json
+      - name: Generate options/service JSON
         run: bash hooks/get-options.sh
 
-      - name: Commit if the JSON changed
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- hooks/options.json hooks/service.json; then
-            echo "Option reference is already up to date."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add hooks/options.json hooks/service.json
-          git commit -m "chore: regenerate option reference [skip ci]"
-          git push origin HEAD:dev
+      - name: Build docs
+        run: python3 hooks/build-docs.py
 
   release:
     name: Release
@@ -146,33 +110,29 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@v3.22.2
 
+
       - name: Check that this is a merge from dev
         id: merge
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           commit="${{ github.sha }}"
+          subject=$(git log -1 --format=%s "$commit")
 
-          pr=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/commits/$commit/pulls" \
-            --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.ref == "dev")] | .[0]')
-
-          if [[ -z "$pr" || "$pr" == "null" ]]; then
-            echo "This is not a merged dev -> main PR."
+          if [[ ! "$subject" =~ ^Merge\ pull\ request\ \#[0-9]+\ from\ .+/dev$ ]]; then
+            echo "Not a dev -> main merge commit: $subject"
             echo "release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          head_sha=$(jq -r '.head.sha' <<< "$pr")
+          head_sha=$(git rev-parse "${commit}^2")
 
-          echo "Detected merged PR from dev to main."
+          echo "Detected: $subject"
           echo "Dev head SHA: $head_sha"
 
           echo "release=true" >> "$GITHUB_OUTPUT"
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
 
       - name: Stop if not a dev -> main merge
         if: steps.merge.outputs.release != 'true'

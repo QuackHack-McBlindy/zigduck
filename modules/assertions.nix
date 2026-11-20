@@ -255,17 +255,22 @@
 
   ];
 
+
+
   syncBoxTvValidation = {
     assertion = config.house.zigbee.hueSyncBox != null &&
                 config.house.zigbee.hueSyncBox.enable &&
                 config.house.zigbee.hueSyncBox.syncBox.tv != "" ->
                 builtins.hasAttr config.house.zigbee.hueSyncBox.syncBox.tv config.house.tv;
     message = let
-      syncBox = config.house.zigbee.hueSyncBox;
-      tv = syncBox.syncBox.tv;
+      syncBox     = config.house.zigbee.hueSyncBox;
+      tv          = if syncBox == null then "<not configured>"
+                    else (syncBox.syncBox.tv or "<not set>");
       availableTvs = attrNames config.house.tv;
     in "🦆 duck say ⮞ fuck ❌ Hue Sync Box references non-existent TV '${tv}'. Available TVs: ${toString availableTvs}";
   };
+
+
 
   tvDefaultValidation =
     let

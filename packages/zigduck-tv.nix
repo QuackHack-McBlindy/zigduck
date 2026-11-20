@@ -1,0 +1,44 @@
+{
+  self,
+  lib,
+  pkgs,
+  rustPlatform,
+  fetchFromGitHub,
+  ...
+} : let
+  src = ./zigduck-tv;
+  cargoToml = builtins.fromTOML (builtins.readFile (src + "/Cargo.toml"));
+  zigduckSrc = ./zigduck;
+  zigduckToml = builtins.fromTOML (builtins.readFile (zigduckSrc + "/Cargo.toml"));
+  version = zigduckToml.package.version;
+  desc = cargoToml.package.description;
+
+in
+rustPlatform.buildRustPackage {
+  pname = "zigduck-tv";
+  inherit version;
+  src = src;
+  cargoLock = { lockFile = src + "/Cargo.lock"; };
+
+  env.CMAKE_POLICY_VERSION_MINIMUM = "3.5";
+
+  nativeBuildInputs = [
+    pkgs.pkg-config
+    pkgs.cmake
+    pkgs.libclang
+    rustPlatform.bindgenHook
+  ];
+
+  buildInputs = [
+    pkgs.openssl.dev
+    pkgs.android-tools
+  ];
+
+
+  meta = with lib; {
+    description = "Home automation system written in Rust";
+    license = licenses.mit;
+    maintainers = [ "QuackHack-McBlindy" ];
+    mainProgram = "tv";
+
+  };}
