@@ -8,3 +8,4 @@ models/stt/ggml-medium-sv.bin
 build.sh
 run.sh
 run-client.sh
+dump

@@ -1,6 +1,6 @@
 [package]
 name    = "zigduck"
-version = "0.2.12"
+version = "0.2.13"
 edition = "2021"
 # ───────────────────────────────────────────────────────────────────────
 description = """
@@ -36,5 +36,5 @@ name = "zigduck"
 path = "src/main.rs"
 
 [[bin]]
-name = "zigduck-dashboard"
-path = "src/zigduck-dashboard.rs"
+name = "zigduck-api"
+path = "src/zigduck-api.rs"

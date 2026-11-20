@@ -3,6 +3,7 @@
   inputs = {
     nixpkgs.url   = "github:NixOS/nixpkgs/nixos-unstable";
     tinyFlake.url = "github:quackhack-mcblindy/tinyFlake";
+    yo.url        = "github:quackhack-mcblindy/yo";
   };
 
   outputs = { self, nixpkgs, tinyFlake, ... }@inputs:
@@ -10,7 +11,13 @@
       inherit self inputs;
       systems   = [ "x86_64-linux" "aarch64-linux" ];
       packages  = tinyFlake.lib.mapModules ./packages import;
-      nixosModules.zigduck = import ./modules;
-      devShells = tinyFlake.lib.mapModules ./devShells (path: import path);              
+      devShells = tinyFlake.lib.mapModules ./devShells (path: import path);
+      checks = tinyFlake.lib.mapModules ./tests (path: import path);
+      nixosModules.zigduck = {
+        imports = [
+          self.inputs.yo.nixosModules.yo
+          (import ./modules)
+        ];
+      };
 
     };}

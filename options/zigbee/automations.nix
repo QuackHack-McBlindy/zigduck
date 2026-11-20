@@ -454,6 +454,52 @@ in {
           };
         };
 
+        state_changed = mkOption {
+          type = types.attrsOf Types.deviceStateChangedType;
+          default = {};
+          description = ''
+            Automations triggered when a device property changes.
+            Each attribute name is the automation's identifier.
+
+            The automation fires when the monitored device property
+            changes and the optional `from` and `to` values match.
+          '';
+          example = {
+            kitchen_fan_started = {
+              enable = true;
+              description = "Turn on kitchen lights when the fan starts";
+
+              device = "Kitchen Fan";
+              property = "state";
+              from = "OFF";
+              to = "ON";
+
+              actions = [
+                {
+                  type = "device";
+                  device = "Kitchen Light";
+                  operation = "on";
+                }
+              ];
+            };
+
+            bedroom_temperature_changed = {
+              enable = true;
+              description = "React when bedroom temperature changes";
+
+              device = "Bedroom Sensor";
+              property = "temperature";
+
+              actions = [
+                {
+                  type = "shell";
+                  command = "echo 'Bedroom temperature changed'";
+                }
+              ];
+            };
+          };
+        };
+
         greeting = mkOption {
           type = types.submodule {
             options = {
@@ -775,6 +821,8 @@ in {
                           schedule
         presence_based -> fires after motion has been absent for a
                           configured duration
+        state_changed  -> fires when a monitored device property
+                                changes and optional from/to values match
         greeting       -> fires when the entry door opens after the house
                           has been empty
         dimmer_actions -> per-room overrides for dimmer button events

@@ -89,8 +89,8 @@ in {
   config = mkMerge [
     (mkIf (cfg.enable || cfg.cli.enable) {
       environment.systemPackages = [
-        zigduckPkgs.tv
-        zigduckPkgs.tv-scraper
+        zigduckPkgs.zigduck-tv
+        zigduckPkgs.zigduck-epg
         pkgs.android-tools
       ];
       environment.etc."zigduck/tv-defaults.json".source = tvDefaultsJsonFile;

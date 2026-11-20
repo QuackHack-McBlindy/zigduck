@@ -36,126 +36,287 @@
     };
   };
 
+
+
   automationActionType = types.oneOf [
-    (types.str)
+    types.str
+
     (types.submodule {
       options = {
         type = mkOption {
-          type = types.enum ["mqtt" "shell" "scene" "wait" "snapshot" "restore"];
+          type = types.enum [
+            "mqtt"
+            "shell"
+            "device"
+            "scene"
+            "wait"
+            "snapshot"
+            "restore"
+          ];
+
           default = "shell";
+
           description = ''
             Discriminator selecting how this action is executed.
-            Each value consumes a different subset of the other
-            options; irrelevant fields are ignored.
 
-              shell    > `command`
-              mqtt     > `topic`, `message`
-              scene    > `scene`
-              wait     > `duration`
-              snapshot > `snapshot_name`, `scope`, `room`, `devices`
-              restore  > `snapshot_name`
+            Each value consumes a different subset of the other options:
 
-            Defaults to `shell`, the most common action type.
-            A plain string may be supplied in place of a full
-            attribute set as shorthand for
-            `{ type = "shell"; command = <string>; }`.
+              shell    > command
+              mqtt     > topic, message
+              device   > device, operation, property, value
+              scene    > scene
+              wait     > duration
+              snapshot > snapshot_name, scope, room, devices
+              restore  > snapshot_name
+
+            A plain string may be supplied as shorthand for:
+            { type = "shell"; command = <string>; }
           '';
-          example = "mqtt";
+
+          example = "device";
         };
+
+        device = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            Friendly name or alias of the target device.
+            Used when type = "device".
+          '';
+          example = "Kitchen Light";
+        };
+
+        operation = mkOption {
+          type = types.nullOr (types.enum [
+            "set"
+            "toggle"
+            "on"
+            "off"
+            "open"
+            "close"
+            "read"
+          ]);
+
+          default = null;
+
+          description = ''
+            Operation to perform on the device.
+
+              set    > Set a property to a specified value.
+              toggle > Toggle the device state.
+              on     > Turn the device on.
+              off    > Turn the device off.
+              open   > Open the device.
+              close  > Close the device.
+              read   > Read the current device state.
+          '';
+
+          example = "set";
+        };
+
+        property = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            Device property to operate on or read.
+            Examples: state, brightness, temperature, position.
+          '';
+          example = "brightness";
+        };
+
+        value = mkOption {
+          type = types.nullOr types.anything;
+          default = null;
+          description = ''
+            Value to assign when operation = "set".
+            Supports strings, numbers, booleans and structured values.
+          '';
+          example = 80;
+        };
+
+
         command = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            Shell command executed when `type = "shell"`. Runs
-            under the zigduck daemon's environment, so `zigduck-cli`,
-            `jq`, `curl`, `yo`, etc. are all available.
+            Shell command executed when type = "shell".
+            Runs under the zigduck daemon's environment, so
+            zigduck-cli, jq, curl, yo, etc. are available.
           '';
           example = "zigduck-cli --notify 'Door opened'";
         };
+
+
         topic = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            MQTT topic to publish to when `type = "mqtt"`. Must be
-            fully qualified with the configured `baseTopic`
-            (default: `zigduck/`).
+            MQTT topic to publish to when type = "mqtt".
+            Must be fully qualified with the configured baseTopic.
           '';
           example = "zigduck/effects/flash";
         };
+
         message = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            MQTT payload to publish when `type = "mqtt"`. Prefer
-            JSON-encoded device commands, e.g. `{"state":"ON"}` for
-            switches and outlets.
+            MQTT payload to publish when type = "mqtt".
+            Prefer JSON-encoded device commands.
           '';
           example = ''{"state":"ON"}'';
         };
+
+
         scene = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            Name of a scene defined under `house.zigbee.scenes` to
-            activate when `type = "scene"`.
+            Name of a scene defined under house.zigbee.scenes.
           '';
           example = "kitchenFadeOff";
         };
+
+
         duration = mkOption {
           type = types.nullOr types.int;
           default = null;
           description = ''
-            Seconds to wait before continuing when `type = "wait"`.
+            Seconds to wait before continuing when type = "wait".
           '';
           example = 5;
         };
+
+
         snapshot_name = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            Identifier used to store and later recall a snapshot of
-            device states. Required for `type = "snapshot"` and
-            `type = "restore"`; defaults to `"default"` if omitted.
+            Identifier used to store and later recall a snapshot.
+            Required for snapshot and restore actions.
           '';
           example = "before_timer";
         };
+
         scope = mkOption {
-          type = types.nullOr (types.enum ["global" "room" "devices"]);
+          type = types.nullOr (types.enum [
+            "global"
+            "room"
+            "devices"
+          ]);
+
           default = null;
+
           description = ''
-            What to capture in the snapshot (only for `type = "snapshot"`):
+            What to capture when type = "snapshot":
 
-              global  > every device known to the daemon
-              room    > devices in a single room (requires `room`)
-              devices > an explicit list (requires `devices`)
+              global  > Every device known to the daemon.
+              room    > Devices in a single room.
+              devices > An explicit list of devices.
 
-            Defaults to `global` when omitted.
+            Defaults to global when omitted.
           '';
+
           example = "room";
         };
+
         room = mkOption {
           type = types.nullOr types.str;
           default = null;
           description = ''
-            Room whose devices should be captured when
-            `scope = "room"`. Matches against
-            `house.zigbee.devices.*.room`.
+            Room whose devices should be captured when scope = "room".
+            Matches house.zigbee.devices.*.room.
           '';
           example = "bedroom";
         };
+
         devices = mkOption {
           type = types.nullOr (types.listOf types.str);
           default = null;
           description = ''
-            Friendly names of the devices to capture when
-            `scope = "devices"`. Must match `friendly_name` entries
-            under `house.zigbee.devices`.
+            Friendly names of devices to capture when scope = "devices".
+            Must match friendly_name entries under house.zigbee.devices.
           '';
           example = [ "PC" "Taket Sovrum 1" ];
         };
       };
     })
   ];
+
+
+  deviceStateChangedType = types.submodule {
+    options = {
+      enable = mkEnableOption "this device state change automation";
+
+      description = mkOption {
+        type = types.str;
+        default = "";
+        description = ''
+          Human-readable description of this automation.
+        '';
+        example = "Turn on kitchen lights when the fan starts";
+      };
+
+      device = mkOption {
+        type = types.str;
+        description = ''
+          Friendly name or alias of the device to monitor.
+        '';
+        example = "Kitchen Fan";
+      };
+
+      property = mkOption {
+        type = types.str;
+        description = ''
+          Device property to monitor for changes.
+          Examples: state, brightness, temperature, occupancy, power.
+        '';
+        example = "state";
+      };
+
+      from = mkOption {
+        type = types.nullOr types.anything;
+        default = null;
+        description = ''
+          Optional previous value.
+
+          When specified, the automation only triggers
+          when the previous value matches this value.
+        '';
+        example = "OFF";
+      };
+
+      to = mkOption {
+        type = types.nullOr types.anything;
+        default = null;
+        description = ''
+          Optional new value.
+
+          When specified, the automation only triggers
+          when the new value matches this value.
+        '';
+        example = "ON";
+      };
+
+      actions = mkOption {
+        type = types.listOf automationActionType;
+        default = [];
+        description = ''
+          Actions executed when the monitored device property changes
+          and the optional from/to conditions match.
+        '';
+        example = [
+          {
+            type = "device";
+            device = "Kitchen Light";
+            operation = "on";
+          }
+        ];
+      };
+    };
+  };
+
+
 
   dimmerActionType = types.submodule {
     options = {
@@ -490,5 +651,12 @@
   scraperToJson = s: lib.filterAttrs (_: v: v != null) s;
 
 in {
-  inherit automationActionType dimmerActionType roomType statusCardType scraperType scraperToJson;
+  inherit
+    automationActionType
+    deviceStateChangedType
+    dimmerActionType
+    roomType
+    statusCardType
+    scraperType
+    scraperToJson;
 }

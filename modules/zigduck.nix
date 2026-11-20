@@ -164,7 +164,7 @@ let
   zigduckConfigFile = jsonFormat.generate "config.json" mainConfig;
 
 in {
-  imports = [ ./dashboard.nix ./tv.nix ./gnomeExtension.nix ];
+  imports = [ ./dashboard.nix ./tv.nix ];
 
   config = mkMerge [
     (mkIf cfg.enable {
@@ -384,7 +384,7 @@ in {
           StateDirectory = cfg.user;
           StateDirectoryMode = "0750";
           WorkingDirectory = cfg.stateDir;
-          ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck-dashboard ${cfg.dashboard.host} ${toString cfg.dashboard.port}";
+          ExecStart = "${zigduckPkgs.zigduck}/bin/zigduck-api ${cfg.dashboard.host} ${toString cfg.dashboard.port}";
           Restart = "on-failure";
           RestartSec = "45s";
 
