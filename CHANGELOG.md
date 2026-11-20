@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.13] - 2026-11-20
+
+### Added
+
 - Added `state_changed` automations for monitoring device property changes, with optional `from` and `to` value matching.
 - Added `device` as a supported automation action type, enabling direct device operations such as `set`, `toggle`, `on`, `off`, `open`, `close`, and `read`.
 - Added `deviceStateChangedType` to define device state-change automation configuration.
