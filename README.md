@@ -55,7 +55,7 @@ Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json, adb and yo.<br>
 most users don’t need to write any automations at all.<br>
 Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
 
-A built-in natural-language automation engine supporting hundreds of millions of possible phrases, with full device, TV and EPG control, timers, alarms, notifications, text-to-speech, and advanced logic (if not, if, while, until, when, chain, state) — all ready to use out of the box, with no grammar definitions or scripts to configure. <br>
+A built-in natural-language automation engine supporting hundreds of millions of possible phrases, with full device, TV and EPG control, timers, alarms, notifications, text-to-speech, and advanced logic (if not, if, while, until, when, chain, state) - all ready to use out of the box, with no grammar definitions or scripts to configure. <br>
 Much much faster than any LLM and at a much lower power consumption - plus no hallucinations!<br>
 Users can even write their automations at runtime.
 
@@ -93,7 +93,7 @@ zigduck/
 │       ├── ci.nix               # release ci / tests
 │       └── wiki.nix             # docs workflow 
 │
-├── modules/            # NixOS modules — what services run
+├── modules/            # NixOS modules - what services run
 │   ├── zigduck.nix              # Main daemon
 │   ├── dashboard.nix            # Web dashboard / API
 │   ├── tv.nix                   # TV control
@@ -132,7 +132,7 @@ zigduck/
 │           ├── countdown.nix    #   shutdown counter
 │           └── compare.nix      #   compare metrics queries
 │
-├── options/            # NixOS options — how it's configured
+├── options/            # NixOS options - how it's configured
 │   ├── devices.nix
 │   ├── rooms.nix
 │   ├── presence.nix
@@ -143,13 +143,13 @@ zigduck/
 │
 ├── packages/           # Buildable artifacts
 │   │
-│   ├── zigduck/        # 🦆 Daemon (Rust) — library + 2 binaries
+│   ├── zigduck/        # 🦆 Daemon (Rust) - library + 2 binaries
 │   │   └── src/
-│   │       ├── lib.rs                   # Crate root — re-exports all modules
+│   │       ├── lib.rs                   # Crate root - re-exports all modules
 │   │       ├── main.rs                  # bin: zigduck (the daemon, 44 lines)
 │   │       ├── zigduck-api.rs           # bin: zigduck-api (HTTP server)
 │   │       │
-│   │       ├── state.rs                 # ZigduckState — shared application state
+│   │       ├── state.rs                 # ZigduckState - shared application state
 │   │       ├── scheduler.rs             # Periodic task tickers
 │   │       ├── net.rs                   # Network reachability probes
 │   │       │
@@ -235,15 +235,14 @@ zigduck/
 
 ### **Two installation paths**
 
-**🖥️ Automated USB installer** *(dedicated host)*
- - Pick me if you never heard about NixOS and don't want to hear about NixOS.
+**Automated USB installer** *(dedicated host)*
+ - **Pick me** if you never heard about NixOS and don't want to hear about NixOS.
  - Insert USB, boot, wait for shutdown. Eject USB, boot & you are done.
+ - **TBA**
 
 
-**❄️ Nix flake module** *(recommended)*
+**Nix flake module** *(recommended)*
  - For users already running NixOS with flakes
- - Full control — every option exposed as a NixOS module
- - Coexists with your other services on the same host
  - Ideal for power users and custom configurations
 
 
@@ -538,9 +537,7 @@ Example usage (automations written in Swedish)
 
 </details>
 
-
 <br>
-
 
 <details><summary><strong>
 Example usage (automations written in Nix) 
@@ -640,9 +637,9 @@ For language grammar contributions , see [CONTRIBUTING.md](CONTRIBUTING.md) <br>
 |----------|:---------|---------:|
 | 🇸🇪 Swedish | `████████████████████░` 100% | 6374 |
 | 🇬🇧 English | `████████░░░░░░░░░░░░` 42% | 2721 |
-| 🇩🇪 German | — | 0 |
-| 🇪🇸 Spanish | — | 0 |
-| 🇫🇷 French | ❌ eval error | — |
+| 🇩🇪 German | - | 0 |
+| 🇪🇸 Spanish | - | 0 |
+| 🇫🇷 French | ❌ eval error | - |
 | **Total** | | **9095** *(+1 failed)* |
 <!-- LANGUAGES_END -->
 
