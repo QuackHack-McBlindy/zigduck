@@ -28,7 +28,7 @@
   ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
   ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
   ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
-  ![yo](https://img.shields.io/badge/🦆%20yo-0.2.14-black?style=flat)
+  ![yo](https://img.shields.io/badge/💬%20yo-0.2.14-black?style=flat)
 
 <!-- VERSIONS_END -->
 
@@ -324,6 +324,116 @@ zigduck/
 ## **Example Usage**
 
 Just at a glance, please see the [documentation](https://quackhack-mcblindy.github.io/zigduck) for more information.
+
+
+<details><summary><strong>
+Example usage (automations written in Emgish) 
+</strong></summary>
+
+<br>
+
+```nix
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  house = {
+    languages = [ "en" ];
+
+    zigbee = {
+      # 🦆 says ⮞ coordinator configuration
+      coordinator = {
+        vendorId  = "10c4";
+        productId = "ea60";
+        symlink   = "zigbee"; # 🦆 says ⮞ creates a symlink to the serial port at /dev/zigbee
+      };
+
+      # 🦆 ⮞ clicking through scenes quickly in the dimmer room!
+      dimmer.doubleClickTimeout = 500;
+
+      # 🦆 says ⮞ when motion triggers the lights to turn on
+      motion = {
+        when.dark.enable = true;
+        trigger.lights = {
+          after      = 14;
+          before     = 9;
+          duration   = 700;
+          transition = true;
+        };
+      };
+
+      # 🦆 says ⮞ when no motion triggers ALL lights to turn off
+      no.motion.trigger = {
+        all.lights.off = {
+          enable  = true;
+          after   = 90;  # 🦆 says ⮞ minutes
+          exclude = [ ]; # 🦆 says ⮞ list of strings, devices to exclude (friendly name/alias, leaves their states unchanged)
+        };
+      };
+
+      automations = {
+        string.prefix = "hey do";
+
+        # 🦆 says ⮞ there are 6 different automation types
+        # 🦆 ⮞ + a greeting automation
+        greeting = {
+          enable       = true;
+          awayDuration = 7200;
+          door         = "Door Sensor Hall";
+          delay        = 10; # 🦆 ⮞ welcome home, idiot
+          actions      = [ "say welcome home, idiot" ];
+        };
+
+        # 🦆 says ⮞ 2. room action automations
+        room_actions = {
+          kitchen = {
+            motion_not_detected = [
+              # 🦆 ⮞ if the fan is consuming more than 20 watts, start a countdown to turn it off after 180 seconds, then slowly turn off the kitchen lights.
+              "if the fan is consuming more than twenty watts, turn off the fan in one hundred and eighty seconds, then slowly turn off the kitchen lights"
+            ];
+
+            motion_detected = [
+              # 🦆 ⮞ big 20ms window - worth it here
+              { type = "scene"; scene = "kitchenInstant"; }
+
+              # 🦆 ⮞ 1: turn on the lights.
+              # 🦆 ⮞ 2: cancel the fan shutoff countdown.
+              # 🦆 ⮞ 3: if my team is playing RIGHT NOW, activate the scene, and if the TV is off, start the game on TV and use TTS to announce that the game is on.
+              "turn off the fan in zero seconds and if the fan is off, turn it on"
+
+              "if Björklöven is playing right now, activate the Löven scene, and if the TV is off, start the live Björklöven game on TV, for fuck's sake, and say the game is starting now, idiot"
+            ];
+          };
+        };
+
+        time_based = {
+          tv_scraping = {
+            enable      = true;
+            description = "Scrape TV guide";
+
+            # 🦆 says ⮞ 3:30 AM every day
+            schedule = {
+              start = "03:30";
+              days  = [ "mon" "tue" "wed" "thu" "fri" "sat" "sun" ];
+            };
+
+            # 🦆 says ⮞ scrape and save so the frontend can read it (from the zigduck user)
+            actions = [
+              "scrape the web for the TV guide and save it in ${zigduck.stateDir}"
+            ];
+          };
+        };
+      };
+    };
+
+  };}
+```
+
+<br>
+
+</details>
 
 
 <details><summary><strong>
