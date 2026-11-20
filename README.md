@@ -14,30 +14,33 @@
   <a href="https://quackhack-mcblindy.github.io/zigduck">
     <img src="images/automations.png" alt="automations" width="800">
   </a>
-</div>
+
 
 
 <!-- VERSIONS_START -->
 
-![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.11-black?style=flat)
+  ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
+  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.11-black?style=flat)
 
-![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
-![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
+  ![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
+  ![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
 
-![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
-![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
-![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
+  ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
+  ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
+  ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
 
 <!-- VERSIONS_END -->
 
 
-<br>
-<a href="https://quackhack-mcblindy.github.io/zigduck/">🦆 Zigduck Wiki</a>.
-<br>
+
+  <br>
+  <a href="https://quackhack-mcblindy.github.io/zigduck/">🦆 Zigduck Wiki</a>.
+  <br>
 
 
-# **A Flake For Your House**
+  # **A Flake For Your House**
+
+</div>
 
 A declarative, reproducible smart-home operating system (NixOS) for people who want their home automation to be as maintainable as their infrastructure.
 Zigduck home automation system brings reproducibility, version control, and natural-language control to your deployable smart home.<br>
