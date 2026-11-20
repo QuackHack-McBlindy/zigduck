@@ -4,12 +4,18 @@
 
 <br>
 
-<a href="https://quackhack-mcblindy.github.io/zigduck">
-  <img src="images/logo.png" alt="Logo" width="330">
-</a>
-<a href="https://quackhack-mcblindy.github.io/zigduck">
-  <img src="images/automations.png" alt="automations" width="580">
-</a>
+<div align="center">
+  <a href="https://quackhack-mcblindy.github.io/zigduck">
+    <img src="images/logo.png" alt="Logo" width="440">
+  </a>
+
+  <br>
+
+  <a href="https://quackhack-mcblindy.github.io/zigduck">
+    <img src="images/automations.png" alt="automations" width="800">
+  </a>
+</div>
+
 
 <!-- VERSIONS_START -->
 
