@@ -75,10 +75,13 @@ Keep sentences **distinct** across scripts. `tills {x}` (until) vs `medan {x}` (
 nix build .#checks.x86_64-linux.grammar
 ```
 
-Fails with a clear message on any grammar problem — pass before pushing.
+Fails with a clear message on any grammar problem - pass before pushing.
 
 ## Multi-language
 
 All languages load simultaneously. A user can say a Swedish *or* an English phrase and the fuzzy matcher picks the closest. `house.language` is just a hint, not a hard switch.
 
 See [`/CONTRIBUTING.md`](../../CONTRIBUTING.md) for the full workflow.
+
+Be patient on merges, as this project's grammar grows the CI checks will take a long time because of the fuzzy conflict detection.
+Let it do it's thing.
