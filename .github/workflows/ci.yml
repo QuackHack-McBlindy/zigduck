@@ -40,6 +40,7 @@ jobs:
   build:
     name: Nix build
     runs-on: ubuntu-latest
+    timeout-minutes: 720
     permissions:
       contents: read
 
@@ -72,6 +73,7 @@ jobs:
         github.ref == 'refs/heads/main'
       }}
     runs-on: ubuntu-latest
+    timeout-minutes: 720
     permissions:
       contents: write
     concurrency:

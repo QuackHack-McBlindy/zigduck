@@ -4,7 +4,7 @@
   self,
   inputs
 }: let
-  languages = [ "sv" "en" "es" "fr" "de" ];
+  languages = [ "de" ];
 
   mkConfig = language:
     inputs.nixpkgs.lib.nixosSystem {

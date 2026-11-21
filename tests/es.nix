@@ -1,12 +1,12 @@
-
 {
   pkgs,
   system,
   self,
-  inputs,
-  language
+  inputs
 }: let
-  mkConfig =
+  languages = [ "es" ];
+
+  mkConfig = language:
     inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = { inherit self inputs pkgs; };
@@ -89,28 +89,36 @@
       ];
     };
 
-  failures = builtins.filter
-    (a: !a.assertion)
-    mkConfig.config.assertions;
+  failures = builtins.concatLists (
+    map (language:
+      let cfg = mkConfig language;
+      in map (a: { inherit language; assertion = a; })
+             (builtins.filter (a: !a.assertion) cfg.config.assertions)
+    ) languages
+  );
 
-  n = builtins.length failures;
+  failedLangs = builtins.attrNames (
+    builtins.listToAttrs (map (f: { name = f.language; value = true; }) failures)
+  );
+
+  n      = builtins.length failures;
+  nLangs = builtins.length failedLangs;
 
   renderMessage = f:
     let r = builtins.tryEval (builtins.stringLength f.assertion.message);
     in if r.success then f.assertion.message else "<message unavailable>";
 in
 if n == 0
-then pkgs.runCommand "grammar-check-${language}" {
+then pkgs.runCommand "grammar-check" {
   nativeBuildInputs = [ pkgs.coreutils ];
 } ''
   echo "✅ grammar check passed!"
-  echo "   language: ${language}"
+  echo "   languages: ${builtins.concatStringsSep ", " languages}"
 
   touch $out
 ''
 else throw (
-  "🦆 Grammar check failed: ${toString n} assertion(s) "
-  + "for language ${language}:\n"
-  + builtins.concatStringsSep "\n"
-    (map (f: "  • " + renderMessage f) failures)
+  "🦆 Grammar check failed: ${toString n} assertion(s) across ${toString nLangs} language(s) "
+  + "(${builtins.concatStringsSep ", " failedLangs}):\n"
+  + builtins.concatStringsSep "\n" (map (f: "  • [${f.language}] " + renderMessage f) failures)
 )
