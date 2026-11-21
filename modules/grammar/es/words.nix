@@ -1,4 +1,22 @@
+# zigduck/modules/grammar/es/words.nix
 {
+  pronouns = [ "ello" ];
+
+  # encadenamiento de comandos
+  splitWords = [ "también" "y después" "oh, además de eso" "y finalmente" ];
+
+  # "Perdona, ¿no te he entendido bien?"
+  sorryPhrases = [
+    "Parece que tienes una albóndiga en la boca. Termina de cenar y vuelve a intentarlo más tarde."
+    "¿Qué coño estás diciendo?"
+    "Por favor, habla como una persona normal."
+    "¿Estás de setas...?"
+  ];
+
+  # comprobación inversa del estado
+  negation = [
+    { "in" = "no|non|nada"; out = "true"; }
+  ];
 
   numberWord = n:
     let

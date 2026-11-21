@@ -10,11 +10,6 @@
 in {
   yo.scripts.state = lib.mkIf (lib.elem "sv" config.house.languages) {
     voice = {
-      priority = 2;
-      fuzzy = {
-        enable = true;
-        threshold = 0.5;
-      };
       sentences = [
         "det {reverse} (är|finns) {state} i {room}"
         "det {reverse} (är|finns) {state} i {device}"
@@ -39,7 +34,7 @@ in {
         "hur mycket {state} har {device}"
         "vilken {state} har {device}"
         "vilken position har {device}"
-        #"[är] {device} [är] {state}"
+        "{device} är {state}"
       ];
       lists = {
         state.values  = sv.states;
