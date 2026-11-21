@@ -72,7 +72,7 @@ Keep sentences **distinct** across scripts. `tills {x}` (until) vs `medan {x}` (
 ## Run the check
 
 ```bash
-nix build .#checks.x86_64-linux.grammar
+nix build .#checks.x86_64-linux.{lang}
 ```
 
 Fails with a clear message on any grammar problem - pass before pushing.

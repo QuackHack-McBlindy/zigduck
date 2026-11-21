@@ -65,6 +65,17 @@
     )
   ) zigbeeDevices;
 
+  tvDevices = lib.mapAttrsToList (name: tv:
+    houseEntry name (
+      asList (tv.aliases or null)
+      ++ asList (tv._aliases or null)
+    )
+  ) (
+    lib.filterAttrs (_: tv:
+      builtins.isAttrs tv && (tv.enable or true)
+    ) (config.house.tv or {})
+  );
+
   rooms = lib.mapAttrsToList (name: cfg:
     houseEntry name (
       asList (cfg.aliases or null)
@@ -115,7 +126,8 @@
 
 in {
   inherit
-    devices rooms scenes
+    devices tvDevices
+    rooms scenes
     states metrics
     colors brightness temperature
     durations clock weekdays

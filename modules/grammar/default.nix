@@ -20,16 +20,6 @@
     )
     selectedLanguages;
 
-  splitWords = lib.concatMap
-    (lang:
-      let
-        wordsFile = ./. + "/${lang}/words.nix";
-        words = import wordsFile;
-      in
-        words.splitWords or []
-    )
-    selectedLanguages;
-
   pronouns = lib.concatMap
     (lang:
       let
@@ -64,7 +54,7 @@ in {
   imports = voiceFiles;
 
   yo.sorryPhrases = sorryPhrases;
-  yo.splitWords   = splitWords;
+  yo.splitWords   = [];
   yo.pronouns     = pronouns;
 
   _module.args =

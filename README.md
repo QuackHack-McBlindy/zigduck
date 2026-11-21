@@ -20,7 +20,7 @@
 <!-- VERSIONS_START -->
 
   ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.14-black?style=flat)
+  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.15-black?style=flat)
 
   ![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
   ![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
@@ -657,14 +657,14 @@ Example usage (automations written in Nix)
 For language grammar contributions , see [CONTRIBUTING.md](CONTRIBUTING.md) <br>
 
 <!-- LANGUAGES_START -->
-| Language | Progress | Patterns |
-|----------|:---------|---------:|
-| 🇸🇪 Swedish | `████████████████████░` 100% | 6327 |
-| 🇬🇧 English | `████████░░░░░░░░░░░░` 42% | 2697 |
-| 🇩🇪 German | `█░░░░░░░░░░░░░░░░░░░░` 0% | 35 |
-| 🇪🇸 Spanish | — | 0 |
-| 🇫🇷 French | — | 0 |
-| **Total** | | **9059** |
+| Language | Scripts | Voice scripts | Voice script coverage | Patterns | Phrases |
+|----------|--------:|--------------:|:------------------------|---------:|--------:|
+| 🇸🇪 Swedish | 19 | 19 | `████████████████████░` 100% | 6762 | 292164797 |
+| 🇬🇧 English | 19 | 17 | `█████████████████░░░` 89% | 2565 | 77536805 |
+| 🇩🇪 German | 19 | 3 | `███░░░░░░░░░░░░░░░░░` 15% | 35 | 260 |
+| 🇪🇸 Spanish | 19 | 2 | `██░░░░░░░░░░░░░░░░░░` 10% | 0 | 0 |
+| 🇫🇷 French | 19 | 2 | `██░░░░░░░░░░░░░░░░░░` 10% | 0 | 0 |
+| **Total** | **19** | **43** | | **9362** | **369701862** |
 <!-- LANGUAGES_END -->
 
 <br>

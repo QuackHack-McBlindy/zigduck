@@ -2,9 +2,6 @@
 {
   pronouns = [ "den" ];
 
-  # command chaining
-  splitWords   = [ "sedan" "och därefter" "ooh utöver det så" "och slutligen" ];
-
   # "Sorry, I did not quite catch that?"
   sorryPhrases = [
     "Det låter som du har en köttebulle i käften. Ät klart middagen och försök sedan igen."
@@ -12,10 +9,6 @@
     "Prata som en människa snälla"
   ];
 
-  # reverse state checking
-  negation = [
-    { "in" = "inte|icke|ej"; out = "true"; }
-  ];
 
   ordinalNumbers = [
     { value = 1; words = [ "första" ]; }

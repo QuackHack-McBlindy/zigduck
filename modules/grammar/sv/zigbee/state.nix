@@ -38,7 +38,7 @@ in {
       ];
       lists = {
         state.values  = sv.states;
-        device.values = sv.devices;
+        device.values = sv.devices ++ sv.tvDevices;
         room.values   = sv.rooms;
         reverse.values = [
           { "in" = "inte"; out = "true"; }

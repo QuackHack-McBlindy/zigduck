@@ -9,12 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added option: `house.tv.<name>.aliases`
+- TV devices now included in the `state.nix` for state fetching TV devices.
+
 ### Changed
+
+- splitWords are now completely handled by the `chain` script and grammar. `yo.splitWords` are  defined as empty.
+- CI grammar checks using`nix flake check` split into per-language checks.
 
 ### Fixed
 
+- `hooks/update-readme.sh` now calculate percentage based on total scripts / defined grammars.
+
 ### Removed
 
+- Removed grammar: `splitWords` & `negation` from `modules/grammar/words.nix`. Single usecase, better per grammar file modification.
+ 
 
 ## [0.2.14] - 2026-11-21
 

@@ -13,9 +13,10 @@ in {
       fuzzy.enable = true;
       fuzzy.threshold = 0.5;
       sentences = [
-        "{a} samt {b} samt {c} samt {d}"
-        "{a} samt {b} samt {c}"
-        "{a} samt {b}"
+        "{a} (samt|sedan|därefter|slutligen) {b} [och] (samt|sedan|därefter|slutligen) {c} ooh utöver det så {d}"
+        "{a} (samt|sedan|därefter|slutligen) {b} [och] (samt|sedan|därefter|slutligen) {c} [och] (samt|sedan|därefter|slutligen) {d}"
+        "{a} (samt|sedan) {b} [och] (samt|sedan|därefter|slutligen) {c}"
+        "{a} (samt|sedan) {b}"
       ];
       lists = {
         a.wildcard = true;
