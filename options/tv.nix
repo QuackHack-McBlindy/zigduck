@@ -21,6 +21,14 @@ in {
             '';
           };
 
+
+          aliases = lib.mkOption {
+            type        = lib.types.listOf lib.types.str;
+            default     = [];
+            description = "Alternative names / aliases for this tv device";
+            example     = [ "tv" "mytv" ];
+          };
+
           room = lib.mkOption {
             type = lib.types.enum (lib.attrNames config.house.rooms);
             description = "Room where the TV is located";

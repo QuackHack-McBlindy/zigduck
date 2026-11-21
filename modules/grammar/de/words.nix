@@ -2,9 +2,6 @@
 {
   pronouns = [ "es" ];
 
-  # Befehlsverkettung
-  splitWords = [ "auch" "und danach" "oh, zusätzlich dazu" "und schließlich" ];
-
   # "Entschuldigung, ich habe dich nicht ganz verstanden?"
   sorryPhrases = [
     "Es klingt, als hättest du einen Fleischklops im Mund. Iss dein Abendessen zu Ende und versuch es später noch einmal."
@@ -13,10 +10,6 @@
     "Bist du auf Pilzen oder was...?"
   ];
 
-  # Umgekehrte Zustandsprüfung
-  negation = [
-    { "in" = "nicht|kein|nein"; out = "true"; }
-  ];
 
   ordinalNumbers = [
     { value = 1; words = [ "erste" ]; }

@@ -2,9 +2,6 @@
 {
   pronouns = [ "it" ];
 
-  # command chaining
-  splitWords = [ "also" "and afterwards" "ooh on top of that" "and finally" ];
-
   # "Sorry, I did not quite catch that?"
   sorryPhrases = [
     "Sounds like you've got a meatball in your mouth. Finish your dinner and try again later."
@@ -12,12 +9,6 @@
     "Please speak like a normal human being."
     "Are you on shrooms...?"
   ];
-
-  # reverse state checking
-  negation = [
-    { "in" = "not|non|no"; out = "true"; }
-  ];
-
 
   numberWord = n:
     let

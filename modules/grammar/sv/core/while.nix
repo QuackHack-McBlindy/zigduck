@@ -7,8 +7,8 @@
 } : let
 
 in {
-  yo.scripts.while = lib.mkIf (lib.elem "sv" config.house.languages) {
-    voice = {
+  yo.scripts.while = {
+    voice = lib.mkIf (lib.elem "sv" config.house.languages) {
       priority = 2;
       fuzzy.enable = true;
       fuzzy.threshold = 0.5;

@@ -2,20 +2,12 @@
 {
   pronouns = [ "il" ];
 
-  # enchaînement de commandes
-  splitWords = [ "aussi" "et ensuite" "oh, en plus de ça" "et enfin" ];
-
   # "Désolé, je n'ai pas bien compris ?"
   sorryPhrases = [
     "On dirait que tu as une boulette de viande dans la bouche. Termine ton dîner et réessaie plus tard."
     "Mais putain, qu'est-ce que tu racontes ?"
     "Parle normalement, s'il te plaît."
     "Tu as pris des champignons hallucinogènes ou quoi... ?"
-  ];
-
-  # vérification inversée de l'état
-  negation = [
-    { "in" = "ne pas|non|pas"; out = "true"; }
   ];
 
   numberWord = n:

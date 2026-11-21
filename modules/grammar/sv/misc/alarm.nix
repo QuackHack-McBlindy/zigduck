@@ -28,8 +28,11 @@ in {
         "jag vill {cancel} stiga upp [klock|klocka|klockan] {hours} [och] {minutes}"
         "väck {cancel} mig [klocka|klockan] {hours} [och] {minutes}"
         "väck {cancel} mig {minuteWord} {prep} {hours}"
+        "väck mmig {cancel} [klocka|klockan] {hours} [och] {minutes}"
+        "väck mig {cancel} {minuteWord} {prep} {hours}"
         "jag vill {cancel} stiga upp {minuteWord} {prep} {hours}"
         "väck {cancel} mig {prep} {hours}"
+        "väck mig {cancel} {prep} {hours}"
         "jag vill {cancel} stiga upp {prep} {hours}"
         "{cancel} alarmet på [klock|klocka|klockan] {hours} [och] {minutes}"
 
