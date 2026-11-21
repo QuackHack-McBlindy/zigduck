@@ -5,36 +5,57 @@
   lib,
   pkgs,
   ...
-}: let
+} : let
   languages = [ "de" "en" "es" "fr" "sv" ];
   categories = [ "core" "media" "misc" "zigbee" ];
+  selectedLanguages = config.house.languages or [ "en" ];
 
-  wordSets = lib.genAttrs
-    (builtins.filter
-      (lang: builtins.elem lang config.house.languages)
-      languages)
-    (lang: import (./. + "/${lang}/words.nix"));
+  sorryPhrases = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.sorryPhrases or []
+    )
+    selectedLanguages;
 
+  splitWords = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.splitWords or []
+    )
+    selectedLanguages;
+
+  pronouns = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.pronouns or []
+    )
+    selectedLanguages;
 
   importDir = dir:
     if !builtins.pathExists dir then [ ]
     else if builtins.pathExists (dir + "/default.nix") then [ dir ]
     else
       let
-        entries = builtins.readDir dir;
+        entries  = builtins.readDir dir;
         nixFiles = builtins.attrNames (
           lib.filterAttrs
             (name: type: type == "regular" && lib.hasSuffix ".nix" name)
             entries
         );
-      in
-        map (name: dir + "/${name}") nixFiles;
+      in map (name: dir + "/${name}") nixFiles;
 
   voiceFiles = lib.concatMap (lang:
-    let
-      langDir = ./. + "/${lang}";
-    in
-      lib.concatMap (cat: importDir (langDir + "/${cat}")) categories
+    let langDir = ./. + "/${lang}";
+    in lib.concatMap (cat: importDir (langDir + "/${cat}")) categories
   ) languages;
 
   sweep = import ./lib.nix;
@@ -42,12 +63,13 @@
 in {
   imports = voiceFiles;
 
+  yo.sorryPhrases = sorryPhrases;
+  yo.splitWords   = splitWords;
+  yo.pronouns     = pronouns;
+
   _module.args =
     (lib.genAttrs languages (lang:
-      sweep {
-        inherit config lib pkgs;
-        words = wordSets.${lang};
-      }
+      sweep { inherit config lib pkgs; words = import (./. + "/${lang}/words.nix"); }
     ))
     // {
       allowFrom = scriptName: listName:
@@ -64,23 +86,5 @@ in {
         in
           if (def.wildcard or false) then []
           else lib.unique (lib.concatMap expand (def.values or []));
-    };
 
-  yo.pronouns = lib.unique (
-    lib.concatMap
-      (lang: wordSets.${lang}.pronouns or [])
-      config.house.languages
-  );
-
-  yo.sorryPhrases = lib.unique (
-    lib.concatMap
-      (lang: wordSets.${lang}.sorryPhrases or [])
-      config.house.languages
-  );
-
-  yo.splitWords = lib.unique (
-    lib.concatMap
-      (lang: wordSets.${lang}.splitWords or [])
-      config.house.languages
-
-  );}
+    };}

@@ -10,8 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added grammar: German -> `/de/zigbee/state.nix`.
-- Added grammar: `pronouns`, `splitWords`, `sorryPhrases`, `negation` --> `modules/grammar/words.nix`.
-  
+- Added grammar: `pronouns`, `splitWords`, `sorryPhrases`, `negation` --> `modules/grammar/words.nix`. 
   
 ### Changed
 
