@@ -8,6 +8,37 @@
 } : let
   languages = [ "de" "en" "es" "fr" "sv" ];
   categories = [ "core" "media" "misc" "zigbee" ];
+  selectedLanguages = config.house.languages or [ "en" ];
+
+  sorryPhrases = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.sorryPhrases or []
+    )
+    selectedLanguages;
+
+  splitWords = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.splitWords or []
+    )
+    selectedLanguages;
+
+  pronouns = lib.concatMap
+    (lang:
+      let
+        wordsFile = ./. + "/${lang}/words.nix";
+        words = import wordsFile;
+      in
+        words.pronouns or []
+    )
+    selectedLanguages;
 
   importDir = dir:
     if !builtins.pathExists dir then [ ]
@@ -31,6 +62,10 @@
 
 in {
   imports = voiceFiles;
+
+  yo.sorryPhrases = sorryPhrases;
+  yo.splitWords   = splitWords;
+  yo.pronouns     = pronouns;
 
   _module.args =
     (lib.genAttrs languages (lang:

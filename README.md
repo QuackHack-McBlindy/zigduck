@@ -6,13 +6,13 @@
 
 <div align="center">
   <a href="https://quackhack-mcblindy.github.io/zigduck">
-    <img src="images/logo.png" alt="Logo" width="440">
+    <img src="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/images/logo.png" alt="Logo" width="440">
   </a>
 
   <br>
 
   <a href="https://quackhack-mcblindy.github.io/zigduck">
-    <img src="images/automations.png" alt="automations" width="800">
+    <img src="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/images/automations.png" alt="automations" width="800">
   </a>
 
 
@@ -20,7 +20,7 @@
 <!-- VERSIONS_START -->
 
   ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.13-black?style=flat)
+  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.14-black?style=flat)
 
   ![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
   ![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
@@ -28,7 +28,7 @@
   ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
   ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
   ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
-  ![yo](https://img.shields.io/badge/💬%20yo-0.2.14-black?style=flat)
+  ![yo](https://img.shields.io/badge/💬%20yo-0.2.15-black?style=flat)
 
 <!-- VERSIONS_END -->
 
@@ -51,33 +51,12 @@ Under the hood: zigbee2mqtt, Mosquitto, tokio/serde_json, adb and yo.<br>
 
 **Define once, deploy forever.**
 
-**zigduck** uses smart defaults, after defining your rooms & devices --<br>
-most users don’t need to write any automations at all.<br>
-Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
-
-A built-in natural-language automation engine supporting hundreds of millions of possible phrases, with full device, TV and EPG control, timers, alarms, notifications, text-to-speech, and advanced logic (if not, if, while, until, when, chain, state) - all ready to use out of the box, with no grammar definitions or scripts to configure. <br>
-Much much faster than any LLM and at a much lower power consumption - plus no hallucinations!<br>
-Users can even write their automations at runtime.
-
-**EVERYTHING** is configurable via NixOS options.<br>
-
-
-Use the <a href="images/screenshot02.png">GNOME Shell extension</a> *(seperate flake)* for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
-
-
-
-
 <br>
 
-
-![Zigduck GNOME Shell extension](Screenshots/zigduck-widget.gif)
-
-<br>
-
-## **Detailed project tree view**
+## **🦆🪾 Detailed project tree view**
 
 <details><summary><strong>
-❄️ View project tree (with info)
+--> View project tree (with info)
 </strong></summary>
 
 
@@ -87,12 +66,14 @@ zigduck/
 ├── README.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md              # guidelines / templates for contributions
-│
+│    
+
 ├── .github/  
 │   └── workflows/  
 │       ├── ci.nix               # release ci / tests
 │       └── wiki.nix             # docs workflow 
-│
+│   
+│    𝑴𝑶𝑫𝑼𝑳𝑬𝑺
 ├── modules/            # NixOS modules - what services run
 │   ├── zigduck.nix              # Main daemon
 │   ├── dashboard.nix            # Web dashboard / API
@@ -132,6 +113,7 @@ zigduck/
 │           ├── countdown.nix    #   shutdown counter
 │           └── compare.nix      #   compare metrics queries
 │
+│   𝑶𝑷𝑻𝑰𝑶𝑵𝑺
 ├── options/            # NixOS options - how it's configured
 │   ├── devices.nix
 │   ├── rooms.nix
@@ -141,9 +123,10 @@ zigduck/
 │   ├── https.nix
 │   └── zigbee/         # Coordinator, automations, scenes, dimmer, …
 │
+│   𝑷𝑨𝑪𝑲𝑨𝑮𝑬𝑺
 ├── packages/           # Buildable artifacts
 │   │
-│   ├── zigduck/        # 🦆 Daemon (Rust) - library + 2 binaries
+│   ├── zigduck/        # 🦆 Daemon (Rust) + API/dashboard binary.
 │   │   └── src/
 │   │       ├── lib.rs                   # Crate root - re-exports all modules
 │   │       ├── main.rs                  # bin: zigduck (the daemon, 44 lines)
@@ -228,9 +211,35 @@ zigduck/
 
 </details>
 
+<br><br>
+
+
+**zigduck** uses smart defaults, after defining your rooms & devices --<br>
+most users don’t need to write any automations at all.<br>
+Lights, dimmers, motion sensors - it should all work as expected **out of the box**.<br>
+
+A built-in natural-language automation engine supporting hundreds of millions of possible phrases, with full device, TV and EPG control, timers, alarms, notifications, text-to-speech, and advanced logic (if not, if, while, until, when, chain, state) - all ready to use out of the box, with no grammar definitions or scripts to configure. <br>
+Much much faster than any LLM and at a much lower power consumption - plus no hallucinations!<br>
+Users can even write their automations at runtime.
+
+**EVERYTHING** is configurable via NixOS options.<br>
+
+
+Use the <a href="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/images/screenshot02.png">GNOME Shell extension</a> *(seperate flake)* for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
+
+
+
+
 <br>
 
-## **Installation**
+
+![Zigduck GNOME Shell extension](https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/Screenshots/zigduck-widget.gif)
+
+<br>
+
+
+
+# **Installation**
 
 
 ### **Two installation paths**
@@ -238,23 +247,32 @@ zigduck/
 **Automated USB installer** *(dedicated host)*
  - **Pick me** if you never heard about NixOS and don't want to hear about NixOS.
  - Insert USB, boot, wait for shutdown. Eject USB, boot & you are done.
- - **TBA**
 
 
 **Nix flake module** *(recommended)*
  - For users already running NixOS with flakes
  - Ideal for power users and custom configurations
 
-
-### **Two configuration paths (initial device/room/scenes config)**
-
-
- - Generate your Nix device config using JS from GitHub Pages. Phone/bbrowser friendly.
- - Write it yourself. (fun)
  
+#### **Installing using automated USB installer**
 
 <details><summary><strong>
-❄️ Using flakes
+💾 Installing Using USB Stick
+</strong></summary>
+
+#### **To Be Announced**
+
+Coming soon....
+
+<br>
+
+</details>
+
+
+#### **Installing using Flakes**
+
+<details><summary><strong>
+❄️ Installing Using Flakes
 </strong></summary>
 
 
@@ -306,8 +324,14 @@ zigduck/
     };
 ```
 
-
 </details>
+
+
+### **Two configuration paths (initial device/room/scenes config)**
+
+
+ - Generate your Nix device config using JS from GitHub Pages. Phone/bbrowser friendly.
+ - Write it yourself. (fun)
 
 <br>
 
@@ -635,12 +659,12 @@ For language grammar contributions , see [CONTRIBUTING.md](CONTRIBUTING.md) <br>
 <!-- LANGUAGES_START -->
 | Language | Progress | Patterns |
 |----------|:---------|---------:|
-| 🇸🇪 Swedish | `████████████████████░` 100% | 6374 |
-| 🇬🇧 English | `████████░░░░░░░░░░░░` 42% | 2721 |
-| 🇩🇪 German | - | 0 |
-| 🇪🇸 Spanish | - | 0 |
-| 🇫🇷 French | ❌ eval error | - |
-| **Total** | | **9095** *(+1 failed)* |
+| 🇸🇪 Swedish | `████████████████████░` 100% | 6327 |
+| 🇬🇧 English | `████████░░░░░░░░░░░░` 42% | 2697 |
+| 🇩🇪 German | `█░░░░░░░░░░░░░░░░░░░░` 0% | 35 |
+| 🇪🇸 Spanish | — | 0 |
+| 🇫🇷 French | — | 0 |
+| **Total** | | **9059** |
 <!-- LANGUAGES_END -->
 
 <br>
