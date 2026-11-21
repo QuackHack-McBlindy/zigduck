@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.14] - 2026-11-21
+
+### Added
+
 - Added grammar: German -> `/de/zigbee/state.nix`.
 - Added grammar: `pronouns`, `splitWords`, `sorryPhrases`, `negation` --> `modules/grammar/words.nix`. 
   
@@ -19,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Brought back `{device} is {state}` -> `scripts/zigbee/state.nix` for proper `if` alignment.
 
 ### Removed
-
 
 ## [0.2.13] - 2026-11-20
 
