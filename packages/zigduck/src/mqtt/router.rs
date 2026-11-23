@@ -273,12 +273,12 @@ impl ZigduckState {
                 let stale = !fresh;
                 if repeat {
                     dt_debug!(
-                        "↺ repeat occupancy={} for {} - ignoring",
+                        "repeat occupancy={} for {} - ignoring",
                         occupancy,
                         device_name
                     );
                 } else if stale {
-                    dt_warning!(
+                    dt_debug!(
                         "stale occupancy={} for {} (last_seen={:?}) - ignoring",
                         occupancy,
                         device_name,

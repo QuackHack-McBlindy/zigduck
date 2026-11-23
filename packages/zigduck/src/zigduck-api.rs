@@ -803,6 +803,10 @@ fn send_response_with_cookie(
 
 fn is_api_path(path: &str) -> bool {
     let p = path.trim_end_matches('/');
+    if p == "/do" {
+        return true;
+    }
+
     let api_roots = [
         "/state",
         "/device",
@@ -1839,6 +1843,41 @@ fn start_alarm_thread(manager: Arc<AlarmManager>) {
 }
 
 
+fn handle_do_command(cmd: &str) -> String {
+    let cmd = cmd.trim();
+    if cmd.is_empty() {
+        return "No matching command found: empty input".to_string();
+    }
+
+    match Command::new("yo").arg("do").arg(cmd).output() {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+            let body = if stderr.is_empty() {
+                stdout
+            } else if stdout.is_empty() {
+                stderr
+            } else {
+                format!("{}{}", stdout, stderr)
+            };
+
+            if output.status.success() {
+                dt_info(&format!("[do] '{}' -> OK", cmd));
+            } else {
+                dt_warning(&format!(
+                    "[do] '{}' failed (exit={:?})", cmd, output.status.code()
+                ));
+            }
+            body
+        }
+        Err(e) => {
+            dt_error(&format!("[do] failed to spawn 'yo': {}", e));
+            format!("No matching command found: failed to run 'yo' ({})", e)
+        }
+    }
+}
+
 fn handle_request(mut stream: TcpStream) {
     let peer_addr = match stream.peer_addr() {
         Ok(addr) => addr.to_string(),
@@ -2059,6 +2098,19 @@ fn handle_request(mut stream: TcpStream) {
             let response = handle_alarm_toggle(query);
             send_response(&mut stream, "200 OK", &response, None);
         }
+
+        ("GET",  "/do")     | ("GET",  "/api/do")
+        | ("POST", "/do")   | ("POST", "/api/do") => {
+            let cmd = get_query_arg(query, "cmd");
+            let body = handle_do_command(&cmd);
+            send_response(
+                &mut stream,
+                "200 OK",
+                &body,
+                Some("text/plain; charset=utf-8"),
+            );
+        }
+
         ("POST", "/media/power/on") | ("POST", "/api/media/power/on") => {
             let device = get_device_ip(query);
             match execute_adb(&device, &["shell", "input", "keyevent", "KEYCODE_WAKEUP"]) {

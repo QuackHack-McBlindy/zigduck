@@ -73,12 +73,13 @@ impl ZigduckState {
 
         let all_no_motion = match self.motion_tracker.read() {
             Ok(tracker) => sensors.iter().all(|sensor| {
-                tracker
-                    .last_motion
-                    .get(sensor)
-                    .and_then(|last| now.duration_since(*last).ok())
-                    .map(|d| d.as_secs() >= after_seconds)
-                    .unwrap_or(false)
+                match tracker.last_motion.get(sensor) {
+                    None => true,
+                    Some(last) => now
+                        .duration_since(*last)
+                        .map(|d| d.as_secs() >= after_seconds)
+                        .unwrap_or(true),
+                }
             }),
             Err(_) => false,
         };
