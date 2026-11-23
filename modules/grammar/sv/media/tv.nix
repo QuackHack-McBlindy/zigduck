@@ -1,24 +1,15 @@
-# dotfiles/bin/media/tv.nix ⮞ https://github.com/quackhack-mcblindy/dotfiles
-{ # 🦆 says ⮞ Android TVOS Controller
+{
   self,
   lib,
   config,
   pkgs,
   sv,
   ...
-} : let # 🦆 says ⮞ used for season entity lists
-
-
+} : let
 
 in {
-
   yo.scripts.tv = {
     voice = lib.mkIf (lib.elem "sv" config.house.languages) {
-        priority = 1; # 🦆 says ⮞ 1 to 5
-        fuzzy = {
-          enable = true;
-          threshold = 0.6;
-        };
         sentences = [
           # 🦆 says ⮞ season specific search
           "[jag] (spel|spela|kör|start|starta) [upp|igång] {typ} {search} (säsong|season) {season} i {room}"

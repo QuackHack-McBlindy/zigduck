@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added more Spanish/German grammar.
+- Added new script: `notify`.
+- Added new API endpoint: `/api/do`.
+
 ### Changed
 
 ### Fixed
