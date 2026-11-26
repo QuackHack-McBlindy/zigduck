@@ -17,6 +17,117 @@ if [[ "${#langs[@]}" -eq 0 ]]; then
   exit 1
 fi
 
+update_version_badges() {
+  local readme="${1:-README.md}"
+  local tmp_file
+  local zigduck_version
+  local yo_version
+  local mqtt_version
+  local z2m_version
+
+  get_version() {
+    local output
+
+    output=$("$1" --version 2>&1) || true
+
+    grep -oP 'version \K[0-9]+\.[0-9]+\.[0-9]+' \
+      <<< "$output" | head -n1 || true
+  }
+
+  get_mqtt_version() {
+    mosquitto -h 2>/dev/null |
+      awk '/^mosquitto version/{print $3}' || true
+  }
+
+  get_z2m_version() {
+    zigbee2mqtt --help 2>&1 |
+      grep -oE 'zigbee2mqtt-[0-9]+\.[0-9]+\.[0-9]+' |
+      head -n1 |
+      cut -d'-' -f2 || true
+  }
+
+  zigduck_version=$(get_version zigduck-cli)
+  yo_version=$(get_version yo)
+  mqtt_version=$(get_mqtt_version)
+  z2m_version=$(get_z2m_version)
+  if [[ "$zigduck_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    zigduck_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1))"
+  fi
+
+  zigduck_version=${zigduck_version:-unknown}
+  yo_version=${yo_version:-unknown}
+  mqtt_version=${mqtt_version:-unknown}
+  z2m_version=${z2m_version:-unknown}
+
+  if ! grep -q '<!-- VERSIONS_START -->' "$readme" ||
+     ! grep -q '<!-- VERSIONS_END -->' "$readme"; then
+    echo "README is missing version markers" >&2
+    return 1
+  fi
+
+  tmp_file=$(mktemp)
+
+  if ! awk \
+    -v zigduck="$zigduck_version" \
+    -v yo="$yo_version" \
+    -v mqtt="$mqtt_version" \
+    -v z2m="$z2m_version" '
+    /<!-- VERSIONS_START -->/ {
+      inside=1
+      print
+      next
+    }
+
+    /<!-- VERSIONS_END -->/ {
+      inside=0
+      print
+      next
+    }
+
+    inside && zigduck != "unknown" && /^\!\[zigduck\]/ {
+      sub(/zigduck-[^-]+-black/, "zigduck-" zigduck "-black")
+      print
+      next
+    }
+
+    inside && yo != "unknown" && /^\!\[yo\]/ {
+      sub(/yo-[^-]+-black/, "yo-" yo "-black")
+      print
+      next
+    }
+
+    inside && mqtt != "unknown" && /^\!\[Mosquitto\]/ {
+      sub(/Mosquitto-[^-]+-yellow/, "Mosquitto-" mqtt "-yellow")
+      print
+      next
+    }
+
+    inside && z2m != "unknown" && /^\!\[Zigbee2MQTT\]/ {
+      sub(/Zigbee2MQTT-[^-]+-yellow/, "Zigbee2MQTT-" z2m "-yellow")
+      print
+      next
+    }
+
+    {
+      print
+    }
+  ' "$readme" > "$tmp_file"; then
+    rm -f "$tmp_file"
+    return 1
+  fi
+
+  mv "$tmp_file" "$readme"
+
+  echo "Updated version badges:"
+  echo "  zigduck:      $zigduck_version"
+  echo "  yo:           $yo_version"
+  echo "  Mosquitto:    $mqtt_version"
+  echo "  Zigbee2MQTT:  $z2m_version"
+}
+
+
+update_version_badges "$readme"
+
 declare -A flag=(
   [sv]="🇸🇪 Swedish"    [en]="🇬🇧 English"    [de]="🇩🇪 German"
   [fr]="🇫🇷 French"     [es]="🇪🇸 Spanish"    [no]="🇳🇴 Norwegian"

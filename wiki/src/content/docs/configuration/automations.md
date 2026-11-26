@@ -1,6 +1,6 @@
 ---
 title: Automations
-description: Time based, MQTT triggered, room, global, dimmer, presence and greeting automations, and the action types they run.
+description: Time based, MQTT triggered, state change, room, global, dimmer, presence and greeting automations, and the action types they run.
 ---
 
 Automations are optional. Smart defaults already cover lights, dimmers and motion, so reach for these
@@ -10,6 +10,7 @@ when you want something extra. They all live under `house.zigbee.automations`.
 | --- | --- |
 | [`time_based`](#time-based) | A cron expression or a structured schedule matches |
 | [`mqtt_triggered`](#mqtt-triggered) | A message arrives on an MQTT topic |
+| [`state_changed`](#state-changed) | A device property changes (optionally `from` → `to`) |
 | [`room_actions`](#room-actions) | A room event happens, such as motion or a door opening |
 | [`global_actions`](#global-actions) | A house-wide event happens, such as a leak or smoke alarm |
 | [`dimmer_actions`](#dimmer-actions) | A dimmer button is pressed or held in a given room |
@@ -18,7 +19,7 @@ when you want something extra. They all live under `house.zigbee.automations`.
 
 ## Actions
 
-Every automation runs a list of actions in order. There are six action types, plus a string
+Every automation runs a list of actions in order. There are seven action types, plus a string
 shorthand.
 
 | Action | Example |
@@ -26,6 +27,7 @@ shorthand.
 | `shell` | `{ type = "shell"; command = "notify 'hello'"; }` |
 | `scene` | `{ type = "scene"; scene = "max"; }` |
 | `mqtt` | `{ type = "mqtt"; topic = "zigbee2mqtt/Roller Shade/set"; message = ''{"state":"ON"}''; }` |
+| `device` | `{ type = "device"; device = "Kitchen Light"; operation = "on"; }` |
 | `wait` | `{ type = "wait"; duration = 10; }` (seconds) |
 | `snapshot` | `{ type = "snapshot"; snapshot_name = "before_alarm"; }` |
 | `restore` | `{ type = "restore"; snapshot_name = "before_alarm"; }` |
@@ -34,6 +36,35 @@ shorthand.
 A snapshot saves the current light states so a later `restore` can put them back. If you use
 [yo](https://github.com/QuackHack-McBlindy/yo), a string action like `"yo do 'turn on all lights'"`
 lets you write simple automations in natural language.
+
+### The `device` action
+
+`device` targets a device by its friendly name and asks the daemon to act on it, without you
+having to remember the MQTT topic or whether the device is a Hue light or a zigbee2mqtt one.
+
+| Field | Required for | Notes |
+| --- | --- | --- |
+| `device` | always | Friendly name from `house.zigbee.devices` (case-insensitive) |
+| `operation` | always | `on`, `off`, `toggle`, `open`, `close`, `set`, `read` |
+| `property` | `set`, `read` | e.g. `state`, `brightness`, `position`, `temperature` |
+| `value` | `set` | number, string, boolean or structured value |
+
+```nix
+# turn the light on and set brightness in one go
+{ type = "device"; device = "Kitchen Light"; operation = "on"; }
+{ type = "device"; device = "Kitchen Light"; operation = "set";
+  property = "brightness"; value = 128; }
+
+# toggle a blind — flips position between fully up and fully down
+{ type = "device"; device = "Bedroom Blind"; operation = "toggle"; }
+
+# read a value — logs the current value without changing anything
+{ type = "device"; device = "Kitchen Light";
+  operation = "read"; property = "brightness"; }
+```
+
+`read` prints a `📖 device read: <name>.<prop> = <value>` line to the daemon log and does
+not publish anything.
 
 ## Time based
 
@@ -69,8 +100,8 @@ house.zigbee.automations.mqtt_triggered = {
       { type = "shell"; command = "tv --typ youtube --search 'nisse snus'"; }
       { type = "snapshot"; snapshot_name = "before_alarm"; }
       { type = "scene"; scene = "max"; }
-      { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 3/set"; message = ''{"state":"OFF"}''; }
-      { type = "mqtt"; topic = "zigbee2mqtt/Robot Arm 4/set"; message = ''{"state":"OFF"}''; }
+      { type = "device"; device = "Robot Arm 3"; operation = "off"; }
+      { type = "device"; device = "Robot Arm 4"; operation = "off"; }
       { type = "wait"; duration = 10; }
       { type = "scene"; scene = "dark-fast"; }
       { type = "wait"; duration = 2; }
@@ -102,6 +133,58 @@ house.zigbee.automations.mqtt_triggered = {
 
 Inside a `shell` action the incoming payload is available as `$MQTT_PAYLOAD`. The
 [dashboard page](../dashboard/) has an example that writes it to a file.
+
+## State changed
+
+Runs when a device property changes. Set `from` and/or `to` to narrow the trigger; either
+may be omitted.
+
+```nix
+house.zigbee.automations.state_changed = {
+  kitchen_fan_logs_light = {
+    enable = true;
+    description = "When the kitchen fan turns ON, log it and turn on the light";
+    device   = "Kitchen Fan";   # friendly name, case-sensitive
+    property = "state";          # state, brightness, temperature, occupancy, power, …
+    from     = "OFF";            # optional
+    to       = "ON";             # optional
+    actions = [
+      "echo 'fan is now ON' >> /tmp/zigduck-test.log"
+      { type = "device"; device = "Kitchen Light"; operation = "on"; }
+    ];
+  };
+
+  bedroom_temperature_changed = {
+    enable = true;
+    description = "React whenever bedroom temperature changes";
+    device   = "Bedroom Sensor";
+    property = "temperature";
+    # no from / to — fires on every change
+    actions = [
+      { type = "shell"; command = "echo 'Bedroom temperature changed'"; }
+    ];
+  };
+};
+```
+
+Field reference:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `enable` | bool | Defaults to `false` |
+| `description` | string | Shown in the daemon log |
+| `device` | string | Friendly name from `house.zigbee.devices` |
+| `property` | string | Name of the state field, e.g. `state`, `brightness`, `temperature`, `occupancy`, `power`, `contact` |
+| `from` | anything (optional) | Previous value. Strings, numbers and booleans all compare correctly; numbers use a `1e-9` epsilon so `21.5` matches `"21.50"` |
+| `to` | anything (optional) | New value. Same comparison rules |
+| `actions` | list of actions | Executed in order |
+
+Notes:
+
+- The automation fires on the **first** observation of a property too, unless you set `from`.
+  If you want it to fire *only* on real transitions, provide `from`.
+- `last_updated` and `last_seen` are excluded: they are rewritten on every message and would
+  self-trigger.
 
 ## Room actions
 
@@ -178,7 +261,7 @@ house.zigbee.automations.dimmer_actions = {
       extra_actions = [];
       override_actions = [
         { type = "scene"; scene = "dark"; }
-        { type = "mqtt"; topic = "zigbee2mqtt/Fläkt/set"; message = ''{"state":"OFF"}''; }
+        { type = "device"; device = "Fläkt"; operation = "off"; }
       ];
     };
   };

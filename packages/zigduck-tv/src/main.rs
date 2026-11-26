@@ -219,7 +219,6 @@ impl Config {
                     std::fs::Permissions::from_mode(0o600),
                 );
             }
-            println!("Installed private ADB key at {}", adbkey.display());
         } else {
             eprintln!("Warning: pubKey set but keyPath missing; adb needs a private key");
         }
@@ -229,7 +228,6 @@ impl Config {
             let adbkey_pub = android_dir.join("adbkey.pub");
             std::fs::write(&adbkey_pub, content)
                 .map_err(|e| format!("Failed to write {}: {}", adbkey_pub.display(), e))?;
-            println!("Installed public ADB key at {}", adbkey_pub.display());
         }
 
         let mut c = Command::new("adb");
@@ -701,6 +699,22 @@ fn resolve_channel(
     None
 }
 
+fn read_webserver_file(config: &Config) -> Result<String, String> {
+    let path = config.webserver_file.as_ref()
+        .ok_or_else(|| "webserver_file is not configured".to_string())?;
+
+    let contents = std::fs::read_to_string(path)
+        .map_err(|e| format!("Failed to read '{}': {}", path, e))?;
+
+    let url = contents.trim().trim_end_matches('/').to_string();
+
+    if url.is_empty() {
+        return Err(format!("Webserver URL file '{}' is empty", path));
+    }
+
+    Ok(url)
+}
+
 fn main() {
     let mut args = Args::parse();
 
@@ -802,6 +816,7 @@ fn main() {
         "play_playlist" => {
             let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
             let playlist_url = format!("{}/{}", url, playlist_rel);
+            println!("{}", playlist_url);
             play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
             return;
         }
@@ -927,6 +942,7 @@ fn main() {
         let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         generate_folder_playlist(&target_path, &base, url, shuffle, max_items, Path::new(&config.playlist_file));
         let playlist_url = format!("{}/{}", url, playlist_rel);
+        println!("{}", playlist_url);
         play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
         return;
     }
@@ -952,6 +968,7 @@ fn main() {
         let url = webserver_url.as_ref().expect("Webserver URL is required. Set either `house.https.media.url` or `house.https.media.urlFile` in your Nix configuration.");
         make_playlist_from_files(&files, base_path, url, Path::new(&config.playlist_file));
         let playlist_url = format!("{}/{}", url, playlist_rel);
+        println!("{}", playlist_url);
         play_playlist(&device_ip, &playlist_url, &keymap["power_on"]);
         return;
     }

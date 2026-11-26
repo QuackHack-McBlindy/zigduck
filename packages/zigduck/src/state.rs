@@ -229,6 +229,7 @@ impl ZigduckState {
                     mqtt_triggered: HashMap::new(),
                     presence_based: HashMap::new(),
                     greeting: None,
+                    state_changed: HashMap::new(),
                 }
             });
 

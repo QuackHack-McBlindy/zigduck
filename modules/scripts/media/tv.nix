@@ -37,8 +37,7 @@ in {
       { name = "season"; type = "string"; description = "Specific season to play"; optional = true; }
       { name = "shuffle"; type = "bool"; description = "Shuffle Toggle, true or false"; default = true; }
     ];
-#    binary = self.inputs.zigduck.packages.x86_64-linux.zigduck-tv + "/bin/tv";
-    binary = "/run/current/system/zigduck-tv/bin/zigduck-tv";
+    binary = "/run/current-system/sw/bin/zigduck-tv";
 
 
   };}

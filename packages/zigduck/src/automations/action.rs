@@ -5,7 +5,7 @@ use tokio::process::Command as TokioCommand;
 
 use crate::domain::AutomationAction;
 use crate::state::ZigduckState;
-
+//
 impl ZigduckState {
     pub async fn execute_automation_action(
         &self,
@@ -46,6 +46,11 @@ impl ZigduckState {
                 "scene" => {
                     if let Some(scene_name) = &action_config.scene {
                         self.activate_scene(scene_name).await?;
+                    }
+                }
+                "device" => {
+                    if let Err(e) = self.run_device_action(action_config).await {
+                        dt_warning!("device action failed: {}", e);
                     }
                 }
                 "snapshot" => {
@@ -166,6 +171,11 @@ impl ZigduckState {
                         self.activate_scene(scene_name).await?;
                     }
                 }
+                "device" => {
+                    if let Err(e) = self.run_device_action(action_config).await {
+                        dt_warning!("device action failed: {}", e);
+                    }
+                }
                 _ => {}
             },
         }
@@ -241,5 +251,77 @@ impl ZigduckState {
             );
         }
         Ok(())
+    }
+    pub async fn run_device_action(
+        &self,
+        a: &crate::domain::StructuredAction,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use serde_json::json;
+
+        let device_name = a.device.as_deref()
+            .ok_or("device action: 'device' field is required")?;
+        let operation = a.operation.as_deref()
+            .ok_or("device action: 'operation' field is required")?;
+
+        let device = self.get_device(device_name)
+            .ok_or_else(|| format!("device action: device '{}' not found", device_name))?;
+
+        dt_debug!(
+            "device action: op={} target={} prop={:?}",
+            operation,
+            device_name,
+            a.property
+        );
+
+        if operation == "read" {
+            let prop = a.property.as_deref().unwrap_or("state");
+            let val = self.get_state(device_name, prop);
+            dt_info!("📖 device read: {}.{} = {:?}", device_name, prop, val);
+            return Ok(());
+        }
+
+        let payload: serde_json::Value = match operation {
+            "on"    => json!({ "state": "ON" }),
+            "off"   => json!({ "state": "OFF" }),
+            "toggle" => match device.device_type.as_str() {
+                "blind" => {
+                    let pos = self
+                        .get_state(device_name, "position")
+                        .and_then(|s| s.parse::<u64>().ok())
+                        .unwrap_or(0);
+                    json!({ "position": if pos > 50 { 0 } else { 100 } })
+                }
+                _ => {
+                    let cur = self
+                        .get_state(device_name, "state")
+                        .unwrap_or_else(|| "OFF".to_string());
+                    let next = if cur.eq_ignore_ascii_case("on") { "OFF" } else { "ON" };
+                    json!({ "state": next })
+                }
+            },
+            "open" => match device.device_type.as_str() {
+                "blind" => json!({ "position": 100 }),
+                _ => json!({ "state": "OPEN" }),
+            },
+            "close" => match device.device_type.as_str() {
+                "blind" => json!({ "position": 0 }),
+                _ => json!({ "state": "CLOSE" }),
+            },
+            "set" => {
+                let prop = a.property.as_deref()
+                    .ok_or("device action: 'set' requires 'property'")?;
+                let val = a.value.as_ref()
+                    .ok_or("device action: 'set' requires 'value'")?;
+                json!({ prop: val })
+            }
+            other => {
+                return Err(format!("device action: unknown operation '{}'", other).into())
+            }
+        };
+
+        let payload_str = serde_json::to_string(&payload)?;
+        dt_debug!("device action payload: {}", payload_str);
+
+        self.handle_device_command(device_name, &payload_str).await
     }
 }

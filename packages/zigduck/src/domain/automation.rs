@@ -11,6 +11,8 @@ pub struct AutomationConfig {
     pub presence_based: HashMap<String, PresenceBasedAutomation>,
     pub mqtt_triggered: HashMap<String, MqttTriggeredAutomation>,
     pub greeting: Option<GreetingAutomation>,
+    #[serde(default)]
+    pub state_changed: HashMap<String, StateChangedAutomation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +56,14 @@ pub struct StructuredAction {
     pub scope: Option<String>,
     pub room: Option<String>,
     pub devices: Option<Vec<String>>,
+    #[serde(default)]
+    pub device: Option<String>,
+    #[serde(default)]
+    pub operation: Option<String>,
+    #[serde(default)]
+    pub property: Option<String>,
+    #[serde(default)]
+    pub value: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,6 +93,20 @@ pub struct MqttTriggeredAutomation {
     pub topic: String,
     pub message: Option<String>,
     pub conditions: Vec<Condition>,
+    pub actions: Vec<AutomationAction>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StateChangedAutomation {
+    pub enable: bool,
+    pub description: String,
+    pub device: String,
+    pub property: String,
+    #[serde(default)]
+    pub from: Option<serde_json::Value>,
+    #[serde(default)]
+    pub to: Option<serde_json::Value>,
+    #[serde(default)]
     pub actions: Vec<AutomationAction>,
 }
 

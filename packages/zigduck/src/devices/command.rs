@@ -10,7 +10,11 @@ impl ZigduckState {
         device_id: &'a str,
         payload: &'a str,
     ) -> std::pin::Pin<
-        Box<dyn std::future::Future<Output = Result<(), Box<dyn std::error::Error>>> + 'a>,
+        Box<
+            dyn std::future::Future<Output = Result<(), Box<dyn std::error::Error>>>
+                + Send
+                + 'a,
+        >,
     > {
         Box::pin(async move {
             let data: Value = match serde_json::from_str(payload) {

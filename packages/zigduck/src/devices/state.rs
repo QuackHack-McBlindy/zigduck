@@ -14,9 +14,49 @@ impl ZigduckState {
         key: &str,
         value: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut states = self.device_states.write().unwrap();
-        let device_map = states.entry(device.to_string()).or_insert_with(std::collections::HashMap::new);
-        device_map.insert(key.to_string(), value.to_string());
+        let prev = {
+            let states = self.device_states.read().unwrap();
+            states.get(device).and_then(|m| m.get(key)).cloned()
+        };
+
+        {
+            let mut states = self.device_states.write().unwrap();
+            let device_map = states
+                .entry(device.to_string())
+                .or_insert_with(std::collections::HashMap::new);
+            device_map.insert(key.to_string(), value.to_string());
+        }
+
+        if prev.as_deref() != Some(value)
+            && key != "last_updated"
+            && key != "last_seen"
+        {
+            let has_match = self.automations.state_changed.values().any(|a| {
+                a.enable && a.device == device && a.property == key
+            });
+
+            if has_match {
+                let state  = self.clone();
+                let device = device.to_string();
+                let key    = key.to_string();
+                let value  = value.to_string();
+                let prev   = prev.clone();
+
+                tokio::spawn(async move {
+                    if let Err(e) = state
+                        .check_state_changed_automations(
+                            &device,
+                            &key,
+                            prev.as_deref(),
+                            &value,
+                        )
+                        .await
+                    {
+                        dt_warning!("state_changed automation error: {}", e);
+                    }
+                });
+            }
+        }
         Ok(())
     }
 

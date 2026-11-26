@@ -419,12 +419,12 @@ in {
 
       systemd.tmpfiles.rules = [
         "d ${cfg.stateDir} 0755 zigduck zigduck - -"
-        #"d ${cfg.stateDir}/timers 0755 zigduck zigduck - -"
+        "d ${cfg.stateDir}/tts 0755 zigduck zigduck - -"
         "f ${cfg.stateDir}/state.json 0644 zigduck zigduck - -"
         "d ${house.zigbee.dataDir} 0755 zigbee2mqtt zigbee2mqtt -"
-       "L+ ${cfg.stateDir}/devices.json - - - - /etc/zigduck/devices.json"
-       "L+ ${cfg.stateDir}/scenes.json - - - - /etc/zigduck/scenes.json"
-       "L+ ${cfg.stateDir}/automations.json - - - - /etc/zigduck/automations.json"
+        "L+ ${cfg.stateDir}/devices.json - - - - /etc/zigduck/devices.json"
+        "L+ ${cfg.stateDir}/scenes.json - - - - /etc/zigduck/scenes.json"
+        "L+ ${cfg.stateDir}/automations.json - - - - /etc/zigduck/automations.json"
       ];
 
       users.users.zigbee2mqtt = {

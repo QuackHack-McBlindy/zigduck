@@ -16,7 +16,6 @@
   </a>
 
 
-
 <!-- VERSIONS_START -->
 
   ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
@@ -31,7 +30,6 @@
   ![yo](https://img.shields.io/badge/💬%20yo-0.2.15-black?style=flat)
 
 <!-- VERSIONS_END -->
-
 
 
   <br>
@@ -126,6 +124,7 @@ zigduck/
 │   𝑷𝑨𝑪𝑲𝑨𝑮𝑬𝑺
 ├── packages/           # Buildable artifacts
 │   │
+│   │   𝒁𝑰𝑮𝑫𝑼𝑪𝑲
 │   ├── zigduck/        # 🦆 Daemon (Rust) + API/dashboard binary.
 │   │   └── src/
 │   │       ├── lib.rs                   # Crate root - re-exports all modules
@@ -203,7 +202,8 @@ zigduck/
 │   ├── zigduck-epg/         # 🦆 EPG scraper (Python)
 │   └── zigduck.nix          # Package aggregator
 │
-├── static/                  # Web dashboard assets
+│   𝑫𝑨𝑺𝑯𝑩𝑶𝑨𝑹𝑫
+├── static/                  # Web dashboard assets (js, html, wav, ...)
 ├── wiki/                    # Documentation site
 ├── hooks/                   # CI hooks
 └── devShells/               # Development shells / grammar testing
@@ -211,7 +211,9 @@ zigduck/
 
 </details>
 
-<br><br>
+<br<
+
+## **8 Automation Types ande 7 Automation ActionsDetailed project tree view**
 
 
 **zigduck** uses smart defaults, after defining your rooms & devices --<br>
@@ -225,7 +227,7 @@ Users can even write their automations at runtime.
 **EVERYTHING** is configurable via NixOS options.<br>
 
 
-Use the <a href="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/images/screenshot02.png">GNOME Shell extension</a> *(seperate flake)* for a handy top bar desktop widget and also an optional dashboard page is generated from the defined Nix configuration to display customized cards as well as scene activation and device control on-the-fly.<br><br>
+Use the <a href="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/refs/heads/main/images/screenshot02.png">GNOME Shell extension</a> *(seperate flake)* for a handy top bar desktop widget and also an optional dashboard page is generated so user can chat with their devices/play your media right in the browser or run scene activations and device control on-the-fly.<br><br>
 
 
 
@@ -261,6 +263,7 @@ Use the <a href="https://raw.githubusercontent.com/QuackHack-McBlindy/zigduck/re
 </strong></summary>
 
 #### **To Be Announced**
+
 
 Coming soon....
 
@@ -346,7 +349,7 @@ Coming soon....
 
 ## **Example Usage**
 
-Just at a glance, please see the [documentation](https://quackhack-mcblindy.github.io/zigduck) for more information.
+Just at a glance, please see the [documentation](https://quackhack-mcblindy.github.io/zigduck) for user submitted configurations.
 
 
 <details><summary><strong>
@@ -659,12 +662,12 @@ For language grammar contributions , see [CONTRIBUTING.md](CONTRIBUTING.md) <br>
 <!-- LANGUAGES_START -->
 | Language | Scripts | Voice scripts | Voice script coverage | Patterns | Phrases |
 |----------|--------:|--------------:|:------------------------|---------:|--------:|
-| 🇸🇪 Swedish | 20 | 20 | `████████████████████░` 100% | 6794 | 292198943 |
-| 🇬🇧 English | 20 | 18 | `██████████████████░░` 90% | 2589 | 77536829 |
-| 🇪🇸 Spanish | 20 | 8 | `████████░░░░░░░░░░░░` 40% | 1854 | 3254206 |
-| 🇩🇪 German | 20 | 15 | `███████████████░░░░░` 75% | 1527 | 2798404 |
-| 🇫🇷 French | 20 | 2 | `██░░░░░░░░░░░░░░░░░░` 10% | 0 | 0 |
-| **Total** | **20** | **63** | | **12764** | **375788382** |
+| 🇸🇪 Swedish | 22 | 22 | `████████████████████░` 100% | 6880 | 292198967 |
+| 🇬🇧 English | 22 | 20 | `██████████████████░░` 90% | 2653 | 77536841 |
+| 🇩🇪 German | 22 | 13 | `███████████░░░░░░░░░` 59% | 1472 | 2797158 |
+| 🇪🇸 Spanish | 22 | 6 | `█████░░░░░░░░░░░░░░░` 27% | 1153 | 786374 |
+| 🇫🇷 French | 22 | 2 | `█░░░░░░░░░░░░░░░░░░░` 9% | 0 | 0 |
+| **Total** | **22** | **63** | | **12158** | **373319340** |
 <!-- LANGUAGES_END -->
 
 <br>

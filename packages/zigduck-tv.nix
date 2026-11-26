@@ -39,6 +39,6 @@ rustPlatform.buildRustPackage {
     description = "Home automation system written in Rust";
     license = licenses.mit;
     maintainers = [ "QuackHack-McBlindy" ];
-    mainProgram = "tv";
+    mainProgram = "zigduck-tv";
 
   };}

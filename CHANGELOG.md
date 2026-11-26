@@ -9,12 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added implementation to `zigduck` Rust binary for automations using `state_changed` and `device`.
+- Added chat interface to the web dashboard, chat with your devices, scripts and automations.
+- Added new script: `time`, and corresponding grammar for English and Swedish.
+- Added new script: `weather`, and corresponding grammar for English and Swedish.
+
 ### Changed
+
+- Wiki page now automatically picks up new markdown files.
+- Moved the inline js <script> block in `modules/dashboard.nix` into `static/js/dashboard.js`.
+- `zigduck-tv` now prints the full URL to the playlist file when starting playback, so chat can read and play. 
 
 ### Fixed
 
+- Fix bad binary name in `tv` script.
+
 ### Removed
 
+. Renived nnedia browsing tab from the dashboard. Use chat instead.
 
 ## [0.2.16] - 2026-11-23
 
