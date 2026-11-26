@@ -19,7 +19,7 @@
 <!-- VERSIONS_START -->
 
   ![License](https://img.shields.io/badge/license-MIT-black?style=flat-square&logo=opensourceinitiative&logoColor=white)
-  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.16-black?style=flat)
+  ![zigduck](https://img.shields.io/badge/🦆%20zigduck-0.2.17-black?style=flat)
 
   ![Build](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/ci.yml/badge.svg)
   ![Docs](https://github.com/QuackHack-McBlindy/zigduck/actions/workflows/wiki.yml/badge.svg)
@@ -27,7 +27,7 @@
   ![Mosquitto](https://img.shields.io/badge/Mosquitto-2.1.2-yellow?style=flat-square&logo=eclipsemosquitto&logoColor=white)
   ![Zigbee2MQTT](https://img.shields.io/badge/Zigbee2MQTT-2.14.3-yellow?style=flat-square&logo=zigbee2mqtt&logoColor=white)
   ![ADB](https://img.shields.io/badge/ADB-1.0.41-green?style=flat-square&logo=android&logoColor=white)
-  ![yo](https://img.shields.io/badge/💬%20yo-0.2.15-black?style=flat)
+  ![yo](https://img.shields.io/badge/💬%20yo-0.2.17-black?style=flat)
 
 <!-- VERSIONS_END -->
 
@@ -211,10 +211,16 @@ zigduck/
 
 </details>
 
-<br<
+<br>
 
-## **8 Automation Types ande 7 Automation ActionsDetailed project tree view**
+## **Why Zigduck?**
 
+- 100% declarative & **extremely** flexible
+- Smart Home in git. No backups needed
+- 8 Automation types (including natural language)
+- 7 Automation actions
+- Simple configuration via Dashboard for users that don't want to write any code.
+- Dashboard + Zigbee + Hue + Sync + Scenes + Android TV + EPG + Smart Chat + ...
 
 **zigduck** uses smart defaults, after defining your rooms & devices --<br>
 most users don’t need to write any automations at all.<br>
