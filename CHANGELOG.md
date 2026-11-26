@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [0.2.17] - 2026-11-26
+
+### Added
+
 - Added implementation to `zigduck` Rust binary for automations using `state_changed` and `device`.
 - Added chat interface to the web dashboard, chat with your devices, scripts and automations.
 - Added new script: `time`, and corresponding grammar for English and Swedish.
