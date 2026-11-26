@@ -21,43 +21,28 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Getting started',
-					items: [
-						{ slug: 'getting-started/introduction' },
-						{ slug: 'getting-started/installation' },
-						{ slug: 'getting-started/quick-start' },
-					],
+					items: [{ autogenerate: { directory: 'getting-started' } }],
 				},
 				{
 					label: 'Configuration',
-					items: [
-						{ slug: 'configuration/zigbee' },
-						{ slug: 'configuration/rooms' },
-						{ slug: 'configuration/devices' },
-						{ slug: 'configuration/dimmers-and-motion' },
-						{ slug: 'configuration/scenes' },
-						{ slug: 'configuration/automations' },
-						{ slug: 'configuration/media' },
-						{ slug: 'configuration/dashboard' },
-						{ slug: 'configuration/voice' },
-					],
+					items: [{ autogenerate: { directory: 'configuration' } }],
 				},
 				{
 					label: 'Usage',
-					items: [
-						{ slug: 'usage/zigduck-cli' },
-						{ slug: 'usage/tv' },
-						{ slug: 'usage/gnome-extension' },
-						{ slug: 'usage/api' },
-					],
+					items: [{ autogenerate: { directory: 'usage' } }],
 				},
 				{
 					label: 'Option reference',
 					items: [{ autogenerate: { directory: 'reference/options' } }],
 				},
 				{
+					label: 'Share',
+					items: [{ autogenerate: { directory: 'share' } }],
+				},
+				{
 					label: 'Project',
 					items: [
-						{ slug: 'project/contributing' },
+						{ autogenerate: { directory: 'project' } },
 						{ label: 'Changelog', link: `${repo}/blob/${branch}/CHANGELOG.md`, attrs: { target: '_blank' } },
 					],
 				},

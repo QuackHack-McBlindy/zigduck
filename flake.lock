@@ -194,11 +194,11 @@
         "tinyFlake": "tinyFlake_2"
       },
       "locked": {
-        "lastModified": 1795452674,
-        "narHash": "sha256-qPhOTLKTpUR1NZChjo/t+2V2riK0FtQ/tzsj2npl7x4=",
+        "lastModified": 1795689891,
+        "narHash": "sha256-fToIo73RtoQo0IKDfJIK0ItMbEv2ZFC6oubovTBbXqM=",
         "owner": "quackhack-mcblindy",
         "repo": "yo",
-        "rev": "6a74cc49d74201019a13baf1b4a9543b81790324",
+        "rev": "591c0b308463322f80dc5849d42fb281c5a98daf",
         "type": "github"
       },
       "original": {
